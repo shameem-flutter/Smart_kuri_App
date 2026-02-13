@@ -34,26 +34,14 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  
-  # HTTP client with advanced features
   dio: ^5.4.0
-  
-  # State management
-  provider: ^6.1.1
-  
-  # Secure storage for tokens
   flutter_secure_storage: ^9.0.0
-  
-  # Non-sensitive data storage
   shared_preferences: ^2.2.2
-  
-  # Value equality
   equatable: ^2.0.5
-  
-  # Retry logic for API calls
   dio_retry_plus: ^2.0.0
-
   pretty_dio_logger: any
+  flutter_riverpod: ^3.2.1
+  google_fonts: ^8.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

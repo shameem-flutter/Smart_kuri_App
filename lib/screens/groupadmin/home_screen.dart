@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:kuri_app/screens/groupadmin/groupdetails.dart';
 import 'package:kuri_app/screens/groupadmin/settings_screen.dart';
+import 'package:kuri_app/screens/member/createmember.dart';
+import 'package:kuri_app/screens/member/memberlistscreen.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/utilities/gap_func.dart';
 import 'package:kuri_app/screens/groupadmin/dashboardscreen.dart';
@@ -16,7 +20,10 @@ class HomeScreen extends StatelessWidget {
         color: Colors.purple,
         onTap: () {
           Navigator.pop(context);
-          // Navigate to Group List
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => GroupDetailsScreen()),
+          );
         },
       ),
       _BottomSheetOption(
@@ -48,7 +55,9 @@ class HomeScreen extends StatelessWidget {
         color: Colors.orange,
         onTap: () {
           Navigator.pop(context);
-          // Navigate to Member List
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => MemberListScreen()));
         },
       ),
       _BottomSheetOption(
@@ -57,7 +66,9 @@ class HomeScreen extends StatelessWidget {
         color: Colors.green,
         onTap: () {
           Navigator.pop(context);
-          // Navigate to Create Member
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => CreateMemberScreen()));
         },
       ),
       _BottomSheetOption(
@@ -257,12 +268,12 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
 
               // Dashboard Title
               buildHeaderCard(),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 20),
 
               // Menu Items
               _DashboardCard(
@@ -421,41 +432,25 @@ class _DashboardCard extends StatelessWidget {
 }
 
 Widget buildHeaderCard() {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0xFF2962FF), Color(0xFF1E88E5)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        'Welcome to Smart Kuri',
+        style: GoogleFonts.poppins(
+          fontSize: 24,
+          fontWeight: FontWeight.bold,
+          color: const Color(
+            0xFF2B3A4A,
+          ), // Matches your IP button/settings icon color
+          letterSpacing: -0.5,
+        ),
       ),
-      borderRadius: BorderRadius.circular(24),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.blue.withValues(alpha: 0.25),
-          blurRadius: 20,
-          offset: const Offset(0, 10),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text(
-          'Welcome to Smart Kuri',
-          style: TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          'Select an option to proceed',
-          style: TextStyle(fontSize: 16, color: Colors.white70),
-        ),
-      ],
-    ),
+      const SizedBox(height: 4),
+      Text(
+        'Select an option to proceed',
+        style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[600]),
+      ),
+    ],
   );
 }

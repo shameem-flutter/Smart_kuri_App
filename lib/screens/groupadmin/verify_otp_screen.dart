@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/auth_provider_riverpod.dart';
 import '../../utilities/colors.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
@@ -10,14 +10,14 @@ import 'home_screen.dart';
 /// Verify OTP Screen
 ///
 /// Screen to enter OTP for verifying account registration.
-class VerifyOtpScreen extends StatefulWidget {
+class VerifyOtpScreen extends ConsumerStatefulWidget {
   const VerifyOtpScreen({super.key});
 
   @override
-  State<VerifyOtpScreen> createState() => _VerifyOtpScreenState();
+  ConsumerState<VerifyOtpScreen> createState() => _VerifyOtpScreenState();
 }
 
-class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
+class _VerifyOtpScreenState extends ConsumerState<VerifyOtpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
 
@@ -30,33 +30,35 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   Future<void> _handleVerify() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final authProvider = context.read<AuthProvider>();
+    final authNotifier = ref.read(authProvider.notifier);
     FocusScope.of(context).unfocus();
 
-    await authProvider.verifyOtp(_otpController.text.trim());
+    await authNotifier.verifyOtp(_otpController.text.trim());
 
     if (!mounted) return;
 
+    final authState = ref.read(authProvider);
+
     // Check for success or error messages
-    if (authProvider.errorMessage != null) {
+    if (authState.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage!),
+          content: Text(authState.errorMessage!),
           backgroundColor: Colors.red,
         ),
       );
-      authProvider.clearMessages();
-    } else if (authProvider.successMessage != null) {
+      ref.read(authProvider.notifier).clearMessages();
+    } else if (authState.successMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.successMessage!),
+          content: Text(authState.successMessage!),
           backgroundColor: Colors.green,
         ),
       );
-      authProvider.clearMessages();
+      ref.read(authProvider.notifier).clearMessages();
     }
 
-    if (authProvider.isAuthenticated) {
+    if (authState.isAuthenticated) {
       Navigator.of(
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
@@ -65,7 +67,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
+    final authState = ref.watch(authProvider);
 
     return Scaffold(
       backgroundColor: darkNavy,
@@ -174,7 +176,7 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                               onPressed: _handleVerify,
                               backgroundColor: primaryColor,
                               icon: Icons.check_circle_outline,
-                              isLoading: authProvider.isLoading,
+                              isLoading: authState.isLoading,
                             ),
                           ],
                         ),

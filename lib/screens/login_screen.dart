@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kuri_app/utilities/colors.dart';
-import 'package:provider/provider.dart';
-import '../../utilities/validators.dart';
-import '../../providers/auth_provider.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_text_field.dart';
-import 'home_screen.dart';
-import 'password_reset_screen.dart';
-import 'verify_otp_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../utilities/validators.dart';
+import '../providers/auth_provider_riverpod.dart';
+import '../widgets/custom_button.dart';
+import '../widgets/custom_text_field.dart';
+import 'groupadmin/home_screen.dart';
+import 'groupadmin/password_reset_screen.dart';
+import 'groupadmin/verify_otp_screen.dart';
 
 /// Login Screen
 ///
 /// Modern, gradient-styled login interface with animations.
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
+class _LoginScreenState extends ConsumerState<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -47,11 +47,11 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _handleAuth() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final authProvider = context.read<AuthProvider>();
+    final authNotifier = ref.read(authProvider.notifier);
     FocusScope.of(context).unfocus();
 
     if (_isLogin) {
-      await authProvider.login(
+      await authNotifier.login(
         identifier: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -59,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen>
       // Parse plan_id or use default
       int planId = int.tryParse(_licenseController.text.trim()) ?? 2;
 
-      await authProvider.register(
+      await authNotifier.register(
         groupName: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
         email: _emailController.text.trim(),
@@ -71,23 +71,25 @@ class _LoginScreenState extends State<LoginScreen>
 
     if (!mounted) return;
 
+    final authState = ref.read(authProvider);
+
     // Check for success or error messages
-    if (authProvider.errorMessage != null) {
+    if (authState.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.errorMessage!),
+          content: Text(authState.errorMessage!),
           backgroundColor: Colors.red,
         ),
       );
-      authProvider.clearMessages();
-    } else if (authProvider.successMessage != null) {
+      ref.read(authProvider.notifier).clearMessages();
+    } else if (authState.successMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(authProvider.successMessage!),
+          content: Text(authState.successMessage!),
           backgroundColor: Colors.green,
         ),
       );
-      authProvider.clearMessages();
+      ref.read(authProvider.notifier).clearMessages();
 
       // If registration was successful, navigate to VerifyOtpScreen
       if (!_isLogin) {
@@ -98,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen>
       }
     }
 
-    if (authProvider.isAuthenticated) {
+    if (authState.isAuthenticated) {
       Navigator.of(
         context,
       ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
@@ -107,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
+    final authState = ref.watch(authProvider);
 
     return Scaffold(
       backgroundColor: darkNavy,
@@ -227,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen>
                               onPressed: _handleAuth,
                               backgroundColor: primaryColor,
                               icon: _isLogin ? Icons.login : Icons.person_add,
-                              isLoading: authProvider.isLoading,
+                              isLoading: authState.isLoading,
                             ),
                           ],
                         ),

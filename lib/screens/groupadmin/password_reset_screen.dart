@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../utilities/validators.dart';
-import '../../providers/auth_provider.dart';
+import '../../providers/auth_provider_riverpod.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import 'password_reset_confirm_screen.dart';
@@ -9,14 +9,14 @@ import 'password_reset_confirm_screen.dart';
 /// Password Reset Screen
 ///
 /// Screen for requesting password reset OTP with modern UI.
-class PasswordResetScreen extends StatefulWidget {
+class PasswordResetScreen extends ConsumerStatefulWidget {
   const PasswordResetScreen({super.key});
 
   @override
-  State<PasswordResetScreen> createState() => _PasswordResetScreenState();
+  ConsumerState<PasswordResetScreen> createState() => _PasswordResetScreenState();
 }
 
-class _PasswordResetScreenState extends State<PasswordResetScreen> {
+class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
   final _formKey = GlobalKey<FormState>();
   final _identifierController = TextEditingController();
 
@@ -31,18 +31,20 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       return;
     }
 
-    final authProvider = context.read<AuthProvider>();
+    final authNotifier = ref.read(authProvider.notifier);
 
     // Dismiss keyboard
     FocusScope.of(context).unfocus();
 
-    await authProvider.requestPasswordReset(
+    await authNotifier.requestPasswordReset(
       identifier: _identifierController.text.trim(),
     );
 
     if (!mounted) return;
 
-    if (authProvider.successMessage != null) {
+    final authState = ref.read(authProvider);
+
+    if (authState.successMessage != null) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => PasswordResetConfirmScreen(
@@ -136,9 +138,10 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                             const SizedBox(height: 20),
 
                             // Message if any
-                            Consumer<AuthProvider>(
-                              builder: (context, authProvider, _) {
-                                if (authProvider.errorMessage != null) {
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final authState = ref.watch(authProvider);
+                                if (authState.errorMessage != null) {
                                   return Container(
                                     padding: const EdgeInsets.all(12),
                                     margin: const EdgeInsets.only(bottom: 24),
@@ -147,7 +150,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
-                                      authProvider.errorMessage!,
+                                      authState.errorMessage!,
                                       style: TextStyle(
                                         color: Colors.red[700],
                                         fontSize: 13,

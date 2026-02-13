@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
-import 'login_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kuri_app/screens/groupadmin/profilescreen.dart';
+import '../../providers/auth_provider_riverpod.dart';
+import '../login_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  void _handleLogout(BuildContext context) async {
-    final authProvider = context.read<AuthProvider>();
-    await authProvider.logout();
+  void _handleLogout(BuildContext context, WidgetRef ref) async {
+    final authNotifier = ref.read(authProvider.notifier);
+    await authNotifier.logout();
 
     if (!context.mounted) return;
 
@@ -20,7 +21,7 @@ class SettingsScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
@@ -138,8 +139,8 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: 'Manage your profile information',
                 iconColor: Colors.blue,
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profile clicked')),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => Profilescreen()),
                   );
                 },
               ),
@@ -180,7 +181,7 @@ class SettingsScreen extends StatelessWidget {
                 title: 'Logout',
                 subtitle: 'Sign out of your account',
                 iconColor: Colors.redAccent,
-                onTap: () => _handleLogout(context),
+                onTap: () => _handleLogout(context, ref),
               ),
             ],
           ),
