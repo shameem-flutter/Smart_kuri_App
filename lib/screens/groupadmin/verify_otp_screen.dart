@@ -45,6 +45,7 @@ class _VerifyOtpScreenState extends ConsumerState<VerifyOtpScreen> {
         SnackBar(
           content: Text(authState.errorMessage!),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       ref.read(authProvider.notifier).clearMessages();
@@ -53,6 +54,7 @@ class _VerifyOtpScreenState extends ConsumerState<VerifyOtpScreen> {
         SnackBar(
           content: Text(authState.successMessage!),
           backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       ref.read(authProvider.notifier).clearMessages();

@@ -20,19 +20,20 @@ class DashboardStats extends Equatable {
       totalGroups: int.tryParse(json['total_groups'].toString()) ?? 0,
       activeGroups: int.tryParse(json['active_groups'].toString()) ?? 0,
       totalMembers: int.tryParse(json['total_members'].toString()) ?? 0,
-      thisMonthCollection: double.tryParse(json['this_month_collection'].toString()) ?? 0.0,
+      thisMonthCollection:
+          double.tryParse(json['this_month_collection'].toString()) ?? 0.0,
       totalReceived: double.tryParse(json['total_received'].toString()) ?? 0.0,
     );
   }
 
   @override
   List<Object?> get props => [
-        totalGroups,
-        activeGroups,
-        totalMembers,
-        thisMonthCollection,
-        totalReceived,
-      ];
+    totalGroups,
+    activeGroups,
+    totalMembers,
+    thisMonthCollection,
+    totalReceived,
+  ];
 }
 
 class DashboardGroup extends Equatable {
@@ -43,6 +44,7 @@ class DashboardGroup extends Equatable {
   final int totalMembers;
   final double monthlyAmount;
   final int durationMonths;
+  final String startDate;
 
   const DashboardGroup({
     required this.id,
@@ -52,6 +54,7 @@ class DashboardGroup extends Equatable {
     required this.totalMembers,
     required this.monthlyAmount,
     required this.durationMonths,
+    required this.startDate,
   });
 
   factory DashboardGroup.fromJson(Map<String, dynamic> json) {
@@ -63,34 +66,34 @@ class DashboardGroup extends Equatable {
       totalMembers: int.tryParse(json['total_members'].toString()) ?? 0,
       monthlyAmount: double.tryParse(json['monthly_amount'].toString()) ?? 0.0,
       durationMonths: int.tryParse(json['duration_months'].toString()) ?? 0,
+      startDate: json['start_date'] as String? ?? 'N/A',
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        code,
-        isActive,
-        totalMembers,
-        monthlyAmount,
-        durationMonths,
-      ];
+    id,
+    name,
+    code,
+    isActive,
+    totalMembers,
+    monthlyAmount,
+    durationMonths,
+    startDate,
+  ];
 }
 
 class DashboardResponse extends Equatable {
   final DashboardStats stats;
   final List<DashboardGroup> groups;
 
-  const DashboardResponse({
-    required this.stats,
-    required this.groups,
-  });
+  const DashboardResponse({required this.stats, required this.groups});
 
   factory DashboardResponse.fromJson(Map<String, dynamic> json) {
     return DashboardResponse(
       stats: DashboardStats.fromJson(json['stats'] as Map<String, dynamic>),
-      groups: (json['groups'] as List<dynamic>?)
+      groups:
+          (json['groups'] as List<dynamic>?)
               ?.map((e) => DashboardGroup.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],

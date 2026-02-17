@@ -42,6 +42,7 @@ dependencies:
   pretty_dio_logger: any
   flutter_riverpod: ^3.2.1
   google_fonts: ^8.0.1
+  intl: ^0.20.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

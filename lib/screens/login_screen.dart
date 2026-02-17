@@ -79,6 +79,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         SnackBar(
           content: Text(authState.errorMessage!),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       ref.read(authProvider.notifier).clearMessages();
@@ -87,6 +88,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         SnackBar(
           content: Text(authState.successMessage!),
           backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       ref.read(authProvider.notifier).clearMessages();

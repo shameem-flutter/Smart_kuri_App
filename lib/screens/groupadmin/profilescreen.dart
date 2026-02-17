@@ -28,23 +28,29 @@ class _ProfilescreenState extends State<Profilescreen> {
   }
 
   Future<void> _loadProfile() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
 
     try {
       final profile = await _apiService.getProfile();
 
-      setState(() {
-        _profileData = profile;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _profileData = profile;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString().replaceAll('Exception: ', '');
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -360,7 +366,7 @@ class _ProfilescreenState extends State<Profilescreen> {
     final status = _profileData!.subscriptionStatus;
 
     final isActive = status.active;
-    final statusColor = isActive ? Colors.green : Colors.orange;
+    final statusColor = isActive ? const Color(0xFF00C853) : Colors.orange;
 
     return Container(
       width: double.infinity,
@@ -370,8 +376,8 @@ class _ProfilescreenState extends State<Profilescreen> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 20,
+            color: const Color(0xFF2962FF).withValues(alpha: 0.08),
+            blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
@@ -385,25 +391,38 @@ class _ProfilescreenState extends State<Profilescreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
+                      color: const Color(0xFF2962FF).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.card_membership_rounded,
-                      color: statusColor,
-                      size: 20,
+                    child: const Icon(
+                      Icons.star_rounded,
+                      color: Color(0xFF2962FF),
+                      size: 24,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    subscription.plan.toUpperCase(),
-                    style: GoogleFonts.poppins(
-                      color: const Color(0xFF2B3A4A),
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Current Plan',
+                        style: GoogleFonts.inter(
+                          color: Colors.grey[500],
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Text(
+                        subscription.plan.toUpperCase(),
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFF2B3A4A),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -415,49 +434,147 @@ class _ProfilescreenState extends State<Profilescreen> {
                 ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  isActive ? 'ACTIVE' : 'INACTIVE',
-                  style: GoogleFonts.inter(
-                    color: statusColor[700],
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: statusColor.withValues(alpha: 0.2),
                   ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isActive ? 'ACTIVE' : 'INACTIVE',
+                      style: GoogleFonts.inter(
+                        color: statusColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
-            child: Divider(height: 1, color: Color(0xFFF0F0F0)),
+          const SizedBox(height: 24),
+
+          // Progress Bars for Limits
+          _buildLimitProgress(
+            label: 'Groups Created',
+            current: subscription.maxGroups - subscription.remainingGroups,
+            max: subscription.maxGroups,
+            color: const Color(0xFF2962FF),
           ),
-          // Details Grid
+          const SizedBox(height: 20),
+          _buildLimitProgress(
+            label: 'Members Added',
+            current: subscription.maxMembers - subscription.remainingMembers,
+            max: subscription.maxMembers,
+            color: const Color(0xFF00C853),
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Divider(height: 1, color: Color(0xFFF1F4F9)),
+          ),
+
+          // Time Left
           Row(
             children: [
-              Expanded(
-                child: _buildDetailColumn(
-                  label: 'Time Left',
-                  value: _profileData!.timeLeft,
-                  icon: Icons.timelapse_rounded,
+              Icon(
+                Icons.timer_outlined,
+                size: 18,
+                color: Colors.grey[400],
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Expires in ',
+                style: GoogleFonts.inter(
+                  color: Colors.grey[500],
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-              Container(width: 1, height: 40, color: const Color(0xFFF0F0F0)),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 20),
-                  child: _buildDetailColumn(
-                    label: 'Days Remaining',
-                    value: '${status.daysLeft} Days',
-                    icon: Icons.calendar_today_rounded,
-                  ),
+              Text(
+                '${status.daysLeft} days',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF2B3A4A),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLimitProgress({
+    required String label,
+    required int current,
+    required int max,
+    required Color color,
+  }) {
+    double progress = max > 0 ? current / max : 0;
+    if (progress > 1) progress = 1;
+
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                color: const Color(0xFF2B3A4A),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$current',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF2B3A4A),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' / $max',
+                    style: GoogleFonts.inter(
+                      color: Colors.grey[400],
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: progress,
+            backgroundColor: color.withValues(alpha: 0.1),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 6,
+          ),
+        ),
+      ],
     );
   }
 
@@ -496,40 +613,7 @@ class _ProfilescreenState extends State<Profilescreen> {
     );
   }
 
-  Widget _buildDetailColumn({
-    required String label,
-    required String value,
-    required IconData icon,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 14, color: Colors.grey[400]),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                color: Colors.grey[500],
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: GoogleFonts.inter(
-            color: const Color(0xFF2B3A4A),
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
+
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/screens/groupadmin/profilescreen.dart';
 import '../../providers/auth_provider_riverpod.dart';
 import '../login_screen.dart';
@@ -28,7 +29,7 @@ class SettingsScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: const Icon(Icons.arrow_back_rounded, color: Color(0xFF2B3A4A)),
           onPressed: () => Navigator.pop(context),
         ),
         systemOverlayStyle: const SystemUiOverlayStyle(
@@ -38,113 +39,135 @@ class SettingsScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Settings Title
-              const Text(
+              // Settings Header
+              Text(
                 'Settings',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.black87,
+                style: GoogleFonts.poppins(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF2B3A4A),
+                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
                 'Manage your account and preferences',
-                style: TextStyle(fontSize: 16, color: Colors.grey[500]),
+                style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 32),
 
-              // User Info Card
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF2962FF), Color(0xFF1E88E5)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.blue.withValues(alpha: 0.25),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Group Admin',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'admin@kuri.app',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 30),
+              // Minimal User Info Card
+              // Container(
+              //   padding: const EdgeInsets.all(20),
+              //   decoration: BoxDecoration(
+              //     color: Colors.white,
+              //     borderRadius: BorderRadius.circular(24),
+              //     boxShadow: [
+              //       BoxShadow(
+              //         color: Colors.black.withValues(alpha: 0.03),
+              //         blurRadius: 20,
+              //         offset: const Offset(0, 8),
+              //       ),
+              //     ],
+              //   ),
+              //   child: Row(
+              //     children: [
+              //       Container(
+              //         height: 56,
+              //         width: 56,
+              //         decoration: BoxDecoration(
+              //           color: const Color(0xFF2962FF).withValues(alpha: 0.1),
+              //           shape: BoxShape.circle,
+              //         ),
+              //         child: const Center(
+              //           child: Icon(
+              //             Icons.person_outline_rounded,
+              //             color: Color(0xFF2962FF),
+              //             size: 28,
+              //           ),
+              //         ),
+              //       ),
+              //       const SizedBox(width: 16),
+              //       Expanded(
+              //         child: Column(
+              //           crossAxisAlignment: CrossAxisAlignment.start,
+              //           children: [
+              //             Text(
+              //               'Group Admin',
+              //               style: GoogleFonts.poppins(
+              //                 fontSize: 18,
+              //                 fontWeight: FontWeight.w600,
+              //                 color: const Color(0xFF2B3A4A),
+              //               ),
+              //             ),
+              //             const SizedBox(height: 2),
+              //             Text(
+              //               'admin@kuri.app',
+              //               style: GoogleFonts.inter(
+              //                 fontSize: 13,
+              //                 color: Colors.grey[500],
+              //                 fontWeight: FontWeight.w500,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //       // Minimal Admin Badge
+              //       Container(
+              //         padding: const EdgeInsets.symmetric(
+              //           horizontal: 10,
+              //           vertical: 5,
+              //         ),
+              //         decoration: BoxDecoration(
+              //           color: Colors.green.withValues(alpha: 0.1),
+              //           borderRadius: BorderRadius.circular(10),
+              //         ),
+              //         child: Text(
+              //           'ADMIN',
+              //           style: GoogleFonts.inter(
+              //             color: Colors.green[700],
+              //             fontSize: 10,
+              //             fontWeight: FontWeight.w700,
+              //             letterSpacing: 0.5,
+              //           ),
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
+              // const SizedBox(height: 32),
 
               // General Section
               Text(
                 'GENERAL',
-                style: TextStyle(
-                  color: Colors.grey[600],
+                style: GoogleFonts.inter(
+                  color: Colors.grey[400],
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(height: 12),
 
               _SettingsTile(
-                icon: Icons.person_outline,
+                icon: Icons.person_outline_rounded,
                 title: 'Profile',
                 subtitle: 'Manage your profile information',
-                iconColor: Colors.blue,
+                iconColor: const Color(0xFF2962FF),
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => Profilescreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const Profilescreen(),
+                    ),
                   );
                 },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
               _SettingsTile(
                 icon: Icons.notifications_none_rounded,
@@ -153,24 +176,24 @@ class SettingsScreen extends ConsumerWidget {
                 iconColor: Colors.orange,
                 onTap: () {},
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
               _SettingsTile(
-                icon: Icons.security,
+                icon: Icons.security_rounded,
                 title: 'Security',
                 subtitle: 'Password and security settings',
                 iconColor: Colors.green,
                 onTap: () {},
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 32),
 
               // Account Section
               Text(
                 'ACCOUNT',
-                style: TextStyle(
-                  color: Colors.grey[600],
+                style: GoogleFonts.inter(
+                  color: Colors.grey[400],
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -182,7 +205,9 @@ class SettingsScreen extends ConsumerWidget {
                 subtitle: 'Sign out of your account',
                 iconColor: Colors.redAccent,
                 onTap: () => _handleLogout(context, ref),
+                hideArrow: true,
               ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -197,6 +222,7 @@ class _SettingsTile extends StatelessWidget {
   final String subtitle;
   final Color iconColor;
   final VoidCallback onTap;
+  final bool hideArrow;
 
   const _SettingsTile({
     required this.icon,
@@ -204,6 +230,7 @@ class _SettingsTile extends StatelessWidget {
     required this.subtitle,
     required this.iconColor,
     required this.onTap,
+    this.hideArrow = false,
   });
 
   @override
@@ -215,8 +242,8 @@ class _SettingsTile extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -226,7 +253,7 @@ class _SettingsTile extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            padding: const EdgeInsets.all(20),
             child: Row(
               children: [
                 // Leading Icon
@@ -247,27 +274,31 @@ class _SettingsTile extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: GoogleFonts.poppins(
                           fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF2B3A4A),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: Colors.grey[500],
+                        ),
                       ),
                     ],
                   ),
                 ),
 
-                // Trailing Arrow
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: Colors.grey[300],
-                  size: 24,
-                ),
+                // Trailing Arrow (Conditional)
+                if (!hideArrow)
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: Colors.grey[300],
+                    size: 24,
+                  ),
               ],
             ),
           ),

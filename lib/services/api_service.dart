@@ -1,14 +1,20 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../models/auth/auth_response.dart';
 import '../models/groupadmin/dashboard_model.dart';
 import '../models/groupadmin/group_model.dart';
 import '../models/groupadmin/profile_model.dart';
 import '../models/groupadmin/member_list.dart';
+import '../models/groupadmin/cashcollector/cashcollector.dart';
+import '../models/groupadmin/cashcollector/cashcollector_list.dart';
 import '../models/auth/login_request.dart';
 import '../models/auth/password_reset_request.dart';
 import '../models/auth/register_request.dart';
 import '../models/auth/token_request.dart';
 import '../utilities/api_config.dart';
+import '../models/groupadmin/group_create_model.dart';
+import '../models/groupadmin/collection_list_model.dart';
+import '../models/groupadmin/collection_create_model.dart';
 import 'storage_service.dart';
 
 class ApiService {
@@ -217,6 +223,24 @@ class ApiService {
     }
   }
 
+  Future<GroupCreateResponse> createGroup(GroupCreateRequest request) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.post(ApiConfig.groupCreate, data: request.toJson());
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return GroupCreateResponse.fromJson(response.data);
+      }
+      throw Exception('Failed to create group: ${response.statusCode}');
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String msg = 'Error creating group';
+      if (data is Map<String, dynamic>) {
+        msg = data['detail'] ?? data['message'] ?? data.toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
   Future<ProfileResponse> getProfile() async {
     try {
       final dio = await _authDio;
@@ -254,6 +278,117 @@ class ApiService {
       String msg = 'Error creating member';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
+  Future<Map<String, dynamic>> createCollector(CashCollectorModel data) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.post(ApiConfig.createCollector, data: data.toJson());
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data as Map<String, dynamic>;
+      }
+      throw Exception('Failed to create collector: ${response.statusCode}');
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      String msg = 'Error creating collector';
+      if (responseData is Map<String, dynamic>) {
+        msg = responseData['detail'] ?? responseData['message'] ?? responseData.toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
+  Future<CashCollectorListResponse> getCollectors() async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.collectors);
+      if (response.statusCode == 200) {
+        return CashCollectorListResponse.fromJson(response.data);
+      }
+      throw Exception('Failed to load collectors: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception('Error fetching collectors: ${e.message}');
+    }
+  }
+
+  Future<void> deleteCollector(int id) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.delete('${ApiConfig.deleteCollector}$id/delete/');
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return;
+      }
+      throw Exception('Failed to delete collector: ${response.statusCode}');
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      String msg = 'Error deleting collector';
+      if (responseData is Map<String, dynamic>) {
+        msg = responseData['detail'] ?? responseData['message'] ?? responseData.toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
+  Future<Map<String, dynamic>> updateCollector(int id, Map<String, dynamic> data) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.put('${ApiConfig.updateCollector}$id/update/', data: data);
+      if (response.statusCode != null && response.statusCode! >= 200 && response.statusCode! < 300) {
+        debugPrint('Collector update response: ${response.data}');
+        final rData = response.data;
+        if (rData is Map<String, dynamic>) {
+          return rData;
+        }
+        return {};
+      }
+      throw Exception('Failed to update collector: ${response.statusCode}');
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      String msg = 'Error updating collector';
+      if (responseData is Map<String, dynamic>) {
+        msg = responseData['detail'] ?? responseData['message'] ?? responseData.toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
+  Future<CollectionListResponse> getCollections() async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.collectionList);
+      if (response.statusCode == 200) {
+        return CollectionListResponse.fromJson(response.data);
+      }
+      throw Exception('Failed to load collections: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception('Error fetching collections: ${e.message}');
+    }
+  }
+
+
+  Future<Map<String, dynamic>> createCollection(CollectionCreateRequest request) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.post(ApiConfig.createCollection, data: request.toJson());
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data as Map<String, dynamic>;
+      }
+      throw Exception('Failed to create collection: ${response.statusCode}');
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String msg = 'Error creating collection';
+      if (data is Map<String, dynamic>) {
+        // Handle common DRF error fields
+        msg = data['detail'] ?? 
+              data['message'] ?? 
+              data['non_field_errors']?.toString() ?? 
+              data.toString();
+      } else if (data is List) {
+        // Handle direct list errors
+        msg = data.join('\n');
       }
       throw Exception(msg);
     }

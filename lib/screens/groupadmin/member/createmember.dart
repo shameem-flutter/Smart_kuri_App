@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../models/groupadmin/group_model.dart';
-import '../../services/api_service.dart';
-import '../../services/storage_service.dart';
+import '../../../models/groupadmin/group_model.dart';
+import '../../../services/api_service.dart';
+import '../../../services/storage_service.dart';
 
 class CreateMemberScreen extends StatefulWidget {
   const CreateMemberScreen({super.key});
@@ -72,9 +72,12 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
   Future<void> _submitMembers() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedGroupId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a group')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a group'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       return;
     }
 
@@ -121,9 +124,12 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
         setState(() {
           _error = e.toString().replaceAll('Exception: ', '');
         });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(_error ?? 'An error occurred')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_error ?? 'An error occurred'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } finally {
       if (mounted) {

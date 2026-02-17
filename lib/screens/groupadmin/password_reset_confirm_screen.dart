@@ -59,6 +59,7 @@ class _PasswordResetConfirmScreenState
         SnackBar(
           content: Text(authState.successMessage!),
           backgroundColor: Theme.of(context).colorScheme.primary,
+          behavior: SnackBarBehavior.floating,
         ),
       );
 

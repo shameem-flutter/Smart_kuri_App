@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kuri_app/screens/groupadmin/cash_collector/cashcollectorlist.dart';
+import 'package:kuri_app/screens/groupadmin/cash_collector/createcashcollectorscreen.dart';
+import 'package:kuri_app/screens/groupadmin/collection/addcollection.dart';
+import 'package:kuri_app/screens/groupadmin/collection/collectionlist.dart';
+import 'package:kuri_app/screens/groupadmin/groupcreate.dart';
 import 'package:kuri_app/screens/groupadmin/groupdetails.dart';
 import 'package:kuri_app/screens/groupadmin/settings_screen.dart';
-import 'package:kuri_app/screens/member/createmember.dart';
-import 'package:kuri_app/screens/member/memberlistscreen.dart';
+import 'package:kuri_app/screens/groupadmin/member/createmember.dart';
+import 'package:kuri_app/screens/groupadmin/member/memberlistscreen.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/utilities/gap_func.dart';
 import 'package:kuri_app/screens/groupadmin/dashboardscreen.dart';
@@ -32,7 +37,9 @@ class HomeScreen extends StatelessWidget {
         color: Colors.green,
         onTap: () {
           Navigator.pop(context);
-          // Navigate to Create Group
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => GroupcreateScreen()));
         },
       ),
       _BottomSheetOption(
@@ -77,7 +84,9 @@ class HomeScreen extends StatelessWidget {
         color: Colors.teal,
         onTap: () {
           Navigator.pop(context);
-          // Navigate to Cash Collector List
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => CashCollectorListScreen()),
+          );
         },
       ),
       _BottomSheetOption(
@@ -86,7 +95,11 @@ class HomeScreen extends StatelessWidget {
         color: Colors.blueGrey,
         onTap: () {
           Navigator.pop(context);
-          // Navigate to Add Cash Collector
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => Createcashcollectorscreen(),
+            ),
+          );
         },
       ),
       _BottomSheetOption(
@@ -109,7 +122,9 @@ class HomeScreen extends StatelessWidget {
         color: Colors.teal,
         onTap: () {
           Navigator.pop(context);
-          // Navigate to Add Collection
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => AddCollectionScreen()),
+          );
         },
       ),
       _BottomSheetOption(
@@ -118,7 +133,9 @@ class HomeScreen extends StatelessWidget {
         color: Colors.amber,
         onTap: () {
           Navigator.pop(context);
-          // Navigate to Collection History
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => CollectionListScreen()),
+          );
         },
       ),
     ]);

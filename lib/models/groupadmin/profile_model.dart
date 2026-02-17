@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+
 class ProfileData extends Equatable {
   final int id;
   final String name;
@@ -32,21 +33,40 @@ class ProfileData extends Equatable {
 class SubscriptionInfo extends Equatable {
   final String plan;
   final bool isActive;
+  final int maxGroups;
+  final int remainingGroups;
+  final int maxMembers;
+  final int remainingMembers;
 
   const SubscriptionInfo({
     required this.plan,
     required this.isActive,
+    required this.maxGroups,
+    required this.remainingGroups,
+    required this.maxMembers,
+    required this.remainingMembers,
   });
 
   factory SubscriptionInfo.fromJson(Map<String, dynamic> json) {
     return SubscriptionInfo(
       plan: json['plan'] as String? ?? '',
       isActive: json['is_active'] as bool? ?? false,
+      maxGroups: int.tryParse(json['max_groups'].toString()) ?? 0,
+      remainingGroups: int.tryParse(json['remaining_groups'].toString()) ?? 0,
+      maxMembers: int.tryParse(json['max_members'].toString()) ?? 0,
+      remainingMembers: int.tryParse(json['remaining_members'].toString()) ?? 0,
     );
   }
 
   @override
-  List<Object?> get props => [plan, isActive];
+  List<Object?> get props => [
+    plan,
+    isActive,
+    maxGroups,
+    remainingGroups,
+    maxMembers,
+    remainingMembers,
+  ];
 }
 
 class SubscriptionStatus extends Equatable {
@@ -92,24 +112,27 @@ class ProfileResponse extends Equatable {
   factory ProfileResponse.fromJson(Map<String, dynamic> json) {
     return ProfileResponse(
       profile: ProfileData.fromJson(
-          json['profile'] as Map<String, dynamic>? ?? {}),
+        json['profile'] as Map<String, dynamic>? ?? {},
+      ),
       groupsCount: int.tryParse(json['groups_count'].toString()) ?? 0,
       membersCount: int.tryParse(json['members_count'].toString()) ?? 0,
       effectiveSubscription: SubscriptionInfo.fromJson(
-          json['effective_subscription'] as Map<String, dynamic>? ?? {}),
+        json['effective_subscription'] as Map<String, dynamic>? ?? {},
+      ),
       subscriptionStatus: SubscriptionStatus.fromJson(
-          json['subscription_status'] as Map<String, dynamic>? ?? {}),
+        json['subscription_status'] as Map<String, dynamic>? ?? {},
+      ),
       timeLeft: json['time_left'] as String? ?? '',
     );
   }
 
   @override
   List<Object?> get props => [
-        profile,
-        groupsCount,
-        membersCount,
-        effectiveSubscription,
-        subscriptionStatus,
-        timeLeft,
-      ];
+    profile,
+    groupsCount,
+    membersCount,
+    effectiveSubscription,
+    subscriptionStatus,
+    timeLeft,
+  ];
 }

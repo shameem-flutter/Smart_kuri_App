@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../utilities/api_config.dart';
 
 /// IP Configuration Dialog
-/// 
+///
 /// Allows users to change the API base URL dynamically.
 class IpConfigDialog extends StatefulWidget {
   const IpConfigDialog({super.key});
@@ -51,8 +51,6 @@ class _IpConfigDialogState extends State<IpConfigDialog> {
     super.dispose();
   }
 
-
-
   Future<void> _handleSave() async {
     if (_hostController.text.isEmpty) {
       setState(() => _errorMessage = 'Please enter a host address');
@@ -67,7 +65,7 @@ class _IpConfigDialogState extends State<IpConfigDialog> {
     try {
       final host = _hostController.text.trim();
       final fullUrl = '$_selectedProtocol$host';
-      
+
       // Optional: Test connection before saving
       // final isConnected = await _testConnection(fullUrl);
       // if (!isConnected) {
@@ -77,21 +75,21 @@ class _IpConfigDialogState extends State<IpConfigDialog> {
       await ApiConfig.updateBaseUrl(_selectedProtocol, host);
 
       if (!mounted) return;
-      
+
       Navigator.of(context).pop();
-      
+
       // Show success
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('API URL updated to $fullUrl'),
           backgroundColor: Colors.teal,
+          behavior: SnackBarBehavior.floating,
         ),
       );
-      
+
       // Force app reload or just let the interceptor handle next requests?
       // Since ApiConfig is updated, next requests will use new URL.
       // But we might want to refresh current screen if it failed previously.
-      
     } catch (e) {
       setState(() => _errorMessage = e.toString());
     } finally {
@@ -133,7 +131,7 @@ class _IpConfigDialogState extends State<IpConfigDialog> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Protocol Selector
             Center(
               child: Container(
@@ -151,7 +149,7 @@ class _IpConfigDialogState extends State<IpConfigDialog> {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Host Input
             TextField(
               controller: _hostController,
@@ -222,7 +220,9 @@ class _IpConfigDialogState extends State<IpConfigDialog> {
   Widget _buildProtocolButton(String protocol) {
     bool isSelected = _selectedProtocol == protocol;
     return GestureDetector(
-      onTap: _isLoading ? null : () => setState(() => _selectedProtocol = protocol),
+      onTap: _isLoading
+          ? null
+          : () => setState(() => _selectedProtocol = protocol),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(

@@ -43,7 +43,14 @@ class ApiConfig {
   // Admin endpoints
   static const String dashboard = 'api/v1/admin/dashboard/';
   static const String groups = 'api/v1/admin/groups/';
+  static const String groupCreate = 'api/v1/admin/groups/create/';
   static const String profile = 'api/v1/admin/profile/';
   static const String members = 'api/v1/members/';
   static const String membersCreate = 'api/v1/members/create/';
+  static const String createCollector = 'api/v1/admin/collectors/create/';
+  static const String collectors = 'api/v1/admin/collectors/';
+  static const String deleteCollector = 'api/v1/admin/collectors/';
+  static const String updateCollector = 'api/v1/admin/collectors/';
+  static const String collectionList = 'api/v1/group/payments/';
+  static const String createCollection = 'api/v1/group/payments/create/';
 }
