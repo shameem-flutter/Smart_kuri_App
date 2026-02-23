@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../providers/auth_provider_riverpod.dart';
-import '../../utilities/colors.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_text_field.dart';
-import 'home_screen.dart';
+import '../../../providers/auth_provider_riverpod.dart';
+import '../../../utilities/colors.dart';
+import '../../../widgets/custom_button.dart';
+import '../../../widgets/custom_text_field.dart';
+import '../home_screen.dart';
 
 /// Verify OTP Screen
 ///

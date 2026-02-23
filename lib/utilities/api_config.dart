@@ -53,4 +53,9 @@ class ApiConfig {
   static const String updateCollector = 'api/v1/admin/collectors/';
   static const String collectionList = 'api/v1/group/payments/';
   static const String createCollection = 'api/v1/group/payments/create/';
+  static const String groupUpdate = 'api/v1/admin/groups/';
+  static const String groupDetails = 'api/v1/admin/groups/';
+  static const String auctions = 'api/v1/admin/auctions/';
+  static const String auctionGroupDetails = 'api/v1/admin/auctions/group/';
+  static const String createAuction = 'api/v1/admin/auctions/create/';
 }

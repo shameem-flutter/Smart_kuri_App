@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Custom Button
-/// 
-/// A reusable button component with loading state and modern styling.
 class CustomButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
@@ -26,70 +23,70 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
-    // Base styles
     final borderRadius = BorderRadius.circular(16);
     const padding = EdgeInsets.symmetric(vertical: 16, horizontal: 24);
-    
+
+    final minSize = const Size(double.infinity, 56); // ⭐ keeps size fixed
+
     if (isOutlined) {
-      return OutlinedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: OutlinedButton.styleFrom(
-          padding: padding,
-          shape: RoundedRectangleBorder(borderRadius: borderRadius),
-          side: BorderSide(
-            color: backgroundColor ?? theme.colorScheme.primary,
-            width: 2,
+      return AbsorbPointer(
+        absorbing: isLoading,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            minimumSize: minSize, // ⭐ prevents shrinking
+            padding: padding,
+            shape: RoundedRectangleBorder(borderRadius: borderRadius),
+            side: BorderSide(
+              color: backgroundColor ?? theme.colorScheme.primary,
+              width: 2,
+            ),
           ),
+          child: _buildChild(context, isOutlined: true),
         ),
-        child: _buildChild(theme, isOutlined: true),
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: borderRadius,
-        boxShadow: [
-          BoxShadow(
-            color: (backgroundColor ?? theme.colorScheme.primary).withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AbsorbPointer(
+      absorbing: isLoading,
       child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
+        onPressed: onPressed,
         style: ElevatedButton.styleFrom(
+          minimumSize: minSize, // ⭐ prevents shrinking
           backgroundColor: backgroundColor ?? theme.colorScheme.primary,
           foregroundColor: textColor ?? theme.colorScheme.onPrimary,
           padding: padding,
           shape: RoundedRectangleBorder(borderRadius: borderRadius),
-          elevation: 0, // Handled by Container box shadow
         ),
-        child: _buildChild(theme),
+        child: _buildChild(context),
       ),
     );
   }
 
-  Widget _buildChild(ThemeData theme, {bool isOutlined = false}) {
+  Widget _buildChild(BuildContext context, {bool isOutlined = false}) {
+    final theme = Theme.of(context);
+
     final color = isOutlined
         ? (backgroundColor ?? theme.colorScheme.primary)
         : (textColor ?? theme.colorScheme.onPrimary);
-        
+
+    /// ⭐ SHOW LOADER INSIDE BUTTON
     if (isLoading) {
       return SizedBox(
-        height: 24,
-        width: 24,
+        height: 22,
+        width: 22,
         child: CircularProgressIndicator(
           strokeWidth: 2.5,
-          valueColor: AlwaysStoppedAnimation<Color>(color),
+          valueColor: AlwaysStoppedAnimation(color),
         ),
       );
     }
 
+    /// ICON + TEXT
     if (icon != null) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 20),
           const SizedBox(width: 8),
@@ -105,6 +102,7 @@ class CustomButton extends StatelessWidget {
       );
     }
 
+    /// TEXT ONLY
     return Text(
       text,
       style: const TextStyle(

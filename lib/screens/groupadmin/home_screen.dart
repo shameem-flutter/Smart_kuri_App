@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kuri_app/screens/groupadmin/auction/auctiongroupdetails.dart';
 import 'package:kuri_app/screens/groupadmin/cash_collector/cashcollectorlist.dart';
 import 'package:kuri_app/screens/groupadmin/cash_collector/createcashcollectorscreen.dart';
 import 'package:kuri_app/screens/groupadmin/collection/addcollection.dart';
 import 'package:kuri_app/screens/groupadmin/collection/collectionlist.dart';
-import 'package:kuri_app/screens/groupadmin/groupcreate.dart';
-import 'package:kuri_app/screens/groupadmin/groupdetails.dart';
+import 'package:kuri_app/screens/groupadmin/groups/groupcreate.dart';
+import 'package:kuri_app/screens/groupadmin/groups/totalgroup.dart';
 import 'package:kuri_app/screens/groupadmin/settings_screen.dart';
 import 'package:kuri_app/screens/groupadmin/member/createmember.dart';
 import 'package:kuri_app/screens/groupadmin/member/memberlistscreen.dart';
@@ -27,7 +28,7 @@ class HomeScreen extends StatelessWidget {
           Navigator.pop(context);
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => GroupDetailsScreen()),
+            MaterialPageRoute(builder: (context) => const TotalGroupScreen()),
           );
         },
       ),
@@ -149,7 +150,9 @@ class HomeScreen extends StatelessWidget {
         color: Colors.redAccent,
         onTap: () {
           Navigator.pop(context);
-          // Navigate to Auction List
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => AuctionListScreen()));
         },
       ),
     ]);

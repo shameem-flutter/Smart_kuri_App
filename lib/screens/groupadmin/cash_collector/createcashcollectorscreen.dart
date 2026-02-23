@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../models/groupadmin/group_model.dart';
 import '../../../models/groupadmin/cashcollector/cashcollector.dart';
-import '../../../services/api_service.dart';
-import '../../../services/storage_service.dart';
+import '../../../providers/group_provider.dart';
 
-class Createcashcollectorscreen extends StatefulWidget {
+class Createcashcollectorscreen extends ConsumerStatefulWidget {
   const Createcashcollectorscreen({super.key});
 
   @override
-  State<Createcashcollectorscreen> createState() => _CashCollectorScreenState();
+  ConsumerState<Createcashcollectorscreen> createState() => _CashCollectorScreenState();
 }
 
-class _CashCollectorScreenState extends State<Createcashcollectorscreen> {
+class _CashCollectorScreenState extends ConsumerState<Createcashcollectorscreen> {
   final _formKey = GlobalKey<FormState>();
-  late final ApiService _apiService;
 
   // Controllers
   final _usernameController = TextEditingController();
@@ -34,7 +33,6 @@ class _CashCollectorScreenState extends State<Createcashcollectorscreen> {
   @override
   void initState() {
     super.initState();
-    _apiService = ApiService(storageService: StorageService());
     _loadGroups();
   }
 
@@ -49,7 +47,7 @@ class _CashCollectorScreenState extends State<Createcashcollectorscreen> {
 
   Future<void> _loadGroups() async {
     try {
-      final response = await _apiService.getGroups();
+      final response = await ref.read(apiServiceProvider).getGroups();
       if (mounted) {
         setState(() {
           _groups = response.groups;
@@ -92,34 +90,34 @@ class _CashCollectorScreenState extends State<Createcashcollectorscreen> {
         group: _selectedGroupId!,
       );
 
-      final response = await _apiService.createCollector(collector);
+      final response = await ref.read(apiServiceProvider).createCollector(collector);
 
       if (mounted) {
-        // showDialog(
-        //   context: context,
-        //   barrierDismissible: false,
-        //   builder: (context) => AlertDialog(
-        //     title: const Text('Success'),
-        //     content: Text(
-        //       response['message'] ?? 'Cash Collector created successfully',
-        //     ),
-        //     actions: [
-        //       TextButton(
-        //         onPressed: () {
-        //           Navigator.pop(context);
-        //           _usernameController.clear();
-        //           _emailController.clear();
-        //           _phoneController.clear();
-        //           _passwordController.clear();
-        //           setState(() {
-        //             _selectedGroupId = null;
-        //           });
-        //         },
-        //         child: const Text('OK'),
-        //       ),
-        //     ],
-        //   ),
-        // );
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Success'),
+            content: Text(
+              response['message'] ?? 'Cash Collector created successfully',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _usernameController.clear();
+                  _emailController.clear();
+                  _phoneController.clear();
+                  _passwordController.clear();
+                  setState(() {
+                    _selectedGroupId = null;
+                  });
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

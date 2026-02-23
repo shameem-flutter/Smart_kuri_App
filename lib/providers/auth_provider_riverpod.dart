@@ -6,7 +6,7 @@ import '../models/auth/login_request.dart';
 import '../models/auth/register_request.dart';
 import '../services/auth_repository.dart';
 
-import 'group_provider.dart'; // Import shared providers
+import 'group_provider.dart';
 
 /// Authentication State
 class AuthState extends Equatable {
@@ -14,12 +14,14 @@ class AuthState extends Equatable {
   final bool isAuthenticated;
   final String? errorMessage;
   final String? successMessage;
+  final String? role;
 
   const AuthState({
     this.isLoading = false,
     this.isAuthenticated = false,
     this.errorMessage,
     this.successMessage,
+    this.role,
   });
 
   AuthState copyWith({
@@ -27,6 +29,7 @@ class AuthState extends Equatable {
     bool? isAuthenticated,
     String? errorMessage,
     String? successMessage,
+    String? role,
     bool clearMessages = false,
   }) {
     return AuthState(
@@ -36,6 +39,7 @@ class AuthState extends Equatable {
       successMessage: clearMessages
           ? null
           : (successMessage ?? this.successMessage),
+      role: role ?? this.role,
     );
   }
 
@@ -45,6 +49,7 @@ class AuthState extends Equatable {
     isAuthenticated,
     errorMessage,
     successMessage,
+    role,
   ];
 }
 
@@ -58,7 +63,8 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> initialize() async {
     try {
       final isAuth = await _authRepository.isAuthenticated();
-      state = state.copyWith(isAuthenticated: isAuth);
+      final role = await _authRepository.getRole();
+      state = state.copyWith(isAuthenticated: isAuth, role: role);
     } catch (e) {
       state = state.copyWith(isAuthenticated: false);
     }
@@ -70,13 +76,14 @@ class AuthNotifier extends Notifier<AuthState> {
   }) async {
     state = state.copyWith(isLoading: true, clearMessages: true);
     try {
-      await _authRepository.login(
+      final tokenResponse = await _authRepository.login(
         LoginRequest(identifier: identifier, password: password),
       );
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,
         successMessage: 'Login successful!',
+        role: tokenResponse.role,
       );
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.message);

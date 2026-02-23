@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../models/groupadmin/collection_create_model.dart';
 import '../../../models/groupadmin/group_model.dart';
 import '../../../models/groupadmin/member_list.dart';
-import '../../../services/api_service.dart';
-import '../../../services/storage_service.dart';
+import '../../../providers/group_provider.dart';
 
-class AddCollectionScreen extends StatefulWidget {
+class AddCollectionScreen extends ConsumerStatefulWidget {
   const AddCollectionScreen({super.key});
 
   @override
-  State<AddCollectionScreen> createState() => _AddCollectionScreenState();
+  ConsumerState<AddCollectionScreen> createState() => _AddCollectionScreenState();
 }
 
-class _AddCollectionScreenState extends State<AddCollectionScreen> {
+class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final ApiService _apiService;
 
   // Controllers
   final _amountController = TextEditingController();
@@ -50,7 +49,6 @@ class _AddCollectionScreenState extends State<AddCollectionScreen> {
   @override
   void initState() {
     super.initState();
-    _apiService = ApiService(storageService: StorageService());
     _loadData();
   }
 
@@ -63,8 +61,9 @@ class _AddCollectionScreenState extends State<AddCollectionScreen> {
 
   Future<void> _loadData() async {
     try {
-      final groupsResponse = await _apiService.getGroups();
-      final membersResponse = await _apiService.getMembers();
+      final apiService = ref.read(apiServiceProvider);
+      final groupsResponse = await apiService.getGroups();
+      final membersResponse = await apiService.getMembers();
 
       if (mounted) {
         setState(() {
@@ -157,7 +156,7 @@ class _AddCollectionScreenState extends State<AddCollectionScreen> {
         paymentStatus: _selectedPaymentStatus!.toLowerCase(),
       );
 
-      await _apiService.createCollection(request);
+      await ref.read(apiServiceProvider).createCollection(request);
 
       if (mounted) {
         showDialog(
@@ -288,8 +287,9 @@ class _AddCollectionScreenState extends State<AddCollectionScreen> {
                         keyboardType: TextInputType.number,
                         validator: (v) {
                           if (v?.isEmpty == true) return 'Amount is required';
-                          if (double.tryParse(v!) == null)
+                          if (double.tryParse(v!) == null) {
                             return 'Invalid amount';
+                          }
                           return null;
                         },
                       ),

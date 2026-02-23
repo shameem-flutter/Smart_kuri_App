@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'providers/auth_provider_riverpod.dart';
 import 'screens/groupadmin/home_screen.dart';
-import 'screens/login_screen.dart';
+import 'screens/groupadmin/auth/login_screen.dart';
 import 'utilities/api_config.dart';
 
 void main() async {

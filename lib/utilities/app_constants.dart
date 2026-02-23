@@ -12,6 +12,7 @@ class AppConstants {
   static const String userIdKey = 'user_id';
   static const String usernameKey = 'username';
   static const String emailKey = 'email';
+  static const String roleKey = 'role';
   static const String isLoggedInKey = 'is_logged_in';
 
   // Validation Patterns

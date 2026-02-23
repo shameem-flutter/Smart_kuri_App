@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../models/groupadmin/group_model.dart';
-import '../../../services/api_service.dart';
-import '../../../services/storage_service.dart';
+import '../../../providers/group_provider.dart';
 
-class CreateMemberScreen extends StatefulWidget {
+class CreateMemberScreen extends ConsumerStatefulWidget {
   const CreateMemberScreen({super.key});
 
   @override
-  State<CreateMemberScreen> createState() => _CreateMemberScreenState();
+  ConsumerState<CreateMemberScreen> createState() => _CreateMemberScreenState();
 }
 
-class _CreateMemberScreenState extends State<CreateMemberScreen> {
+class _CreateMemberScreenState extends ConsumerState<CreateMemberScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final ApiService _apiService;
 
   // Controllers
   final _nameController = TextEditingController();
@@ -35,7 +34,6 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
   @override
   void initState() {
     super.initState();
-    _apiService = ApiService(storageService: StorageService());
     _loadGroups();
   }
 
@@ -52,7 +50,7 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
 
   Future<void> _loadGroups() async {
     try {
-      final response = await _apiService.getGroups();
+      final response = await ref.read(apiServiceProvider).getGroups();
       if (mounted) {
         setState(() {
           _groups = response.groups;
@@ -97,10 +95,9 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
         "password": _passwordController.text,
       };
 
-      final response = await _apiService.createMember(data);
+      final response = await ref.read(apiServiceProvider).createMember(data);
 
       if (mounted) {
-        // Show success dialog
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -174,22 +171,27 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // ── Page Title ──────────────────────────────────────
                       Text(
                         'Create New Member',
                         style: GoogleFonts.poppins(
                           color: const Color(0xFF2B3A4A),
                           fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                          fontSize: 20,
                         ),
                       ),
+
+                      // ── Personal Information ─────────────────────────────
+                      const SizedBox(height: 24), // FIX: added top spacing
                       _buildSectionTitle('Personal Information'),
                       const SizedBox(height: 16),
                       _buildTextField(
                         controller: _nameController,
                         label: 'Full Name',
                         icon: Icons.person_outline_rounded,
-                        validator: (v) =>
-                            v?.isEmpty == true ? 'Name is required' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Name is required'
+                            : null,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
@@ -197,8 +199,9 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
                         label: 'Email Address',
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
-                        validator: (v) =>
-                            v?.isEmpty == true ? 'Email is required' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Email is required'
+                            : null,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
@@ -206,8 +209,9 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
                         label: 'Phone Number',
                         icon: Icons.phone_outlined,
                         keyboardType: TextInputType.phone,
-                        validator: (v) =>
-                            v?.isEmpty == true ? 'Phone is required' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Phone is required'
+                            : null,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
@@ -215,8 +219,9 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
                         label: 'Address',
                         icon: Icons.location_on_outlined,
                         maxLines: 2,
-                        validator: (v) =>
-                            v?.isEmpty == true ? 'Address is required' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Address is required'
+                            : null,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
@@ -224,17 +229,26 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
                         label: 'Aadhaar Number',
                         icon: Icons.badge_outlined,
                         keyboardType: TextInputType.number,
-                        validator: (v) => v?.length != 12
-                            ? 'Enter valid 12-digit Aadhaar'
-                            : null,
+                        // FIX: null-safe Aadhaar validator
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) {
+                            return 'Aadhaar number is required';
+                          }
+                          if (v.trim().length != 12) {
+                            return 'Enter a valid 12-digit Aadhaar';
+                          }
+                          return null;
+                        },
                       ),
 
-                      const SizedBox(height: 32),
+                      // ── Group Assignment ─────────────────────────────────
+                      const SizedBox(height: 32), // FIX: added top spacing
                       _buildSectionTitle('Group Assignment'),
                       const SizedBox(height: 16),
                       _buildGroupDropdown(),
 
-                      const SizedBox(height: 32),
+                      // ── Security ─────────────────────────────────────────
+                      const SizedBox(height: 32), // FIX: added top spacing
                       _buildSectionTitle('Security'),
                       const SizedBox(height: 16),
                       _buildTextField(
@@ -243,9 +257,16 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
                         icon: Icons.lock_outline_rounded,
                         obscureText: _obscurePassword,
                         isPassword: true,
-                        validator: (v) => v != null && v.length < 6
-                            ? 'Password must be at least 6 chars'
-                            : null,
+                        // FIX: separate empty vs too-short messages
+                        validator: (v) {
+                          if (v == null || v.isEmpty) {
+                            return 'Password is required';
+                          }
+                          if (v.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
+                          return null;
+                        },
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
@@ -261,6 +282,7 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
                         ),
                       ),
 
+                      // ── Submit Button ────────────────────────────────────
                       const SizedBox(height: 40),
                       SizedBox(
                         height: 56,
@@ -295,6 +317,8 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
                                 ),
                         ),
                       ),
+
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
@@ -303,11 +327,13 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
     );
   }
 
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
   Widget _buildSectionTitle(String title) {
     return Text(
-      title,
+      title.toUpperCase(),
       style: GoogleFonts.poppins(
-        fontSize: 10,
+        fontSize: 11, // FIX: bumped from 10 → 11 for better readability
         fontWeight: FontWeight.w600,
         color: Colors.grey[500],
         letterSpacing: 1,
@@ -351,7 +377,11 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
         ),
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
+          labelStyle: GoogleFonts.inter(
+            color: Colors.grey[500],
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
           prefixIcon: Icon(icon, color: const Color(0xFF2962FF), size: 22),
           suffixIcon: suffixIcon,
           border: InputBorder.none,
@@ -371,17 +401,29 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(color: Colors.red[300]!, width: 1.5),
           ),
+          // FIX: added focusedErrorBorder so border stays visible on focus
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.red[300]!, width: 1.5),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildGroupDropdown() {
+    final bool isSelected = _selectedGroupId != null;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        // FIX: show blue border when a group is selected, matching text fields
+        border: Border.all(
+          color: isSelected ? const Color(0xFF2962FF) : Colors.transparent,
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -435,10 +477,13 @@ class _CreateMemberScreenState extends State<CreateMemberScreen> {
               ),
             );
           }).toList(),
+          // FIX: null-safe onChanged — no force-unwrap
           onChanged: (int? newValue) {
-            setState(() {
-              _selectedGroupId = newValue!;
-            });
+            if (newValue != null) {
+              setState(() {
+                _selectedGroupId = newValue;
+              });
+            }
           },
         ),
       ),

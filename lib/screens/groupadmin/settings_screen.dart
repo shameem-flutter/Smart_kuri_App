@@ -4,12 +4,65 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/screens/groupadmin/profilescreen.dart';
 import '../../providers/auth_provider_riverpod.dart';
-import '../login_screen.dart';
+import 'auth/login_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
   void _handleLogout(BuildContext context, WidgetRef ref) async {
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Confirm Logout',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF2B3A4A),
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to log out?',
+          style: GoogleFonts.inter(
+            color: Colors.grey[600],
+          ),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(
+                color: Colors.grey[500],
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: Text(
+              'Logout',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
     final authNotifier = ref.read(authProvider.notifier);
     await authNotifier.logout();
 

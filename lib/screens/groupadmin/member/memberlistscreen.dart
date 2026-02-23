@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/utilities/gap_func.dart';
 import '../../../models/groupadmin/member_list.dart';
-import '../../../services/api_service.dart';
-import '../../../services/storage_service.dart';
+import '../../../providers/group_provider.dart';
 import 'createmember.dart';
 
-class MemberListScreen extends StatefulWidget {
+class MemberListScreen extends ConsumerStatefulWidget {
   const MemberListScreen({super.key});
 
   @override
-  State<MemberListScreen> createState() => _MemberListScreenState();
+  ConsumerState<MemberListScreen> createState() => _MemberListScreenState();
 }
 
-class _MemberListScreenState extends State<MemberListScreen> {
-  late final ApiService _apiService;
-
+class _MemberListScreenState extends ConsumerState<MemberListScreen> {
   bool _isLoading = true;
   String? _error;
   List<Member> _members = [];
@@ -26,7 +24,6 @@ class _MemberListScreenState extends State<MemberListScreen> {
   @override
   void initState() {
     super.initState();
-    _apiService = ApiService(storageService: StorageService());
     _loadMembers();
     _searchController.addListener(_onSearchChanged);
   }
@@ -56,7 +53,7 @@ class _MemberListScreenState extends State<MemberListScreen> {
         _error = null;
       });
 
-      final response = await _apiService.getMembers();
+      final response = await ref.read(apiServiceProvider).getMembers();
       setState(() {
         _members = response.results;
         _filteredMembers = response.results;
@@ -136,10 +133,9 @@ class _MemberListScreenState extends State<MemberListScreen> {
                 Text(
                   'Members',
                   style: GoogleFonts.poppins(
-                    fontSize: 25,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF2B3A4A),
-                    letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -534,236 +530,4 @@ class _MemberListScreenState extends State<MemberListScreen> {
       ),
     );
   }
-}
-
-Widget _buildEnhancedMemberCard(Member member) {
-  return Container(
-    margin: const EdgeInsets.symmetric(vertical: 8),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(24),
-      border: Border.all(
-        color: const Color(0xFFF0F4F8),
-        width: 1.5,
-      ), // Matches Group Card
-      boxShadow: [
-        BoxShadow(
-          color: const Color(
-            0xFF2962FF,
-          ).withValues(alpha: 0.04), // Tinted shadow
-          blurRadius: 24,
-          offset: const Offset(0, 8),
-        ),
-      ],
-    ),
-    child: Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(24),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: () {
-          // Tap card to view member full profile
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              // --- Header Row ---
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Avatar
-                  Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2962FF).withValues(alpha: 0.08),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        member.name.isNotEmpty
-                            ? member.name.substring(0, 1).toUpperCase()
-                            : '?',
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF2962FF),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Member Name & Group
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          member.name,
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1A1D1E),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.people_outline_rounded,
-                              size: 14,
-                              color: const Color(0xFF8A94A6),
-                            ),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                member.groupName.isNotEmpty
-                                    ? member.groupName
-                                    : 'Unassigned',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  color: const Color(0xFF8A94A6),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Clean Status Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: member.isActive
-                          ? Colors.green.withValues(alpha: 0.1)
-                          : Colors.red.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: member.isActive
-                                ? Colors.green[600]
-                                : Colors.red[500],
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          member.isActive ? 'Active' : 'Inactive',
-                          style: GoogleFonts.inter(
-                            color: member.isActive
-                                ? Colors.green[700]
-                                : Colors.red[700],
-                            fontWeight: FontWeight.w600,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: Divider(height: 1, color: Color(0xFFF0F4F8)),
-              ),
-
-              // --- Interactive Contact Chips ---
-              Row(
-                children: [
-                  if (member.phone.isNotEmpty)
-                    Expanded(
-                      child: _buildContactChip(
-                        icon: Icons.phone_outlined,
-                        text: member.phone,
-                        color: const Color(
-                          0xFF2962FF,
-                        ), // Primary blue for calling
-                        onTap: () {
-                          // Launch url_launcher to dial phone
-                        },
-                      ),
-                    ),
-
-                  if (member.phone.isNotEmpty && member.email.isNotEmpty)
-                    const SizedBox(width: 12),
-
-                  if (member.email.isNotEmpty)
-                    Expanded(
-                      child: _buildContactChip(
-                        icon: Icons.email_outlined,
-                        text:
-                            'Email', // Simplified label to prevent layout breaks from long emails
-                        color: const Color(
-                          0xFF4A5568,
-                        ), // Neutral grey for secondary action
-                        onTap: () {
-                          // Launch url_launcher to open email app
-                        },
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-Widget _buildContactChip({
-  required IconData icon,
-  required String text,
-  required Color color,
-  required VoidCallback onTap,
-}) {
-  return Material(
-    color: color.withValues(alpha: 0.08),
-    borderRadius: BorderRadius.circular(12),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                text,
-                style: GoogleFonts.inter(
-                  color: color,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 }

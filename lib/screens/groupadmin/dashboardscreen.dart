@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kuri_app/screens/groupadmin/groups/groupdetails.dart';
+import 'package:kuri_app/screens/groupadmin/groups/groupcreate.dart';
 import 'package:kuri_app/utilities/gap_func.dart';
 import '../../models/groupadmin/dashboard_model.dart';
 import '../../providers/group_provider.dart';
@@ -191,6 +193,23 @@ class DashboardScreen extends ConsumerWidget {
                       amount: '₹${group.monthlyAmount}',
                       collector: 'Not Assigned', // Not provided in API
                       isActive: group.isActive,
+                      onEdit: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                GroupcreateScreen(group: group),
+                          ),
+                        );
+                      },
+                      onView: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                GroupDetailsScreen(groupId: group.id),
+                          ),
+                        );
+                      },
+                      onCollect: () {},
                     ),
                   ),
                 ),
@@ -222,7 +241,7 @@ class DashboardScreen extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
@@ -234,7 +253,7 @@ class DashboardScreen extends ConsumerWidget {
               child: Icon(icon, color: iconColor, size: 24),
             ),
             Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Text(
                   value,
@@ -247,7 +266,7 @@ class DashboardScreen extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 10),
                 Text(
                   label,
                   style: GoogleFonts.inter(

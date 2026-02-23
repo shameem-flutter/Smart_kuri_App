@@ -22,6 +22,9 @@ class AuthRepository {
       accessToken: tokenResponse.access,
       refreshToken: tokenResponse.refresh,
     );
+    if (tokenResponse.role.isNotEmpty) {
+      await _storageService.saveRole(tokenResponse.role);
+    }
     await _storageService.setLoggedIn(true);
     return tokenResponse;
   }
@@ -32,6 +35,9 @@ class AuthRepository {
       accessToken: tokenResponse.access,
       refreshToken: tokenResponse.refresh,
     );
+    if (tokenResponse.role.isNotEmpty) {
+      await _storageService.saveRole(tokenResponse.role);
+    }
     await _storageService.setLoggedIn(true);
     return tokenResponse;
   }
@@ -80,6 +86,10 @@ class AuthRepository {
     return await _storageService.getRefreshToken();
   }
 
+  Future<String?> getRole() async {
+    return await _storageService.getRole();
+  }
+
   Future<AuthResponse> register(RegisterRequest request) async {
     return await _apiService.register(request);
   }
@@ -93,6 +103,9 @@ class AuthRepository {
         accessToken: tokenResponse.access,
         refreshToken: tokenResponse.refresh,
       );
+      if (tokenResponse.role.isNotEmpty) {
+        await _storageService.saveRole(tokenResponse.role);
+      }
       await _storageService.setLoggedIn(true);
     }
 

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../utilities/validators.dart';
-import '../../providers/auth_provider_riverpod.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_text_field.dart';
-import '../login_screen.dart';
+import '../../../utilities/validators.dart';
+import '../../../providers/auth_provider_riverpod.dart';
+import '../../../widgets/custom_button.dart';
+import '../../../widgets/custom_text_field.dart';
+import 'login_screen.dart';
 
 class PasswordResetConfirmScreen extends ConsumerStatefulWidget {
   final String identifier;

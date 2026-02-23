@@ -142,6 +142,27 @@ class StorageService {
     }
   }
 
+  /// Save role
+  Future<void> saveRole(String role) async {
+    try {
+      await _secureStorage.write(
+        key: AppConstants.roleKey,
+        value: role,
+      );
+    } catch (e) {
+      throw CacheException('Failed to save role', originalError: e);
+    }
+  }
+
+  /// Get role
+  Future<String?> getRole() async {
+    try {
+      return await _secureStorage.read(key: AppConstants.roleKey);
+    } catch (e) {
+      throw CacheException('Failed to retrieve role', originalError: e);
+    }
+  }
+
   /// Save email
   Future<void> saveEmail(String email) async {
     try {

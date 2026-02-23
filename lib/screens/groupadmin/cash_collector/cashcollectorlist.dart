@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../models/groupadmin/cashcollector/cashcollector_list.dart';
-import '../../../services/api_service.dart';
-import '../../../services/storage_service.dart';
+import '../../../providers/group_provider.dart';
 
-class CashCollectorListScreen extends StatefulWidget {
+class CashCollectorListScreen extends ConsumerStatefulWidget {
   const CashCollectorListScreen({super.key});
 
   @override
-  State<CashCollectorListScreen> createState() =>
+  ConsumerState<CashCollectorListScreen> createState() =>
       _CashCollectorListScreenState();
 }
 
-class _CashCollectorListScreenState extends State<CashCollectorListScreen> {
-  late final ApiService _apiService;
+class _CashCollectorListScreenState extends ConsumerState<CashCollectorListScreen> {
   List<CashCollectorListItem> _collectors = [];
   bool _isLoading = true;
   String? _error;
@@ -22,7 +21,6 @@ class _CashCollectorListScreenState extends State<CashCollectorListScreen> {
   @override
   void initState() {
     super.initState();
-    _apiService = ApiService(storageService: StorageService());
     _loadCollectors();
   }
 
@@ -35,7 +33,7 @@ class _CashCollectorListScreenState extends State<CashCollectorListScreen> {
     }
 
     try {
-      final response = await _apiService.getCollectors();
+      final response = await ref.read(apiServiceProvider).getCollectors();
       if (mounted) {
         setState(() {
           _collectors = response.results;
@@ -139,7 +137,7 @@ class _CashCollectorListScreenState extends State<CashCollectorListScreen> {
     if (confirmed != true) return;
 
     try {
-      await _apiService.deleteCollector(id);
+      await ref.read(apiServiceProvider).deleteCollector(id);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -257,7 +255,7 @@ class _CashCollectorListScreenState extends State<CashCollectorListScreen> {
                         };
                         debugPrint('Keeping it simple: Updating $data');
 
-                        await _apiService.updateCollector(collector.id, data);
+                        await ref.read(apiServiceProvider).updateCollector(collector.id, data);
 
                         if (dialogContext.mounted) {
                           Navigator.pop(dialogContext);
@@ -314,6 +312,14 @@ class _CashCollectorListScreenState extends State<CashCollectorListScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        title: Text(
+          'Cash Collectors',
+          style: GoogleFonts.poppins(
+            color: const Color(0xFF2B3A4A),
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
@@ -359,17 +365,10 @@ class _CashCollectorListScreenState extends State<CashCollectorListScreen> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      'Cash Collectors',
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF2B3A4A),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
-                      ),
-                    ),
-                  ),
+                  // Padding(
+                  //   padding: const EdgeInsets.symmetric(horizontal: 20),
+                  //   child:
+                  // ),
                   Expanded(
                     child: ListView.separated(
                       padding: const EdgeInsets.all(16),

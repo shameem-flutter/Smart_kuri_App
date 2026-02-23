@@ -1,29 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/groupadmin/profile_model.dart';
-import '../../services/api_service.dart';
-import '../../services/storage_service.dart';
+import '../../providers/group_provider.dart';
 
-class Profilescreen extends StatefulWidget {
+class Profilescreen extends ConsumerStatefulWidget {
   const Profilescreen({super.key});
 
   @override
-  State<Profilescreen> createState() => _ProfilescreenState();
+  ConsumerState<Profilescreen> createState() => _ProfilescreenState();
 }
 
-class _ProfilescreenState extends State<Profilescreen> {
+class _ProfilescreenState extends ConsumerState<Profilescreen> {
   ProfileResponse? _profileData;
   bool _isLoading = true;
   String? _errorMessage;
-  late final StorageService _storageService;
-  late final ApiService _apiService;
 
   @override
   void initState() {
     super.initState();
-    _storageService = StorageService();
-    _apiService = ApiService(storageService: _storageService);
     _loadProfile();
   }
 
@@ -36,7 +32,7 @@ class _ProfilescreenState extends State<Profilescreen> {
     }
 
     try {
-      final profile = await _apiService.getProfile();
+      final profile = await ref.read(apiServiceProvider).getProfile();
 
       if (mounted) {
         setState(() {

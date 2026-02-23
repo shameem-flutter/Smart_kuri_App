@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:kuri_app/screens/groupadmin/groupdetails.dart';
-import '../../models/groupadmin/group_create_model.dart';
-import '../../providers/group_provider.dart';
+import 'package:kuri_app/models/groupadmin/group_create_model.dart';
+import 'package:kuri_app/providers/group_provider.dart';
+import 'package:kuri_app/screens/groupadmin/groups/groupdetails.dart';
+import '../../../models/groupadmin/dashboard_model.dart';
 
 class GroupcreateScreen extends ConsumerStatefulWidget {
-  const GroupcreateScreen({super.key});
+  final DashboardGroup? group;
+  const GroupcreateScreen({super.key, this.group});
 
   @override
   ConsumerState<GroupcreateScreen> createState() => _GroupcreateScreenState();
@@ -21,6 +23,32 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
   DateTime? _selectedDate;
   bool _isLoading = false;
   // Removed: PlanDetails? _planDetails;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.group != null) {
+      _nameController.text = widget.group!.name;
+      _amountController.text = widget.group!.monthlyAmount.toString();
+      _durationController.text = widget.group!.durationMonths.toString();
+      _startDateController.text = widget.group!.startDate;
+
+      // Parse start date for DatePicker
+      // Assuming format is DD-MM-YYYY or similar from API
+      try {
+        final parts = widget.group!.startDate.split('-');
+        if (parts.length == 3) {
+          // Basic parsing attempt assuming DD-MM-YYYY
+          int day = int.parse(parts[0]);
+          int month = int.parse(parts[1]);
+          int year = int.parse(parts[2]);
+          _selectedDate = DateTime(year, month, day);
+        }
+      } catch (e) {
+        debugPrint('Error parsing date: $e');
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -73,36 +101,69 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
 
       try {
         final apiService = ref.read(apiServiceProvider);
-        final request = GroupCreateRequest(
-          name: _nameController.text,
-          monthlyAmount: double.parse(_amountController.text),
-          durationMonths: int.parse(_durationController.text),
-          startDate: _startDateController.text,
-        );
 
-        final response = await apiService.createGroup(request);
+        if (widget.group != null) {
+          // Editing
+          final Map<String, dynamic> updateData = {
+            "name": _nameController.text,
+            "monthly_amount": double.parse(_amountController.text),
+            "duration_months": int.parse(_durationController.text),
+            "start_date": _startDateController.text,
+          };
 
-        if (mounted) {
-          ref.invalidate(groupListProvider);
-          ref.invalidate(profileProvider);
+          await apiService.updateGroup(widget.group!.id, updateData);
 
-          setState(() {
-            _nameController.clear();
-            _amountController.clear();
-            _durationController.clear();
-            _startDateController.clear();
-            _selectedDate = null;
-          });
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => GroupDetailsScreen()),
+          if (mounted) {
+            ref.invalidate(dashboardDataProvider); // Refresh dashboard
+            ref.invalidate(groupListProvider);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Group updated successfully'),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            Navigator.pop(context); // Go back to dashboard/list
+            // If we want to view details after edit, we could replace pop with pushReplacement
+            // But usually backing out to the list or previous screen is expected after 'Save'
+          }
+        } else {
+          // Creating
+          final request = GroupCreateRequest(
+            name: _nameController.text,
+            monthlyAmount: double.parse(_amountController.text),
+            durationMonths: int.parse(_durationController.text),
+            startDate: _startDateController.text,
           );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Group created: ${response.message}'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+
+          final response = await apiService.createGroup(request);
+
+          if (mounted) {
+            ref.invalidate(groupListProvider);
+            ref.invalidate(profileProvider);
+            ref.invalidate(dashboardDataProvider);
+
+            setState(() {
+              _nameController.clear();
+              _amountController.clear();
+              _durationController.clear();
+              _startDateController.clear();
+              _selectedDate = null;
+            });
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => GroupDetailsScreen(groupId: response.id),
+              ),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Group created: ${response.message}'),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -138,10 +199,10 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Add Group',
+          widget.group != null ? 'Edit Group' : 'Add Group',
           style: GoogleFonts.poppins(
-            color: const Color(0xFF2962FF),
-            fontSize: 24,
+            // color: const Color(0xFF2962FF),
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -158,7 +219,9 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Group Details',
+                    widget.group != null
+                        ? 'Edit Group Details'
+                        : 'Group Details',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -268,7 +331,9 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
                               ),
                             )
                           : Text(
-                              'Create Group',
+                              widget.group != null
+                                  ? 'Save Changes'
+                                  : 'Create Group',
                               style: GoogleFonts.inter(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,

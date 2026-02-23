@@ -36,10 +36,14 @@ class AuthResponse extends Equatable {
 class TokenResponse extends Equatable {
   final String access;
   final String refresh;
+  final String username;
+  final String role;
 
   const TokenResponse({
     required this.access,
     required this.refresh,
+    this.username = '',
+    this.role = '',
   });
 
   /// Create from JSON response
@@ -47,6 +51,8 @@ class TokenResponse extends Equatable {
     return TokenResponse(
       access: json['access'] as String,
       refresh: json['refresh'] as String,
+      username: json['username'] as String? ?? '',
+      role: json['role'] as String? ?? '',
     );
   }
 
@@ -55,14 +61,16 @@ class TokenResponse extends Equatable {
     return {
       'access': access,
       'refresh': refresh,
+      'username': username,
+      'role': role,
     };
   }
 
   @override
-  List<Object?> get props => [access, refresh];
+  List<Object?> get props => [access, refresh, username, role];
 
   @override
-  String toString() => 'TokenResponse(access: ${access.substring(0, 20)}..., refresh: ${refresh.substring(0, 20)}...)';
+  String toString() => 'TokenResponse(access: ${access.substring(0, 20)}..., refresh: ${refresh.substring(0, 20)}..., username: $username, role: $role)';
 }
 
 /// Token Refresh Response Model

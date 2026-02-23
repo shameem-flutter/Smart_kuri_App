@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../utilities/validators.dart';
-import '../providers/auth_provider_riverpod.dart';
-import '../widgets/custom_button.dart';
-import '../widgets/custom_text_field.dart';
-import 'groupadmin/home_screen.dart';
-import 'groupadmin/password_reset_screen.dart';
-import 'groupadmin/verify_otp_screen.dart';
+import '../../../utilities/validators.dart';
+import '../../../providers/auth_provider_riverpod.dart';
+import '../../../widgets/custom_button.dart';
+import '../../../widgets/custom_text_field.dart';
+import '../home_screen.dart';
+import '../../member-admin/memberdashboardscreen.dart';
+import 'password_reset_screen.dart';
+import 'verify_otp_screen.dart';
 
 /// Login Screen
-///
-/// Modern, gradient-styled login interface with animations.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -56,7 +55,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         password: _passwordController.text,
       );
     } else {
-      // Parse plan_id or use default
       int planId = int.tryParse(_licenseController.text.trim()) ?? 2;
 
       await authNotifier.register(
@@ -73,7 +71,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     final authState = ref.read(authProvider);
 
-    // Check for success or error messages
     if (authState.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -93,7 +90,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       );
       ref.read(authProvider.notifier).clearMessages();
 
-      // If registration was successful, navigate to VerifyOtpScreen
       if (!_isLogin) {
         Navigator.of(
           context,
@@ -103,9 +99,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     }
 
     if (authState.isAuthenticated) {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+      if (authState.role == 'member') {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MemberDashboardScreen()),
+        );
+      }else if(authState.role==""){
+
+      } else  {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        );
+      }
     }
   }
 
@@ -206,7 +210,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         key: _formKey,
                         child: Column(
                           children: [
-                            // Segmented Toggle
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 20,

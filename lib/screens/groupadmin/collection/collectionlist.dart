@@ -1,32 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../models/groupadmin/collection_list_model.dart';
-import '../../../services/api_service.dart';
-import '../../../services/storage_service.dart';
+import '../../../providers/group_provider.dart';
 import 'addcollection.dart';
 
-class CollectionListScreen extends StatefulWidget {
+class CollectionListScreen extends ConsumerStatefulWidget {
   const CollectionListScreen({super.key});
 
   @override
-  State<CollectionListScreen> createState() => _CollectionListScreenState();
+  ConsumerState<CollectionListScreen> createState() => _CollectionListScreenState();
 }
 
-class _CollectionListScreenState extends State<CollectionListScreen> {
-  late final ApiService _apiService;
+class _CollectionListScreenState extends ConsumerState<CollectionListScreen> {
   late Future<CollectionListResponse> _collectionFuture;
 
   @override
   void initState() {
     super.initState();
-    _apiService = ApiService(storageService: StorageService());
-    _collectionFuture = _apiService.getCollections();
+    _collectionFuture = ref.read(apiServiceProvider).getCollections();
   }
 
   Future<void> _refreshCollections() async {
     setState(() {
-      _collectionFuture = _apiService.getCollections();
+      _collectionFuture = ref.read(apiServiceProvider).getCollections();
     });
   }
 

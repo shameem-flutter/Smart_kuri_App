@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../utilities/validators.dart';
-import '../../providers/auth_provider_riverpod.dart';
-import '../../widgets/custom_button.dart';
-import '../../widgets/custom_text_field.dart';
+import '../../../utilities/validators.dart';
+import '../../../providers/auth_provider_riverpod.dart';
+import '../../../widgets/custom_button.dart';
+import '../../../widgets/custom_text_field.dart';
 import 'password_reset_confirm_screen.dart';
 
 /// Password Reset Screen
@@ -13,7 +13,8 @@ class PasswordResetScreen extends ConsumerStatefulWidget {
   const PasswordResetScreen({super.key});
 
   @override
-  ConsumerState<PasswordResetScreen> createState() => _PasswordResetScreenState();
+  ConsumerState<PasswordResetScreen> createState() =>
+      _PasswordResetScreenState();
 }
 
 class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {

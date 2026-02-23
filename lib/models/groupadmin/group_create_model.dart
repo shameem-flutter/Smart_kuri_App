@@ -32,6 +32,8 @@ class GroupCreateResponse extends Equatable {
 
   const GroupCreateResponse({required this.message, required this.group});
 
+  int get id => group['id'] as int? ?? 0;
+
   factory GroupCreateResponse.fromJson(Map<String, dynamic> json) {
     return GroupCreateResponse(
       message: json['message'] as String? ?? '',
