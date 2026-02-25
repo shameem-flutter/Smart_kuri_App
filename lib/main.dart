@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'providers/auth_provider_riverpod.dart';
 import 'screens/groupadmin/home_screen.dart';
 import 'screens/groupadmin/auth/login_screen.dart';
+import 'screens/collector-admin/collectorhomescreen.dart';
+import 'screens/member-admin/memberdashboardscreen.dart';
 import 'utilities/api_config.dart';
 
 void main() async {
@@ -78,9 +80,19 @@ class _AuthInitializerState extends ConsumerState<AuthInitializer> {
       final authState = ref.read(authProvider);
 
       if (authState.isAuthenticated) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
+        if (authState.role == 'member') {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const MemberDashboardScreen()),
+          );
+        } else if (authState.role == 'collector') {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const Collectorhomescreen()),
+          );
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+        }
       } else {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const LoginScreen()),

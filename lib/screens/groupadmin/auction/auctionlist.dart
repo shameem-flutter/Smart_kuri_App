@@ -50,7 +50,7 @@ class AuctionGroupDetailsScreen extends ConsumerWidget {
         },
         error: (e, _) => _ErrorView(
           error: e.toString(),
-          onRetry: () => ref.invalidate(auctionGroupDetailsProvider(groupId)),
+          onRetry: () => ref.refresh(auctionGroupDetailsProvider(groupId).future),
         ),
         loading: () =>
             Center(child: CircularProgressIndicator(color: primaryColor)),
@@ -328,7 +328,10 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
-                (context, index) => _MonthCard(month: months[index]),
+                (context, index) => _MonthCard(
+                  month: months[index],
+                  groupId: group.id.toString(),
+                ),
                 childCount: months.length,
               ),
             ),
@@ -339,12 +342,13 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
 }
 
 // ── Month Card ─────────────────────────────────────────────────────────────
-class _MonthCard extends StatelessWidget {
+class _MonthCard extends ConsumerWidget {
   final AuctionMonth month;
-  const _MonthCard({required this.month});
+  final String groupId;
+  const _MonthCard({required this.month, required this.groupId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final detail = month.auction;
 
     final String status = detail == null
@@ -537,13 +541,15 @@ class _MonthCard extends StatelessWidget {
                     icon: Icons.rotate_right_rounded,
                     bgColor: const Color(0xFFFFF7ED),
                     textColor: _kOrange,
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => SpinScreen(auctionId: detail.id),
                         ),
                       );
+                      // Refresh the group details to show the updated winner
+                      ref.invalidate(auctionGroupDetailsProvider(groupId));
                     },
                   ),
                 ],

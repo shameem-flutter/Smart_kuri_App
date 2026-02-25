@@ -19,6 +19,12 @@ import '../models/groupadmin/group_details_model.dart';
 import '../models/groupadmin/auction/auction_group_details_model.dart';
 import '../models/groupadmin/auction/auction_details_model.dart';
 import '../models/groupadmin/auction/spin_auction_model.dart';
+import '../models/groupadmin/collector_dashboard_model.dart';
+import '../models/groupadmin/assigned_member_model.dart';
+import '../models/groupadmin/member_history_model.dart';
+import '../models/groupadmin/collector_profile_model.dart';
+import '../models/groupadmin/collector_profile_model.dart';
+import '../models/collector/pending_member_model.dart';
 import 'storage_service.dart';
 
 class ApiService {
@@ -211,6 +217,94 @@ class ApiService {
       throw Exception('Failed to load dashboard: ${response.statusCode}');
     } on DioException catch (e) {
       throw Exception('Error fetching dashboard: ${e.message}');
+    }
+  }
+
+  Future<CollectorDashboardModel> getCollectorDashboardData() async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.collectorDashboard);
+      if (response.statusCode == 200) {
+        return CollectorDashboardModel.fromJson(response.data);
+      }
+      throw Exception('Failed to load collector dashboard: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception('Error fetching collector dashboard: ${e.message}');
+    }
+  }
+
+  Future<PendingMembersResponse> getPendingMembers() async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.collectorPendingMembers);
+      if (response.statusCode == 200) {
+        return PendingMembersResponse.fromJson(response.data);
+      }
+      throw Exception('Failed to load pending members: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception('Error fetching pending members: ${e.message}');
+    }
+  }
+
+  Future<AssignedMemberResponse> getAssignedMembers({int page = 1, int pageSize = 100}) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(
+        ApiConfig.collectorMembers,
+        queryParameters: {'page': page, 'page_size': pageSize},
+      );
+      if (response.statusCode == 200) {
+        return AssignedMemberResponse.fromJson(response.data);
+      }
+      throw Exception('Failed to load assigned members: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception('Error fetching assigned members: ${e.message}');
+    }
+  }
+
+  Future<Map<String, dynamic>> addCollectorCollection(Map<String, dynamic> data) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.post(ApiConfig.collectorAddCollection, data: data);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data as Map<String, dynamic>;
+      }
+      throw Exception('Failed to add collection: ${response.statusCode}');
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      String msg = 'Error adding collection';
+      if (responseData is Map<String, dynamic>) {
+        msg = responseData['detail'] ??
+              responseData['message'] ??
+              responseData.toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
+  Future<MemberHistoryResponse> getMemberHistory(int memberId) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.memberHistory(memberId));
+      if (response.statusCode == 200) {
+        return MemberHistoryResponse.fromJson(response.data);
+      }
+      throw Exception('Failed to load member history: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception('Error fetching member history: ${e.message}');
+    }
+  }
+
+  Future<CollectorProfileResponse> getCollectorProfile() async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.collectorProfile);
+      if (response.statusCode == 200) {
+        return CollectorProfileResponse.fromJson(response.data);
+      }
+      throw Exception('Failed to load collector profile: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception('Error fetching collector profile: ${e.message}');
     }
   }
 
@@ -514,7 +608,12 @@ class ApiService {
       }
       throw Exception('Failed to load spin data: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching spin data: ${e.message}');
+      final data = e.response?.data;
+      String msg = 'Error fetching spin data';
+      if (data is Map<String, dynamic>) {
+        msg = data['error'] ?? data['detail'] ?? data['message'] ?? data.toString();
+      }
+      throw Exception(msg);
     }
   }
 

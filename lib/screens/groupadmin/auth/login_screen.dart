@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:kuri_app/screens/collector-admin/collectorhomescreen.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../utilities/validators.dart';
@@ -103,9 +104,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MemberDashboardScreen()),
         );
-      }else if(authState.role==""){
-
-      } else  {
+      } else if (authState.role == "collector") {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const Collectorhomescreen()),
+        );
+      } else {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomeScreen()),
         );

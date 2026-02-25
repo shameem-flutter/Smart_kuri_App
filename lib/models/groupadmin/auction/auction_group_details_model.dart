@@ -100,11 +100,19 @@ class AuctionDetail {
   });
 
   factory AuctionDetail.fromJson(Map<String, dynamic> json) {
+    dynamic winnerData = json['winner'];
+    String? winnerName;
+    if (winnerData is Map) {
+      winnerName = winnerData['name'] as String? ?? winnerData['username'] as String?;
+    } else if (winnerData is String) {
+      if (winnerData.isNotEmpty) winnerName = winnerData;
+    }
+
     return AuctionDetail(
       id: json['id'] as int,
       auctionDate: json['auction_date'] as String?,
       isClosed: json['is_closed'] as bool? ?? false,
-      winner: json['winner'] as String?,
+      winner: winnerName,
     );
   }
 

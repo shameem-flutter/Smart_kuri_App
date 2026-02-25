@@ -28,16 +28,16 @@ class _SpinScreenState extends ConsumerState<SpinScreen> {
 
   // Vibrant color palette for the wheel slices
   static const List<Color> _sliceColors = [
-    Color(0xFF6366F1), // Indigo
-    Color(0xFF8B5CF6), // Violet
-    Color(0xFFEC4899), // Pink
-    Color(0xFFF43F5E), // Rose
-    Color(0xFFF97316), // Orange
-    Color(0xFF14B8A6), // Teal
-    Color(0xFF06B6D4), // Cyan
-    Color(0xFF3B82F6), // Blue
-    Color(0xFF10B981), // Emerald
-    Color(0xFFEAB308), // Yellow
+    Color(0xFF6366F1),
+    Color(0xFF8B5CF6),
+    Color(0xFFEC4899),
+    Color(0xFFF43F5E),
+    Color(0xFFF97316),
+    Color(0xFF14B8A6),
+    Color(0xFF06B6D4),
+    Color(0xFF3B82F6),
+    Color(0xFF10B981),
+    Color(0xFFEAB308),
   ];
 
   @override
@@ -126,9 +126,9 @@ class _SpinScreenState extends ConsumerState<SpinScreen> {
     final spinAsync = ref.watch(spinAuctionProvider(widget.auctionId));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: whiteColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: whiteColor,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
@@ -173,14 +173,14 @@ class _SpinScreenState extends ConsumerState<SpinScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '$err',
+                  err.toString().replaceAll('Exception: ', ''),
                   style: GoogleFonts.dmSans(fontSize: 13, color: Colors.grey),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () =>
-                      ref.invalidate(spinAuctionProvider(widget.auctionId)),
+                      ref.refresh(spinAuctionProvider(widget.auctionId).future),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                   ),
