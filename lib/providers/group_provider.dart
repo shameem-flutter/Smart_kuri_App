@@ -10,6 +10,8 @@ import '../models/groupadmin/assigned_member_model.dart';
 import '../models/groupadmin/member_history_model.dart';
 import '../models/groupadmin/collector_profile_model.dart';
 import '../models/collector/pending_member_model.dart';
+import '../models/collector/today_collections_model.dart';
+import '../models/collector/reports_model.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 
@@ -30,33 +32,45 @@ final dashboardDataProvider = FutureProvider<DashboardResponse>((ref) async {
 });
 
 // Collector Dashboard provider
-final collectorDashboardProvider = FutureProvider<CollectorDashboardModel>((ref) async {
+final collectorDashboardProvider = FutureProvider<CollectorDashboardModel>((
+  ref,
+) async {
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getCollectorDashboardData();
 });
 
 // Pending Members provider
-final pendingMembersProvider = FutureProvider<PendingMembersResponse>((ref) async {
+final pendingMembersProvider = FutureProvider<PendingMembersResponse>((
+  ref,
+) async {
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getPendingMembers();
 });
 
 // Assigned Members provider
-final assignedMemberProvider = FutureProvider.family<AssignedMemberResponse, Map<String, int>>((ref, params) async {
-  final apiService = ref.watch(apiServiceProvider);
-  final page = params['page'] ?? 1;
-  final pageSize = params['pageSize'] ?? 100;
-  return apiService.getAssignedMembers(page: page, pageSize: pageSize);
-});
+final assignedMemberProvider =
+    FutureProvider.family<AssignedMemberResponse, Map<String, int>>((
+      ref,
+      params,
+    ) async {
+      final apiService = ref.watch(apiServiceProvider);
+      final page = params['page'] ?? 1;
+      final pageSize = params['pageSize'] ?? 100;
+      return apiService.getAssignedMembers(page: page, pageSize: pageSize);
+    });
 
 // Member History provider
-final memberHistoryProvider = FutureProvider.family<MemberHistoryResponse, int>((ref, memberId) async {
-  final apiService = ref.watch(apiServiceProvider);
-  return apiService.getMemberHistory(memberId);
-});
+final memberHistoryProvider = FutureProvider.family<MemberHistoryResponse, int>(
+  (ref, memberId) async {
+    final apiService = ref.watch(apiServiceProvider);
+    return apiService.getMemberHistory(memberId);
+  },
+);
 
 // Collector Profile provider
-final collectorProfileProvider = FutureProvider<CollectorProfileResponse>((ref) async {
+final collectorProfileProvider = FutureProvider<CollectorProfileResponse>((
+  ref,
+) async {
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getCollectorProfile();
 });
@@ -80,13 +94,68 @@ final memberListProvider = FutureProvider<MemberListResponse>((ref) async {
 });
 
 // Collection list provider
-final collectionListProvider = FutureProvider<CollectionListResponse>((ref) async {
+final collectionListProvider = FutureProvider<CollectionListResponse>((
+  ref,
+) async {
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getCollections();
 });
 
 // Collector list provider
-final collectorListProvider = FutureProvider<CashCollectorListResponse>((ref) async {
+final collectorListProvider = FutureProvider<CashCollectorListResponse>((
+  ref,
+) async {
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getCollectors();
+});
+
+// Today Collections provider
+final todayCollectionsProvider = FutureProvider<TodayCollectionsResponse>((
+  ref,
+) async {
+  final apiService = ref.watch(apiServiceProvider);
+  return apiService.getTodayCollections();
+});
+
+// Reports filter state
+class ReportFilterState {
+  final String? fromDate;
+  final String? toDate;
+
+  ReportFilterState({this.fromDate, this.toDate});
+
+  ReportFilterState copyWith({String? fromDate, String? toDate}) {
+    return ReportFilterState(
+      fromDate: fromDate ?? this.fromDate,
+      toDate: toDate ?? this.toDate,
+    );
+  }
+}
+
+// Reports filter provider
+class ReportFilterNotifier extends Notifier<ReportFilterState> {
+  @override
+  ReportFilterState build() => ReportFilterState();
+
+  void setFilters(String? fromDate, String? toDate) {
+    state = state.copyWith(fromDate: fromDate, toDate: toDate);
+  }
+
+  void clearFilters() {
+    state = ReportFilterState();
+  }
+}
+
+final reportFilterProvider = NotifierProvider<ReportFilterNotifier, ReportFilterState>(
+  ReportFilterNotifier.new,
+);
+
+// Reports provider
+final reportsProvider = FutureProvider<ReportsResponse>((ref) async {
+  final apiService = ref.watch(apiServiceProvider);
+  final filters = ref.watch(reportFilterProvider);
+  return apiService.getReports(
+    fromDate: filters.fromDate,
+    toDate: filters.toDate,
+  );
 });

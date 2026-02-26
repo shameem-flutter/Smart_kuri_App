@@ -6,8 +6,10 @@ import 'package:kuri_app/screens/collector-admin/assignedmember.dart';
 import 'package:kuri_app/screens/collector-admin/collectorprofile.dart';
 import 'package:kuri_app/screens/collector-admin/pending_members.dart';
 import 'package:kuri_app/screens/collector-admin/collectoraddcollection.dart';
+import 'package:kuri_app/screens/collector-admin/today_collections_screen.dart';
+import 'package:kuri_app/screens/collector-admin/reports_screen.dart';
 
-class Collectorhomescreen extends StatelessWidget{
+class Collectorhomescreen extends StatelessWidget {
   const Collectorhomescreen({super.key});
 
   @override
@@ -143,7 +145,13 @@ class Collectorhomescreen extends StatelessWidget{
                         icon: Icons.calendar_today_rounded,
                         iconColor: Colors.purple,
                         onTap: () {
-                          // TODO: Navigate to Today
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const TodayCollectionsScreen(),
+                            ),
+                          );
                         },
                       ),
                       _Divider(),
@@ -152,7 +160,12 @@ class Collectorhomescreen extends StatelessWidget{
                         icon: Icons.auto_graph_rounded,
                         iconColor: Colors.teal,
                         onTap: () {
-                          // TODO: Navigate to Reports
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ReportsScreen(),
+                            ),
+                          );
                         },
                       ),
                       _Divider(),
@@ -164,7 +177,8 @@ class Collectorhomescreen extends StatelessWidget{
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const CollectorprofileScreen(),
+                              builder: (context) =>
+                                  const CollectorprofileScreen(),
                             ),
                           );
                         },

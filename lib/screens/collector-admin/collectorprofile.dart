@@ -26,21 +26,21 @@ class _CollectorprofileScreenState
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: primaryColor,
         elevation: 0,
         centerTitle: true,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Icon(
+          child: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF2B3A4A),
+            color: whiteColor,
             size: 18,
           ),
         ),
         title: Text(
           'My Profile',
           style: GoogleFonts.poppins(
-            color: const Color(0xFF2B3A4A),
+            color: whiteColor,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),

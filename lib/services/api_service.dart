@@ -24,6 +24,8 @@ import '../models/groupadmin/assigned_member_model.dart';
 import '../models/groupadmin/member_history_model.dart';
 import '../models/groupadmin/collector_profile_model.dart';
 import '../models/collector/pending_member_model.dart';
+import '../models/collector/today_collections_model.dart';
+import '../models/collector/reports_model.dart';
 import 'storage_service.dart';
 
 class ApiService {
@@ -284,6 +286,63 @@ class ApiService {
     } on DioException catch (e) {
       final responseData = e.response?.data;
       String msg = 'Error adding collection';
+      if (responseData is Map<String, dynamic>) {
+        msg =
+            responseData['detail'] ??
+            responseData['message'] ??
+            responseData.toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
+  Future<TodayCollectionsResponse> getTodayCollections() async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.collectorTodayCollections);
+      if (response.statusCode == 200) {
+        return TodayCollectionsResponse.fromJson(response.data);
+      }
+      throw Exception(
+        'Failed to load today collections: ${response.statusCode}',
+      );
+    } on DioException catch (e) {
+      throw Exception('Error fetching today collections: ${e.message}');
+    }
+  }
+
+  Future<ReportsResponse> getReports({String? fromDate, String? toDate}) async {
+    try {
+      final dio = await _authDio;
+      final Map<String, dynamic> queryParams = {};
+      if (fromDate != null && fromDate.isNotEmpty)
+        queryParams['from_date'] = fromDate;
+      if (toDate != null && toDate.isNotEmpty) queryParams['to_date'] = toDate;
+
+      final response = await dio.get(
+        ApiConfig.collectorReports,
+        queryParameters: queryParams,
+      );
+      if (response.statusCode == 200) {
+        return ReportsResponse.fromJson(response.data);
+      }
+      throw Exception('Failed to load reports: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception('Error fetching reports: ${e.message}');
+    }
+  }
+
+  Future<void> deletePayment(int id) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.delete(ApiConfig.deletePayment(id));
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return;
+      }
+      throw Exception('Failed to delete payment: ${response.statusCode}');
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      String msg = 'Error deleting payment';
       if (responseData is Map<String, dynamic>) {
         msg =
             responseData['detail'] ??

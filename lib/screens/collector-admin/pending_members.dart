@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/collector/pending_member_model.dart';
+import 'package:kuri_app/utilities/colors.dart';
 
 class Pendingmembers extends ConsumerWidget {
   const Pendingmembers({super.key});
@@ -18,7 +19,7 @@ class Pendingmembers extends ConsumerWidget {
     return Scaffold(
       backgroundColor: bgGrey,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: primaryColor,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -32,7 +33,7 @@ class Pendingmembers extends ConsumerWidget {
         title: Text(
           'Pending Dues',
           style: GoogleFonts.poppins(
-            color: darkBlue,
+            color: whiteColor,
             fontWeight: FontWeight.w600,
             fontSize: 18,
           ),

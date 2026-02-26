@@ -44,9 +44,17 @@ class ApiConfig {
   static const String dashboard = 'api/v1/admin/dashboard/';
   static const String collectorDashboard = 'api/v1/collector/dashboard/';
   static const String collectorMembers = 'api/v1/collector/list-members/';
-  static const String collectorPendingMembers = 'api/v1/collector/pending-members/';
-  static const String collectorAddCollection = 'api/v1/collector/add-collection/';
-  static String memberHistory(int id) => 'api/v1/collector/members/$id/history/';
+  static const String collectorPendingMembers =
+      'api/v1/collector/pending-members/';
+  static const String collectorTodayCollections =
+      'api/v1/collector/today-collections/';
+  static const String collectorReports = 'api/v1/collector/reports/';
+  static const String collectorAddCollection =
+      'api/v1/collector/add-collection/';
+  static String deletePayment(int id) =>
+      'api/v1/collector/payments/$id/delete/';
+  static String memberHistory(int id) =>
+      'api/v1/collector/members/$id/history/';
   static const String collectorProfile = 'api/v1/collector/profile/';
   static const String groups = 'api/v1/admin/groups/';
   static const String groupCreate = 'api/v1/admin/groups/create/';

@@ -5,7 +5,6 @@ import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/groupadmin/assigned_member_model.dart';
 import 'package:flutter/services.dart';
-import 'package:kuri_app/utilities/gap_func.dart';
 import 'package:kuri_app/screens/collector-admin/paymenthistory.dart';
 
 class Assignedmember extends ConsumerStatefulWidget {
@@ -15,7 +14,6 @@ class Assignedmember extends ConsumerStatefulWidget {
 }
 
 class _AssignedmemberState extends ConsumerState<Assignedmember> {
-  // Using default params for pagination
   final Map<String, int> _params = const {'page': 1, 'pageSize': 100};
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -33,125 +31,116 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: primaryColor,
+        leading: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: whiteColor,
+            size: 18,
+          ),
+        ),
+        title: Text(
+          'Assigned Members',
+          style: GoogleFonts.poppins(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: whiteColor,
+          ),
+        ),
+      ),
       backgroundColor: const Color(0xFFF8F9FD),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-          child: Column(
-            children: [
-              // ── Header Section ───────────────────────────────────────────────
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new_rounded,
-                      color: Color(0xFF2B3A4A),
-                      size: 18,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        child: Column(
+          children: [
+            // vertGap(15),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 15,
+                      offset: const Offset(0, 5),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    'Assigned Members',
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF2B3A4A),
-                    ),
-                  ),
-                ],
-              ),
-              vertGap(15),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
+                  ],
                 ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value.toLowerCase();
+                    });
+                  },
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF2B3A4A),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Search by name, phone or group...',
+                    hintStyle: GoogleFonts.inter(
+                      color: Colors.grey[400],
+                      fontSize: 14,
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: Colors.grey[400],
+                      size: 22,
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: Icon(Icons.clear, color: Colors.grey[400]),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            Expanded(
+              child: membersData.when(
+                data: (data) => _buildMemberList(context, data),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: primaryColor),
+                ),
+                error: (error, stack) => Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        color: Colors.red[300],
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Something went wrong',
+                        style: GoogleFonts.poppins(
+                          color: const Color(0xFF2B3A4A),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value.toLowerCase();
-                      });
-                    },
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF2B3A4A),
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Search by name, phone or group...',
-                      hintStyle: GoogleFonts.inter(
-                        color: Colors.grey[400],
-                        fontSize: 14,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search_rounded,
-                        color: Colors.grey[400],
-                        size: 22,
-                      ),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear, color: Colors.grey[400]),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                    ),
-                  ),
                 ),
               ),
-              const SizedBox(height: 10),
-
-              Expanded(
-                child: membersData.when(
-                  data: (data) => _buildMemberList(context, data),
-                  loading: () => Center(
-                    child: CircularProgressIndicator(color: primaryColor),
-                  ),
-                  error: (error, stack) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline_rounded,
-                          color: Colors.red[300],
-                          size: 48,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Something went wrong',
-                          style: GoogleFonts.poppins(
-                            color: const Color(0xFF2B3A4A),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -248,7 +237,7 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
                   height: 50,
                   width: 50,
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
+                    color: primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
@@ -363,7 +352,7 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: primaryColor.withOpacity(0.08),
+                        color: primaryColor.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(

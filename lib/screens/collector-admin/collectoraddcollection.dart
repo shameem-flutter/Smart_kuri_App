@@ -122,19 +122,19 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
     final apiService = ref.read(apiServiceProvider);
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
-    const darkBlue = Color(0xFF2B3A4A);
+
     const bgGrey = Color(0xFFF2F4F7);
 
     return Scaffold(
       backgroundColor: bgGrey,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: primaryColor,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: darkBlue,
+            color: whiteColor,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
@@ -142,7 +142,7 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
         title: Text(
           'Add Collection',
           style: GoogleFonts.poppins(
-            color: darkBlue,
+            color: whiteColor,
             fontWeight: FontWeight.w600,
             fontSize: 18,
           ),
@@ -177,7 +177,7 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
             _buildLabel('Select Member'),
             const SizedBox(height: 8),
             DropdownButtonFormField<AssignedMember>(
-              value: _selectedMember,
+              initialValue: _selectedMember,
               hint: Text(
                 'Choose a member',
                 style: GoogleFonts.inter(color: Colors.grey[400]),
@@ -199,23 +199,28 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
                   _selectedMember = value;
                   _amountController.clear(); // Clear while fetching
                 });
-                
+
                 if (value != null) {
                   try {
                     // Fetch member history to get the accurate monthly amount
                     final history = await apiService.getMemberHistory(value.id);
                     if (mounted && _selectedMember?.id == value.id) {
                       setState(() {
-                        _amountController.text = history.summary.monthlyAmount.toStringAsFixed(0);
+                        _amountController.text = history.summary.monthlyAmount
+                            .toStringAsFixed(0);
                       });
                     }
                   } catch (e) {
                     if (mounted) {
-                      _showSnackBar('Failed to fetch amount: $e', isError: true);
+                      _showSnackBar(
+                        'Failed to fetch amount: $e',
+                        isError: true,
+                      );
                       // Fallback to the assigned member's amount if API fails
                       setState(() {
                         if (value.monthlyAmount > 0) {
-                          _amountController.text = value.monthlyAmount.toStringAsFixed(0);
+                          _amountController.text = value.monthlyAmount
+                              .toStringAsFixed(0);
                         }
                       });
                     }
@@ -230,16 +235,19 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
             _buildLabel('Amount'),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _amountController.text.isNotEmpty ? _amountController.text : null,
+              initialValue: _amountController.text.isNotEmpty
+                  ? _amountController.text
+                  : null,
               hint: Text(
                 'Select amount',
                 style: GoogleFonts.inter(color: Colors.grey[400]),
               ),
-              decoration: _inputDecoration(
-                prefixIcon: Icons.currency_rupee_rounded,
-              ).copyWith(
-                fillColor: Colors.grey[100], // Make it look read-only
-              ),
+              decoration:
+                  _inputDecoration(
+                    prefixIcon: Icons.currency_rupee_rounded,
+                  ).copyWith(
+                    fillColor: Colors.grey[100], // Make it look read-only
+                  ),
               items: _amountController.text.isNotEmpty
                   ? [
                       DropdownMenuItem(
@@ -248,7 +256,7 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
                           _amountController.text,
                           style: GoogleFonts.inter(color: darkBlue),
                         ),
-                      )
+                      ),
                     ]
                   : [],
               onChanged: (value) {
@@ -289,7 +297,7 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
             _buildLabel('Payment Method'),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
-              value: _paymentMethod,
+              initialValue: _paymentMethod,
               decoration: _inputDecoration(prefixIcon: Icons.payment_rounded),
               items: _paymentMethods.map((method) {
                 return DropdownMenuItem(
@@ -374,7 +382,7 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.grey.withOpacity(0.1)),
+        borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
@@ -382,7 +390,7 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: Colors.red.withOpacity(0.5)),
+        borderSide: BorderSide(color: Colors.red.withValues(alpha: 0.5)),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
