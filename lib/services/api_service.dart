@@ -23,7 +23,6 @@ import '../models/groupadmin/collector_dashboard_model.dart';
 import '../models/groupadmin/assigned_member_model.dart';
 import '../models/groupadmin/member_history_model.dart';
 import '../models/groupadmin/collector_profile_model.dart';
-import '../models/groupadmin/collector_profile_model.dart';
 import '../models/collector/pending_member_model.dart';
 import 'storage_service.dart';
 
@@ -227,7 +226,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return CollectorDashboardModel.fromJson(response.data);
       }
-      throw Exception('Failed to load collector dashboard: ${response.statusCode}');
+      throw Exception(
+        'Failed to load collector dashboard: ${response.statusCode}',
+      );
     } on DioException catch (e) {
       throw Exception('Error fetching collector dashboard: ${e.message}');
     }
@@ -246,7 +247,10 @@ class ApiService {
     }
   }
 
-  Future<AssignedMemberResponse> getAssignedMembers({int page = 1, int pageSize = 100}) async {
+  Future<AssignedMemberResponse> getAssignedMembers({
+    int page = 1,
+    int pageSize = 100,
+  }) async {
     try {
       final dio = await _authDio;
       final response = await dio.get(
@@ -256,16 +260,23 @@ class ApiService {
       if (response.statusCode == 200) {
         return AssignedMemberResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load assigned members: ${response.statusCode}');
+      throw Exception(
+        'Failed to load assigned members: ${response.statusCode}',
+      );
     } on DioException catch (e) {
       throw Exception('Error fetching assigned members: ${e.message}');
     }
   }
 
-  Future<Map<String, dynamic>> addCollectorCollection(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> addCollectorCollection(
+    Map<String, dynamic> data,
+  ) async {
     try {
       final dio = await _authDio;
-      final response = await dio.post(ApiConfig.collectorAddCollection, data: data);
+      final response = await dio.post(
+        ApiConfig.collectorAddCollection,
+        data: data,
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data as Map<String, dynamic>;
       }
@@ -274,9 +285,10 @@ class ApiService {
       final responseData = e.response?.data;
       String msg = 'Error adding collection';
       if (responseData is Map<String, dynamic>) {
-        msg = responseData['detail'] ??
-              responseData['message'] ??
-              responseData.toString();
+        msg =
+            responseData['detail'] ??
+            responseData['message'] ??
+            responseData.toString();
       }
       throw Exception(msg);
     }
@@ -302,7 +314,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return CollectorProfileResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load collector profile: ${response.statusCode}');
+      throw Exception(
+        'Failed to load collector profile: ${response.statusCode}',
+      );
     } on DioException catch (e) {
       throw Exception('Error fetching collector profile: ${e.message}');
     }
@@ -524,11 +538,17 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> updateGroup(int id, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updateGroup(
+    int id,
+    Map<String, dynamic> data,
+  ) async {
     try {
       final dio = await _authDio;
       // PUT request to api/v1/admin/groups/{id}/edit/
-      final response = await dio.put('${ApiConfig.groupUpdate}$id/edit/', data: data);
+      final response = await dio.put(
+        '${ApiConfig.groupUpdate}$id/edit/',
+        data: data,
+      );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data as Map<String, dynamic>;
       }
@@ -537,10 +557,11 @@ class ApiService {
       final data = e.response?.data;
       String msg = 'Error updating group';
       if (data is Map<String, dynamic>) {
-        msg = data['detail'] ?? 
-              data['message'] ?? 
-              data['non_field_errors']?.toString() ?? 
-              data.toString();
+        msg =
+            data['detail'] ??
+            data['message'] ??
+            data['non_field_errors']?.toString() ??
+            data.toString();
       } else if (data is List) {
         msg = data.join('\n');
       }
@@ -560,6 +581,7 @@ class ApiService {
       throw Exception('Error fetching group details: ${e.message}');
     }
   }
+
   Future<GroupListResponse> getAuctions() async {
     try {
       final dio = await _authDio;
@@ -573,14 +595,20 @@ class ApiService {
     }
   }
 
-  Future<AuctionGroupDetailsResponse> getAuctionGroupDetails(String groupId) async {
+  Future<AuctionGroupDetailsResponse> getAuctionGroupDetails(
+    String groupId,
+  ) async {
     try {
       final dio = await _authDio;
-      final response = await dio.get('${ApiConfig.auctionGroupDetails}$groupId/');
+      final response = await dio.get(
+        '${ApiConfig.auctionGroupDetails}$groupId/',
+      );
       if (response.statusCode == 200) {
         return AuctionGroupDetailsResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load auction group details: ${response.statusCode}');
+      throw Exception(
+        'Failed to load auction group details: ${response.statusCode}',
+      );
     } on DioException catch (e) {
       throw Exception('Error fetching auction group details: ${e.message}');
     }
@@ -611,13 +639,20 @@ class ApiService {
       final data = e.response?.data;
       String msg = 'Error fetching spin data';
       if (data is Map<String, dynamic>) {
-        msg = data['error'] ?? data['detail'] ?? data['message'] ?? data.toString();
+        msg =
+            data['error'] ??
+            data['detail'] ??
+            data['message'] ??
+            data.toString();
       }
       throw Exception(msg);
     }
   }
 
-  Future<Map<String, dynamic>> assignAuctionWinner(int auctionId, int memberId) async {
+  Future<Map<String, dynamic>> assignAuctionWinner(
+    int auctionId,
+    int memberId,
+  ) async {
     try {
       final dio = await _authDio;
       final response = await dio.post(
@@ -632,9 +667,10 @@ class ApiService {
       final responseData = e.response?.data;
       String msg = 'Error assigning winner';
       if (responseData is Map<String, dynamic>) {
-        msg = responseData['detail'] ??
-              responseData['message'] ??
-              responseData.toString();
+        msg =
+            responseData['detail'] ??
+            responseData['message'] ??
+            responseData.toString();
       }
       throw Exception(msg);
     }
@@ -652,9 +688,10 @@ class ApiService {
       final responseData = e.response?.data;
       String msg = 'Error creating auction';
       if (responseData is Map<String, dynamic>) {
-        msg = responseData['detail'] ??
-              responseData['message'] ??
-              responseData.toString();
+        msg =
+            responseData['detail'] ??
+            responseData['message'] ??
+            responseData.toString();
       }
       throw Exception(msg);
     }

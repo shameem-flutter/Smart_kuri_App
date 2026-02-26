@@ -17,12 +17,12 @@ class Addcollection extends ConsumerStatefulWidget {
 
 class _AddcollectionState extends ConsumerState<Addcollection> {
   final _formKey = GlobalKey<FormState>();
-  
+
   AssignedMember? _selectedMember;
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
   String _paymentMethod = 'UPI'; // Default payment method
-  
+
   final List<String> _paymentMethods = ['UPI', 'Cash', 'Bank Transfer'];
   bool _isLoading = false;
 
@@ -83,15 +83,15 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
       };
 
       final response = await apiService.addCollectorCollection(requestData);
-      
+
       if (!mounted) return;
-      
+
       _showSnackBar(response['message'] ?? 'Collection added successfully');
-      
+
       // Refresh relevant providers
       ref.invalidate(collectorDashboardProvider);
       ref.invalidate(pendingMembersProvider);
-      
+
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
@@ -106,10 +106,7 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
   void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          message,
-          style: GoogleFonts.inter(color: Colors.white),
-        ),
+        content: Text(message, style: GoogleFonts.inter(color: Colors.white)),
         backgroundColor: isError ? Colors.red[400] : Colors.green[400],
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -119,7 +116,9 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
 
   @override
   Widget build(BuildContext context) {
-    final membersAsync = ref.watch(assignedMemberProvider({'page': 1, 'pageSize': 100}));
+    final membersAsync = ref.watch(
+      assignedMemberProvider(const {'page': 1, 'pageSize': 100}),
+    );
     final apiService = ref.read(apiServiceProvider);
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
@@ -133,7 +132,11 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: darkBlue, size: 20),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: darkBlue,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -147,7 +150,8 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
       ),
       body: SafeArea(
         child: membersAsync.when(
-          loading: () => Center(child: CircularProgressIndicator(color: primaryColor)),
+          loading: () =>
+              Center(child: CircularProgressIndicator(color: primaryColor)),
           error: (err, stack) => Center(child: Text('Error: $err')),
           data: (data) => _buildForm(context, data.results, apiService),
         ),
@@ -155,7 +159,11 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
     );
   }
 
-  Widget _buildForm(BuildContext context, List<AssignedMember> members, ApiService apiService) {
+  Widget _buildForm(
+    BuildContext context,
+    List<AssignedMember> members,
+    ApiService apiService,
+  ) {
     const darkBlue = Color(0xFF2B3A4A);
 
     return Form(
@@ -170,7 +178,10 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
             const SizedBox(height: 8),
             DropdownButtonFormField<AssignedMember>(
               value: _selectedMember,
-              hint: Text('Choose a member', style: GoogleFonts.inter(color: Colors.grey[400])),
+              hint: Text(
+                'Choose a member',
+                style: GoogleFonts.inter(color: Colors.grey[400]),
+              ),
               isExpanded: true,
               decoration: _inputDecoration(prefixIcon: Icons.person_outline),
               items: members.map((member) {
@@ -183,15 +194,33 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
                 );
               }).toList(),
               validator: (value) => value == null ? 'Required field' : null,
-              onChanged: (value) {
+              onChanged: (value) async {
                 setState(() {
                   _selectedMember = value;
-                  if (value != null && value.monthlyAmount > 0) {
-                    _amountController.text = value.monthlyAmount.toStringAsFixed(0);
-                  } else {
-                    _amountController.clear();
-                  }
+                  _amountController.clear(); // Clear while fetching
                 });
+                
+                if (value != null) {
+                  try {
+                    // Fetch member history to get the accurate monthly amount
+                    final history = await apiService.getMemberHistory(value.id);
+                    if (mounted && _selectedMember?.id == value.id) {
+                      setState(() {
+                        _amountController.text = history.summary.monthlyAmount.toStringAsFixed(0);
+                      });
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      _showSnackBar('Failed to fetch amount: $e', isError: true);
+                      // Fallback to the assigned member's amount if API fails
+                      setState(() {
+                        if (value.monthlyAmount > 0) {
+                          _amountController.text = value.monthlyAmount.toStringAsFixed(0);
+                        }
+                      });
+                    }
+                  }
+                }
               },
             ),
 
@@ -200,20 +229,38 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
             // Amount Field
             _buildLabel('Amount'),
             const SizedBox(height: 8),
-            TextFormField(
-              controller: _amountController,
-              readOnly: true, // Amount is fixed based on monthly amount to be paid
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: GoogleFonts.inter(color: darkBlue, fontWeight: FontWeight.w500),
+            DropdownButtonFormField<String>(
+              value: _amountController.text.isNotEmpty ? _amountController.text : null,
+              hint: Text(
+                'Select amount',
+                style: GoogleFonts.inter(color: Colors.grey[400]),
+              ),
               decoration: _inputDecoration(
                 prefixIcon: Icons.currency_rupee_rounded,
-                hintText: 'Amount',
               ).copyWith(
                 fillColor: Colors.grey[100], // Make it look read-only
               ),
+              items: _amountController.text.isNotEmpty
+                  ? [
+                      DropdownMenuItem(
+                        value: _amountController.text,
+                        child: Text(
+                          _amountController.text,
+                          style: GoogleFonts.inter(color: darkBlue),
+                        ),
+                      )
+                    ]
+                  : [],
+              onChanged: (value) {
+                // Read-only dropdown, no logic needed here as there's only one option
+              },
               validator: (value) {
-                if (value == null || value.trim().isEmpty) return 'Select a member to view amount';
-                if (double.tryParse(value.trim()) == null) return 'Invalid amount';
+                if (_selectedMember == null) {
+                  return 'Select a member first';
+                }
+                if (value == null || value.trim().isEmpty) {
+                  return 'Amount is required';
+                }
                 return null;
               },
             ),
@@ -227,7 +274,10 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
               controller: _dateController,
               readOnly: true,
               onTap: () => _selectDate(context),
-              style: GoogleFonts.inter(color: darkBlue, fontWeight: FontWeight.w500),
+              style: GoogleFonts.inter(
+                color: darkBlue,
+                fontWeight: FontWeight.w500,
+              ),
               decoration: _inputDecoration(
                 prefixIcon: Icons.calendar_today_rounded,
               ),
@@ -308,7 +358,10 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
     );
   }
 
-  InputDecoration _inputDecoration({required IconData prefixIcon, String? hintText}) {
+  InputDecoration _inputDecoration({
+    required IconData prefixIcon,
+    String? hintText,
+  }) {
     return InputDecoration(
       hintText: hintText,
       hintStyle: GoogleFonts.inter(color: Colors.grey[400]),

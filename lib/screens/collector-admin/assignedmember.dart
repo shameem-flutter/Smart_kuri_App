@@ -16,7 +16,7 @@ class Assignedmember extends ConsumerStatefulWidget {
 
 class _AssignedmemberState extends ConsumerState<Assignedmember> {
   // Using default params for pagination
-  final Map<String, int> _params = {'page': 1, 'pageSize': 100};
+  final Map<String, int> _params = const {'page': 1, 'pageSize': 100};
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
