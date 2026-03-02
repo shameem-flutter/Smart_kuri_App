@@ -139,7 +139,7 @@ class TotalGroupScreen extends ConsumerWidget {
                   return ListView.separated(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
                     itemCount: groupList.groups.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 16),
+                    separatorBuilder: (_, _) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       final group = groupList.groups[index];
                       return _GroupListCard(group: group);
@@ -273,7 +273,7 @@ class _GroupListCard extends StatelessWidget {
                     startDate: group.startDate,
                     duration: '${group.durationMonths} Months',
                     amount: '₹${group.monthlyAmount.toStringAsFixed(0)}',
-                    collector: "${group.parentGroup}" ?? 'Admin',
+                    collector: "${group.parentGroup}",
                   ),
 
                   const SizedBox(height: 20),

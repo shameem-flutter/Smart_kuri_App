@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:kuri_app/models/member/member_dashboard_model.dart';
 import '../models/auth/auth_response.dart';
 import '../models/groupadmin/dashboard_model.dart';
 import '../models/groupadmin/group_model.dart';
@@ -71,10 +72,8 @@ class ApiService {
             String? newAccessToken;
 
             // Step 1: Try tokenRefresh for a new access token
-            final currentRefreshToken =
-                await _storageService.getRefreshToken();
-            if (currentRefreshToken != null &&
-                currentRefreshToken.isNotEmpty) {
+            final currentRefreshToken = await _storageService.getRefreshToken();
+            if (currentRefreshToken != null && currentRefreshToken.isNotEmpty) {
               try {
                 final refreshResponse = await _dio.post(
                   ApiConfig.tokenRefresh,
@@ -82,8 +81,7 @@ class ApiService {
                 );
                 if (refreshResponse.statusCode == 200 ||
                     refreshResponse.statusCode == 201) {
-                  newAccessToken =
-                      refreshResponse.data['access'] as String;
+                  newAccessToken = refreshResponse.data['access'] as String;
                   await _storageService.saveAccessToken(newAccessToken);
                 }
               } catch (_) {
@@ -93,10 +91,9 @@ class ApiService {
 
             // Step 2: If tokenRefresh failed, use token endpoint with credentials
             if (newAccessToken == null) {
-              final identifier =
-                  await _storageService.getCredentialIdentifier();
-              final password =
-                  await _storageService.getCredentialPassword();
+              final identifier = await _storageService
+                  .getCredentialIdentifier();
+              final password = await _storageService.getCredentialPassword();
 
               if (identifier == null || password == null) {
                 return handler.next(error);
@@ -113,8 +110,7 @@ class ApiService {
               }
 
               newAccessToken = tokenResponse.data['access'] as String;
-              final newRefreshToken =
-                  tokenResponse.data['refresh'] as String;
+              final newRefreshToken = tokenResponse.data['refresh'] as String;
               await _storageService.saveAccessToken(newAccessToken);
               await _storageService.saveRefreshToken(newRefreshToken);
             }
@@ -830,6 +826,25 @@ class ApiService {
             responseData.toString();
       }
       throw Exception(msg);
+    }
+  }
+  // ==========================================
+  // Member Specific Methods
+  // ==========================================
+
+  /// Get Member Dashboard
+  Future<MemberDashboardResponse> getMemberDashboard() async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.memberDashboard);
+      return MemberDashboardResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      if (e.response != null && e.response?.data is Map) {
+        throw Exception(
+          e.response?.data['message'] ?? 'Failed to load member dashboard',
+        );
+      }
+      throw Exception('Network error occurred');
     }
   }
 }

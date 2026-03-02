@@ -11,6 +11,7 @@ import '../models/groupadmin/member_history_model.dart';
 import '../models/groupadmin/collector_profile_model.dart';
 import '../models/collector/pending_member_model.dart';
 import '../models/collector/today_collections_model.dart';
+import '../models/member/member_dashboard_model.dart';
 import '../models/collector/reports_model.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
@@ -27,8 +28,9 @@ class ScreenIndexNotifier extends Notifier<int> {
   void goTo(int index) => state = index;
 }
 
-final collectorScreenIndexProvider =
-    NotifierProvider<ScreenIndexNotifier, int>(ScreenIndexNotifier.new);
+final collectorScreenIndexProvider = NotifierProvider<ScreenIndexNotifier, int>(
+  ScreenIndexNotifier.new,
+);
 
 class PaymentHistoryMemberIdNotifier extends Notifier<int> {
   @override
@@ -38,7 +40,8 @@ class PaymentHistoryMemberIdNotifier extends Notifier<int> {
 
 final paymentHistoryMemberIdProvider =
     NotifierProvider<PaymentHistoryMemberIdNotifier, int>(
-        PaymentHistoryMemberIdNotifier.new);
+      PaymentHistoryMemberIdNotifier.new,
+    );
 
 final apiServiceProvider = Provider<ApiService>((ref) {
   final storageService = ref.watch(storageServiceProvider);
@@ -95,7 +98,14 @@ final collectorProfileProvider = FutureProvider<CollectorProfileResponse>((
   return apiService.getCollectorProfile();
 });
 
-// Group provider
+// Member Dashboard Provider
+final memberDashboardProvider =
+    FutureProvider.autoDispose<MemberDashboardResponse>((ref) async {
+      final apiService = ref.read(apiServiceProvider);
+      return apiService.getMemberDashboard();
+    });
+
+// Group Admin Providers
 final groupListProvider = FutureProvider<GroupListResponse>((ref) async {
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getGroups();
@@ -166,9 +176,10 @@ class ReportFilterNotifier extends Notifier<ReportFilterState> {
   }
 }
 
-final reportFilterProvider = NotifierProvider<ReportFilterNotifier, ReportFilterState>(
-  ReportFilterNotifier.new,
-);
+final reportFilterProvider =
+    NotifierProvider<ReportFilterNotifier, ReportFilterState>(
+      ReportFilterNotifier.new,
+    );
 
 // Reports provider
 final reportsProvider = FutureProvider<ReportsResponse>((ref) async {
