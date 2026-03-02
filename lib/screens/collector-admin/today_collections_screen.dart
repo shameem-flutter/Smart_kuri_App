@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,6 +16,25 @@ class TodayCollectionsScreen extends ConsumerStatefulWidget {
 
 class _TodayCollectionsScreenState
     extends ConsumerState<TodayCollectionsScreen> {
+  Timer? _autoRefreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-refresh every 30 seconds so the screen stays up to date
+    _autoRefreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) {
+        ref.invalidate(todayCollectionsProvider);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
+  }
+
   // We handle deletion directly inside the Dismissible's confirmDismiss callback now
   Future<bool> _handleDismiss(int id) async {
     final confirm = await showDialog<bool>(
@@ -90,9 +110,17 @@ class _TodayCollectionsScreenState
     final todayCollectionsAsyncValue = ref.watch(todayCollectionsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white, // Pure white for a clean ledger look
+      backgroundColor: Colors.white,
       body: todayCollectionsAsyncValue.when(
-        data: (data) => _buildCustomScroll(data),
+        data: (data) => RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(todayCollectionsProvider);
+            // Wait for the provider to complete refetching
+            await ref.read(todayCollectionsProvider.future);
+          },
+          color: primaryColor,
+          child: _buildCustomScroll(data),
+        ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stack) => _buildErrorState(),
       ),
@@ -111,7 +139,8 @@ class _TodayCollectionsScreenState
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () =>
+                ref.read(collectorScreenIndexProvider.notifier).goTo(-1),
           ),
           flexibleSpace: FlexibleSpaceBar(
             titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
@@ -310,3 +339,5 @@ class _TodayCollectionsScreenState
     );
   }
 }
+
+

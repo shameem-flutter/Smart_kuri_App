@@ -8,8 +8,7 @@ import 'package:kuri_app/models/groupadmin/member_history_model.dart';
 import 'package:intl/intl.dart';
 
 class Paymenthistory extends ConsumerStatefulWidget {
-  final int memberId;
-  const Paymenthistory({super.key, required this.memberId});
+  const Paymenthistory({super.key});
 
   @override
   ConsumerState<Paymenthistory> createState() => _PaymenthistoryState();
@@ -18,35 +17,41 @@ class Paymenthistory extends ConsumerStatefulWidget {
 class _PaymenthistoryState extends ConsumerState<Paymenthistory> {
   @override
   Widget build(BuildContext context) {
-    final historyData = ref.watch(memberHistoryProvider(widget.memberId));
+    final memberId = ref.watch(paymentHistoryMemberIdProvider);
+    final historyData = ref.watch(memberHistoryProvider(memberId));
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: bgGrey,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: primaryColor,
         elevation: 0,
         centerTitle: true,
         leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: const Icon(
+          onTap: () => ref
+              .read(collectorScreenIndexProvider.notifier)
+              .goTo(1), // Back to Assignedmember
+          child: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF2B3A4A),
+            color: whiteColor,
             size: 18,
           ),
         ),
         title: Text(
           'Payment History',
           style: GoogleFonts.poppins(
-            color: const Color(0xFF2B3A4A),
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
+            color: whiteColor,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
           ),
         ),
       ),
       body: historyData.when(
-        data: (data) => _buildContent(context, data),
+        data: (data) {
+          if (memberId == 0) return const Center(child: Text("Invalid Member"));
+          return _buildContent(context, data, memberId);
+        },
         loading: () =>
             Center(child: CircularProgressIndicator(color: primaryColor)),
         error: (error, stack) => Center(
@@ -59,7 +64,11 @@ class _PaymenthistoryState extends ConsumerState<Paymenthistory> {
     );
   }
 
-  Widget _buildContent(BuildContext context, MemberHistoryResponse data) {
+  Widget _buildContent(
+    BuildContext context,
+    MemberHistoryResponse data,
+    int memberId,
+  ) {
     final fmt = NumberFormat.currency(
       symbol: '₹',
       decimalDigits: 0,
@@ -73,7 +82,7 @@ class _PaymenthistoryState extends ConsumerState<Paymenthistory> {
     return RefreshIndicator(
       color: primaryColor,
       onRefresh: () async {
-        return ref.refresh(memberHistoryProvider(widget.memberId).future);
+        return ref.refresh(memberHistoryProvider(memberId).future);
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),

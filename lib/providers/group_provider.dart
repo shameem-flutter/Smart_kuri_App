@@ -20,6 +20,26 @@ final storageServiceProvider = Provider<StorageService>((ref) {
   return StorageService();
 });
 
+// Navigation Providers
+class ScreenIndexNotifier extends Notifier<int> {
+  @override
+  int build() => -1;
+  void goTo(int index) => state = index;
+}
+
+final collectorScreenIndexProvider =
+    NotifierProvider<ScreenIndexNotifier, int>(ScreenIndexNotifier.new);
+
+class PaymentHistoryMemberIdNotifier extends Notifier<int> {
+  @override
+  int build() => 0;
+  void setId(int id) => state = id;
+}
+
+final paymentHistoryMemberIdProvider =
+    NotifierProvider<PaymentHistoryMemberIdNotifier, int>(
+        PaymentHistoryMemberIdNotifier.new);
+
 final apiServiceProvider = Provider<ApiService>((ref) {
   final storageService = ref.watch(storageServiceProvider);
   return ApiService(storageService: storageService);

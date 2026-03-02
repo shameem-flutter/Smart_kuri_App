@@ -51,13 +51,89 @@ class ApiService {
     return dio;
   }
 
-  /// Helper to get Dio with auth token
+  /// Helper to get Dio with auth token and automatic token refresh
   Future<Dio> get _authDio async {
     final dio = _dio;
     final token = await _storageService.getAccessToken();
     if (token != null && token.isNotEmpty) {
       dio.options.headers['Authorization'] = 'Bearer $token';
     }
+
+    dio.interceptors.add(
+      QueuedInterceptorsWrapper(
+        onError: (DioException error, ErrorInterceptorHandler handler) async {
+          // Only handle 401 Unauthorized errors
+          if (error.response?.statusCode != 401) {
+            return handler.next(error);
+          }
+
+          try {
+            String? newAccessToken;
+
+            // Step 1: Try tokenRefresh for a new access token
+            final currentRefreshToken =
+                await _storageService.getRefreshToken();
+            if (currentRefreshToken != null &&
+                currentRefreshToken.isNotEmpty) {
+              try {
+                final refreshResponse = await _dio.post(
+                  ApiConfig.tokenRefresh,
+                  data: {'refresh': currentRefreshToken},
+                );
+                if (refreshResponse.statusCode == 200 ||
+                    refreshResponse.statusCode == 201) {
+                  newAccessToken =
+                      refreshResponse.data['access'] as String;
+                  await _storageService.saveAccessToken(newAccessToken);
+                }
+              } catch (_) {
+                // Refresh token expired, fall through to Step 2
+              }
+            }
+
+            // Step 2: If tokenRefresh failed, use token endpoint with credentials
+            if (newAccessToken == null) {
+              final identifier =
+                  await _storageService.getCredentialIdentifier();
+              final password =
+                  await _storageService.getCredentialPassword();
+
+              if (identifier == null || password == null) {
+                return handler.next(error);
+              }
+
+              final tokenResponse = await _dio.post(
+                ApiConfig.token,
+                data: {'username': identifier, 'password': password},
+              );
+
+              if (tokenResponse.statusCode != 200 &&
+                  tokenResponse.statusCode != 201) {
+                return handler.next(error);
+              }
+
+              newAccessToken = tokenResponse.data['access'] as String;
+              final newRefreshToken =
+                  tokenResponse.data['refresh'] as String;
+              await _storageService.saveAccessToken(newAccessToken);
+              await _storageService.saveRefreshToken(newRefreshToken);
+            }
+
+            // Step 3: Retry the original request with the new token
+            final options = error.requestOptions;
+            options.headers['Authorization'] = 'Bearer $newAccessToken';
+
+            final retryResponse = await _dio.fetch(options);
+            return handler.resolve(retryResponse);
+          } catch (e) {
+            debugPrint('Token refresh failed: $e');
+            await _storageService.clearAll();
+            return handler.next(error);
+          }
+        },
+      ),
+    );
+
     return dio;
   }
 
@@ -315,8 +391,9 @@ class ApiService {
     try {
       final dio = await _authDio;
       final Map<String, dynamic> queryParams = {};
-      if (fromDate != null && fromDate.isNotEmpty)
+      if (fromDate != null && fromDate.isNotEmpty) {
         queryParams['from_date'] = fromDate;
+      }
       if (toDate != null && toDate.isNotEmpty) queryParams['to_date'] = toDate;
 
       final response = await dio.get(

@@ -12,10 +12,6 @@ class Pendingmembers extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pendingMembersAsyncValue = ref.watch(pendingMembersProvider);
 
-    // Main Brand Colors
-    const darkBlue = Color(0xFF2B3A4A);
-    const bgGrey = Color(0xFFF2F4F7);
-
     return Scaffold(
       backgroundColor: bgGrey,
       appBar: AppBar(
@@ -23,9 +19,9 @@ class Pendingmembers extends ConsumerWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: darkBlue,
+            color: whiteColor,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
@@ -35,7 +31,7 @@ class Pendingmembers extends ConsumerWidget {
           style: GoogleFonts.poppins(
             color: whiteColor,
             fontWeight: FontWeight.w600,
-            fontSize: 18,
+            fontSize: 20,
           ),
         ),
       ),

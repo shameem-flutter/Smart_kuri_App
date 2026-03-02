@@ -5,7 +5,6 @@ import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/groupadmin/assigned_member_model.dart';
 import 'package:flutter/services.dart';
-import 'package:kuri_app/screens/collector-admin/paymenthistory.dart';
 
 class Assignedmember extends ConsumerStatefulWidget {
   const Assignedmember({super.key});
@@ -44,21 +43,21 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
         title: Text(
           'Assigned Members',
           style: GoogleFonts.poppins(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
             color: whiteColor,
           ),
         ),
       ),
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: bgGrey,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
         child: Column(
           children: [
-            // vertGap(15),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               child: Container(
+                clipBehavior: Clip.antiAlias,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -84,12 +83,12 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
                   decoration: InputDecoration(
                     hintText: 'Search by name, phone or group...',
                     hintStyle: GoogleFonts.inter(
-                      color: Colors.grey[400],
+                      color: Colors.grey[600],
                       fontSize: 14,
                     ),
                     prefixIcon: Icon(
                       Icons.search_rounded,
-                      color: Colors.grey[400],
+                      color: Colors.grey[600],
                       size: 22,
                     ),
                     suffixIcon: _searchQuery.isNotEmpty
@@ -337,13 +336,10 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              Paymenthistory(memberId: member.id),
-                        ),
-                      );
+                      ref
+                          .read(paymentHistoryMemberIdProvider.notifier)
+                          .setId(member.id);
+                      ref.read(collectorScreenIndexProvider.notifier).goTo(7);
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(

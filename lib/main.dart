@@ -8,9 +8,12 @@ import 'screens/collector-admin/collectorhomescreen.dart';
 import 'screens/member-admin/memberdashboardscreen.dart';
 import 'utilities/api_config.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiConfig.init();
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

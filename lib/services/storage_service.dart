@@ -206,6 +206,51 @@ class StorageService {
     }
   }
 
+  // Credential Management for Token Refresh
+
+  /// Save login credentials securely (for automatic token refresh)
+  Future<void> saveCredentials({
+    required String identifier,
+    required String password,
+  }) async {
+    try {
+      await Future.wait([
+        _secureStorage.write(
+          key: AppConstants.credentialIdentifierKey,
+          value: identifier,
+        ),
+        _secureStorage.write(
+          key: AppConstants.credentialPasswordKey,
+          value: password,
+        ),
+      ]);
+    } catch (e) {
+      throw CacheException('Failed to save credentials', originalError: e);
+    }
+  }
+
+  /// Get stored identifier
+  Future<String?> getCredentialIdentifier() async {
+    try {
+      return await _secureStorage.read(
+        key: AppConstants.credentialIdentifierKey,
+      );
+    } catch (e) {
+      throw CacheException('Failed to retrieve identifier', originalError: e);
+    }
+  }
+
+  /// Get stored password
+  Future<String?> getCredentialPassword() async {
+    try {
+      return await _secureStorage.read(
+        key: AppConstants.credentialPasswordKey,
+      );
+    } catch (e) {
+      throw CacheException('Failed to retrieve password', originalError: e);
+    }
+  }
+
   /// Clear all stored data (logout)
   Future<void> clearAll() async {
     try {

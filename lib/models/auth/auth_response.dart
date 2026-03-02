@@ -75,7 +75,7 @@ class TokenResponse extends Equatable {
 
 /// Token Refresh Response Model
 /// 
-/// Represents the response when refreshing access token.
+/// Represents the response when refreshing the access token.
 class TokenRefreshResponse extends Equatable {
   final String access;
 

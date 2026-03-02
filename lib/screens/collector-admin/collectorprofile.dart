@@ -30,7 +30,7 @@ class _CollectorprofileScreenState
         elevation: 0,
         centerTitle: true,
         leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
+          onTap: () => ref.read(collectorScreenIndexProvider.notifier).goTo(-1),
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
             color: whiteColor,
@@ -41,8 +41,8 @@ class _CollectorprofileScreenState
           'My Profile',
           style: GoogleFonts.poppins(
             color: whiteColor,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
           ),
         ),
       ),

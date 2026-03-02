@@ -496,3 +496,5 @@ class _DetailItem extends StatelessWidget {
     );
   }
 }
+
+

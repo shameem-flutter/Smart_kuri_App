@@ -503,3 +503,5 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
     );
   }
 }
+
+

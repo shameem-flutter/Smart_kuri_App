@@ -18,7 +18,7 @@ class _CollectordashboardState extends ConsumerState<Collectordashboard> {
   Widget build(BuildContext context) {
     final dashboardData = ref.watch(collectorDashboardProvider);
 
-    // Set system UI to dark icons for the light background
+  
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
 
     return Scaffold(
@@ -305,3 +305,5 @@ class _CollectordashboardState extends ConsumerState<Collectordashboard> {
     );
   }
 }
+
+

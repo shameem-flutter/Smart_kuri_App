@@ -58,7 +58,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, size: 18, color: whiteColor),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () =>
+              ref.read(collectorScreenIndexProvider.notifier).goTo(-1),
         ),
         title: Text(
           'Reports',
@@ -448,3 +449,5 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 }
+
+

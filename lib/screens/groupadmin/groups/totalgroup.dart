@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/models/groupadmin/group_model.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupcreate.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupdetails.dart';
 import 'package:kuri_app/models/groupadmin/dashboard_model.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-// ── Palette ────────────────────────────────────────────────────────────────
 const _kPrimary = Color(0xFF1A56DB);
 const _kPrimaryLight = Color(0xFFEEF4FF);
 const _kOrange = Color(0xFFF59E0B);
@@ -64,6 +63,8 @@ class TotalGroupScreen extends ConsumerWidget {
             // ── Content ────────────────────────────────────────────────────
             Expanded(
               child: groupListAsync.when(
+                skipLoadingOnRefresh: true,
+                skipLoadingOnReload: true,
                 data: (groupList) {
                   if (groupList.groups.isEmpty) {
                     return Center(
@@ -253,16 +254,14 @@ class _GroupListCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header ──────────────────────────────────────────────────
             _AccentHeader(
               initials: initials,
               name: group.name,
               id: group.id.toString(),
-              isActive: true, // replace with actual field if available
+              isActive: true,
               progress: progress,
             ),
 
-            // ── Body ────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
               child: Column(

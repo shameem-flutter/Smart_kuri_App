@@ -91,8 +91,10 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
       // Refresh relevant providers
       ref.invalidate(collectorDashboardProvider);
       ref.invalidate(pendingMembersProvider);
+      ref.invalidate(todayCollectionsProvider);
 
-      Navigator.pop(context);
+      // Go back to dashboard main menu
+      ref.read(collectorScreenIndexProvider.notifier).goTo(-1);
     } catch (e) {
       if (!mounted) return;
       _showSnackBar(e.toString().replaceAll('Exception: ', ''), isError: true);
@@ -137,14 +139,15 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
             color: whiteColor,
             size: 20,
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () =>
+              ref.read(collectorScreenIndexProvider.notifier).goTo(-1),
         ),
         title: Text(
           'Add Collection',
           style: GoogleFonts.poppins(
             color: whiteColor,
             fontWeight: FontWeight.w600,
-            fontSize: 18,
+            fontSize: 20,
           ),
         ),
       ),

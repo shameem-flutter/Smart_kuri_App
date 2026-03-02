@@ -884,3 +884,5 @@ Widget _buildDetailRow(String label, String value, {bool showDivider = true}) {
     ],
   );
 }
+
+

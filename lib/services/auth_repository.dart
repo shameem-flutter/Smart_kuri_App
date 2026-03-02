@@ -22,6 +22,11 @@ class AuthRepository {
       accessToken: tokenResponse.access,
       refreshToken: tokenResponse.refresh,
     );
+    // Save credentials for automatic token refresh
+    await _storageService.saveCredentials(
+      identifier: request.identifier,
+      password: request.password,
+    );
     if (tokenResponse.role.isNotEmpty) {
       await _storageService.saveRole(tokenResponse.role);
     }
@@ -43,17 +48,33 @@ class AuthRepository {
   }
 
   Future<TokenResponse> refreshAccessToken() async {
-    final refreshToken = await _storageService.getRefreshToken();
-
-    if (refreshToken == null || refreshToken.isEmpty) {
-      throw Exception('No refresh token available');
+    // Step 1: Try refreshing the access token using the refresh token
+    final currentRefreshToken = await _storageService.getRefreshToken();
+    if (currentRefreshToken != null && currentRefreshToken.isNotEmpty) {
+      try {
+        final refreshRequest = TokenRefreshRequest(refresh: currentRefreshToken);
+        final refreshResponse = await _apiService.refreshToken(refreshRequest);
+        await _storageService.saveAccessToken(refreshResponse.access);
+        return TokenResponse(access: refreshResponse.access, refresh: currentRefreshToken);
+      } catch (_) {
+        // Refresh token might be expired, fall through to Step 2
+      }
     }
 
-    final request = TokenRefreshRequest(refresh: refreshToken);
-    final response = await _apiService.refreshToken(request);
+    // Step 2: Fall back to token endpoint with stored credentials
+    final identifier = await _storageService.getCredentialIdentifier();
+    final password = await _storageService.getCredentialPassword();
+    if (identifier == null || password == null) {
+      throw Exception('No stored credentials for token refresh');
+    }
 
-    await _storageService.saveAccessToken(response.access);
-    return TokenResponse(access: response.access, refresh: refreshToken);
+    final tokenRequest = TokenRequest(username: identifier, password: password);
+    final tokenResponse = await _apiService.generateToken(tokenRequest);
+    await _storageService.saveTokens(
+      accessToken: tokenResponse.access,
+      refreshToken: tokenResponse.refresh,
+    );
+    return tokenResponse;
   }
 
   Future<AuthResponse> requestPasswordReset(
