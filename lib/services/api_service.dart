@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:kuri_app/models/member/member_dashboard_model.dart';
+import 'package:kuri_app/models/member/member_payments_model.dart';
+import 'package:kuri_app/models/member/member_profile_model.dart';
 import '../models/auth/auth_response.dart';
 import '../models/groupadmin/dashboard_model.dart';
 import '../models/groupadmin/group_model.dart';
@@ -34,6 +36,44 @@ class ApiService {
 
   ApiService({required StorageService storageService})
     : _storageService = storageService;
+
+  /// Centralized Dio error message extractor.
+  /// Handles plain-text (ngrok offline), JSON map, list, and timeout errors.
+  String _extractDioErrorMsg(DioException e, String defaultMsg) {
+    // Connection-level errors
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      return 'Connection timed out. Please check your network.';
+    }
+    if (e.type == DioExceptionType.connectionError) {
+      return 'Could not connect to the server. Please check your network.';
+    }
+
+    // Response-level errors
+    final data = e.response?.data;
+    if (data != null) {
+      if (data is String && data.isNotEmpty) {
+        if (data.contains('ERR_NGROK')) {
+          return 'Server endpoint is currently offline. Please try again later.';
+        }
+        if (data.contains('<html') || data.contains('<!DOCTYPE')) {
+          return '$defaultMsg (Server error ${e.response?.statusCode ?? ''})';
+        }
+        return data.trim();
+      } else if (data is Map<String, dynamic>) {
+        return data['detail'] as String? ??
+            data['message'] as String? ??
+            data['error'] as String? ??
+            data['non_field_errors']?.toString() ??
+            data.toString();
+      } else if (data is List) {
+        return data.join('\n');
+      }
+    }
+
+    return e.message ?? defaultMsg;
+  }
 
   Dio get _dio {
     final dio = Dio(
@@ -289,7 +329,7 @@ class ApiService {
       }
       throw Exception('Failed to load dashboard: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching dashboard: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching dashboard'));
     }
   }
 
@@ -304,7 +344,7 @@ class ApiService {
         'Failed to load collector dashboard: ${response.statusCode}',
       );
     } on DioException catch (e) {
-      throw Exception('Error fetching collector dashboard: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching collector dashboard'));
     }
   }
 
@@ -317,7 +357,7 @@ class ApiService {
       }
       throw Exception('Failed to load pending members: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching pending members: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching pending members'));
     }
   }
 
@@ -338,7 +378,7 @@ class ApiService {
         'Failed to load assigned members: ${response.statusCode}',
       );
     } on DioException catch (e) {
-      throw Exception('Error fetching assigned members: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching assigned members'));
     }
   }
 
@@ -379,7 +419,7 @@ class ApiService {
         'Failed to load today collections: ${response.statusCode}',
       );
     } on DioException catch (e) {
-      throw Exception('Error fetching today collections: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching today collections'));
     }
   }
 
@@ -401,7 +441,7 @@ class ApiService {
       }
       throw Exception('Failed to load reports: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching reports: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching reports'));
     }
   }
 
@@ -435,7 +475,7 @@ class ApiService {
       }
       throw Exception('Failed to load member history: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching member history: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching member history'));
     }
   }
 
@@ -450,7 +490,7 @@ class ApiService {
         'Failed to load collector profile: ${response.statusCode}',
       );
     } on DioException catch (e) {
-      throw Exception('Error fetching collector profile: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching collector profile'));
     }
   }
 
@@ -463,7 +503,7 @@ class ApiService {
       }
       throw Exception('Failed to load groups: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching groups: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching groups'));
     }
   }
 
@@ -497,7 +537,7 @@ class ApiService {
       }
       throw Exception('Failed to load profile: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching profile: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching profile'));
     }
   }
 
@@ -510,7 +550,7 @@ class ApiService {
       }
       throw Exception('Failed to load members: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching members: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching members'));
     }
   }
 
@@ -565,7 +605,7 @@ class ApiService {
       }
       throw Exception('Failed to load collectors: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching collectors: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching collectors'));
     }
   }
 
@@ -635,7 +675,7 @@ class ApiService {
       }
       throw Exception('Failed to load collections: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching collections: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching collections'));
     }
   }
 
@@ -710,7 +750,7 @@ class ApiService {
       }
       throw Exception('Failed to load group details: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching group details: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching group details'));
     }
   }
 
@@ -723,7 +763,7 @@ class ApiService {
       }
       throw Exception('Failed to load auctions: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching auctions: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching auctions'));
     }
   }
 
@@ -742,7 +782,7 @@ class ApiService {
         'Failed to load auction group details: ${response.statusCode}',
       );
     } on DioException catch (e) {
-      throw Exception('Error fetching auction group details: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching auction group details'));
     }
   }
 
@@ -755,7 +795,7 @@ class ApiService {
       }
       throw Exception('Failed to load auction details: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception('Error fetching auction details: ${e.message}');
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching auction details'));
     }
   }
 
@@ -839,12 +879,30 @@ class ApiService {
       final response = await dio.get(ApiConfig.memberDashboard);
       return MemberDashboardResponse.fromJson(response.data);
     } on DioException catch (e) {
-      if (e.response != null && e.response?.data is Map) {
-        throw Exception(
-          e.response?.data['message'] ?? 'Failed to load member dashboard',
-        );
-      }
-      throw Exception('Network error occurred');
+      throw Exception(_extractDioErrorMsg(e, 'Failed to load member dashboard'));
     }
   }
+
+  /// Get Member Payments
+  Future<MemberPaymentsResponse> getMemberPayments() async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.memberPayments);
+      return MemberPaymentsResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      throw Exception(_extractDioErrorMsg(e, 'Failed to load payment history'));
+    }
+  }
+
+  /// Get Member Profile
+  Future<MemberProfileResponse> getMemberProfile() async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.memberProfile);
+      return MemberProfileResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      throw Exception(_extractDioErrorMsg(e, 'Failed to load member profile'));
+    }
+  }
+
 }

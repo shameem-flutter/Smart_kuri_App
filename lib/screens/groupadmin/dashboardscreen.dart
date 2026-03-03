@@ -7,6 +7,7 @@ import 'package:kuri_app/screens/groupadmin/groups/groupcreate.dart';
 import 'package:kuri_app/utilities/gap_func.dart';
 import '../../models/groupadmin/dashboard_model.dart';
 import '../../providers/group_provider.dart';
+import '../../widgets/custom_error_widget.dart';
 
 const _kPrimary = Color(0xFF1A56DB);
 const _kPrimaryLight = Color(0xFFEEF4FF);
@@ -31,35 +32,9 @@ class DashboardScreen extends ConsumerWidget {
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Error: $error',
-                style: GoogleFonts.inter(color: Colors.redAccent),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2962FF),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  ref.invalidate(dashboardDataProvider);
-                },
-                child: Text(
-                  'Retry',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
+        body: CustomErrorWidget(
+          error: error.toString().replaceAll('Exception: ', ''),
+          onRetry: () => ref.invalidate(dashboardDataProvider),
         ),
       ),
     );

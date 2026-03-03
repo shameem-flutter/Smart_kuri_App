@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:kuri_app/screens/member-admin/memberhomescreen.dart';
 import 'providers/auth_provider_riverpod.dart';
 import 'screens/groupadmin/home_screen.dart';
 import 'screens/groupadmin/auth/login_screen.dart';
 import 'screens/collector-admin/collectorhomescreen.dart';
-import 'screens/member-admin/memberdashboardscreen.dart';
 import 'utilities/api_config.dart';
 
 import 'package:google_fonts/google_fonts.dart';
@@ -85,7 +85,7 @@ class _AuthInitializerState extends ConsumerState<AuthInitializer> {
       if (authState.isAuthenticated) {
         if (authState.role == 'member') {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const MemberDashboardScreen()),
+            MaterialPageRoute(builder: (_) => const Memberhomescreen()),
           );
         } else if (authState.role == 'collector') {
           Navigator.of(context).pushReplacement(
