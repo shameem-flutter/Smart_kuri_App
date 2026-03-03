@@ -9,6 +9,7 @@ import '../../../models/groupadmin/auction/spin_auction_model.dart';
 import '../../../providers/auction_provider.dart';
 import '../../../providers/group_provider.dart';
 import '../../../utilities/colors.dart';
+import '../../../widgets/custom_error_widget.dart';
 
 class SpinScreen extends ConsumerStatefulWidget {
   final int auctionId;
@@ -151,50 +152,9 @@ class _SpinScreenState extends ConsumerState<SpinScreen> {
         data: (data) => _buildSpinContent(data),
         loading: () =>
             Center(child: CircularProgressIndicator(color: primaryColor)),
-        error: (err, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: 48,
-                  color: Colors.red[300],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load spin data',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1F2937),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  err.toString().replaceAll('Exception: ', ''),
-                  style: GoogleFonts.dmSans(fontSize: 13, color: Colors.grey),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () =>
-                      ref.refresh(spinAuctionProvider(widget.auctionId).future),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                  ),
-                  child: Text(
-                    'Retry',
-                    style: GoogleFonts.dmSans(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        error: (err, _) => CustomErrorWidget(
+          error: err.toString().replaceAll('Exception: ', ''),
+          onRetry: () => ref.invalidate(spinAuctionProvider(widget.auctionId)),
         ),
       ),
     );

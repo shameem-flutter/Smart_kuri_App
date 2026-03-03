@@ -7,6 +7,7 @@ import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/models/groupadmin/assigned_member_model.dart';
 import 'package:kuri_app/services/api_service.dart';
+import 'package:kuri_app/widgets/custom_error_widget.dart';
 
 class Addcollection extends ConsumerStatefulWidget {
   const Addcollection({super.key});
@@ -155,7 +156,10 @@ class _AddcollectionState extends ConsumerState<Addcollection> {
         child: membersAsync.when(
           loading: () =>
               Center(child: CircularProgressIndicator(color: primaryColor)),
-          error: (err, stack) => Center(child: Text('Error: $err')),
+          error: (err, stack) => CustomErrorWidget(
+            error: err.toString().replaceAll('Exception: ', ''),
+            onRetry: () => ref.invalidate(assignedMemberProvider(const {'page': 1, 'pageSize': 100})),
+          ),
           data: (data) => _buildForm(context, data.results, apiService),
         ),
       ),

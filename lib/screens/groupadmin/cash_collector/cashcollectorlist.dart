@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../models/groupadmin/cashcollector/cashcollector_list.dart';
 import '../../../providers/group_provider.dart';
+import '../../../widgets/custom_error_widget.dart';
 
 class CashCollectorListScreen extends ConsumerStatefulWidget {
   const CashCollectorListScreen({super.key});
@@ -342,18 +343,9 @@ class _CashCollectorListScreenState extends ConsumerState<CashCollectorListScree
                 child: CircularProgressIndicator(color: Color(0xFF2962FF)),
               )
             : _error != null
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Error: $_error'),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: _loadCollectors,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
+            ? CustomErrorWidget(
+                error: _error!,
+                onRetry: _loadCollectors,
               )
             : _collectors.isEmpty
             ? Center(

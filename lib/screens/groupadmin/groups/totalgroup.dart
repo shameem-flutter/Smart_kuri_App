@@ -6,6 +6,7 @@ import 'package:kuri_app/screens/groupadmin/groups/groupcreate.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupdetails.dart';
 import 'package:kuri_app/models/groupadmin/dashboard_model.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kuri_app/widgets/custom_error_widget.dart';
 
 const _kPrimary = Color(0xFF1A56DB);
 const _kPrimaryLight = Color(0xFFEEF4FF);
@@ -146,64 +147,9 @@ class TotalGroupScreen extends ConsumerWidget {
                     },
                   );
                 },
-                error: (error, _) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        size: 48,
-                        color: Colors.red[300],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Oops! Something went wrong',
-                        style: GoogleFonts.dmSans(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 18,
-                          color: _kText,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        child: Text(
-                          error.toString(),
-                          style: GoogleFonts.dmSans(
-                            color: _kSubtext,
-                            fontSize: 13,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _kPrimary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        onPressed: () => ref.invalidate(groupListProvider),
-                        icon: const Icon(
-                          Icons.refresh_rounded,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                        label: Text(
-                          'Retry',
-                          style: GoogleFonts.dmSans(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                error: (error, _) => CustomErrorWidget(
+                  error: error.toString().replaceAll('Exception: ', ''),
+                  onRetry: () => ref.invalidate(groupListProvider),
                 ),
                 loading: () => const Center(
                   child: CircularProgressIndicator(color: _kPrimary),

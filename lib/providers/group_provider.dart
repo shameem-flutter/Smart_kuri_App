@@ -12,6 +12,8 @@ import '../models/groupadmin/collector_profile_model.dart';
 import '../models/collector/pending_member_model.dart';
 import '../models/collector/today_collections_model.dart';
 import '../models/member/member_dashboard_model.dart';
+import '../models/member/member_payments_model.dart';
+import '../models/member/member_profile_model.dart';
 import '../models/collector/reports_model.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
@@ -103,6 +105,20 @@ final memberDashboardProvider =
     FutureProvider.autoDispose<MemberDashboardResponse>((ref) async {
       final apiService = ref.read(apiServiceProvider);
       return apiService.getMemberDashboard();
+    });
+
+// Member Payments Provider
+final memberPaymentsProvider =
+    FutureProvider.autoDispose<MemberPaymentsResponse>((ref) async {
+      final apiService = ref.read(apiServiceProvider);
+      return apiService.getMemberPayments();
+    });
+
+// Member Profile Provider
+final memberProfileProvider =
+    FutureProvider.autoDispose<MemberProfileResponse>((ref) async {
+      final apiService = ref.read(apiServiceProvider);
+      return apiService.getMemberProfile();
     });
 
 // Group Admin Providers

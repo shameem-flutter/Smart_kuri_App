@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/groupadmin/assigned_member_model.dart';
+import 'package:kuri_app/widgets/custom_error_widget.dart';
 import 'package:flutter/services.dart';
 
 class Assignedmember extends ConsumerStatefulWidget {
@@ -117,25 +118,9 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
                 loading: () => Center(
                   child: CircularProgressIndicator(color: primaryColor),
                 ),
-                error: (error, stack) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        color: Colors.red[300],
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Something went wrong',
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF2B3A4A),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                error: (error, stack) => CustomErrorWidget(
+                  error: error.toString().replaceAll('Exception: ', ''),
+                  onRetry: () => ref.invalidate(assignedMemberProvider(_params)),
                 ),
               ),
             ),

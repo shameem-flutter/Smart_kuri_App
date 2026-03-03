@@ -8,6 +8,7 @@ import '../../../models/groupadmin/auction/auction_group_details_model.dart';
 import '../../../models/groupadmin/auction/auction_details_model.dart';
 import '../../../providers/auction_provider.dart';
 import '../../../providers/group_provider.dart';
+import '../../../widgets/custom_error_widget.dart';
 import 'spinscreen.dart';
 
 // ── Palette ────────────────────────────────────────────────────────────────
@@ -48,9 +49,9 @@ class AuctionGroupDetailsScreen extends ConsumerWidget {
         data: (data) {
           return _DetailsBody(group: data.group, months: data.months);
         },
-        error: (e, _) => _ErrorView(
-          error: e.toString(),
-          onRetry: () => ref.refresh(auctionGroupDetailsProvider(groupId).future),
+        error: (e, _) => CustomErrorWidget(
+          error: e.toString().replaceAll('Exception: ', ''),
+          onRetry: () => ref.invalidate(auctionGroupDetailsProvider(groupId)),
         ),
         loading: () =>
             Center(child: CircularProgressIndicator(color: primaryColor)),
@@ -653,69 +654,6 @@ class _ActionBtn extends StatelessWidget {
   }
 }
 
-// ── Error View ─────────────────────────────────────────────────────────────
-class _ErrorView extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  const _ErrorView({required this.error, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline_rounded, size: 48, color: Colors.red[300]),
-            const SizedBox(height: 16),
-            Text(
-              'Oops! Something went wrong',
-              style: GoogleFonts.dmSans(
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-                color: _kText,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error,
-              style: GoogleFonts.dmSans(color: _kSubtext, fontSize: 13),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              onPressed: onRetry,
-              icon: const Icon(
-                Icons.refresh_rounded,
-                color: Colors.white,
-                size: 18,
-              ),
-              label: Text(
-                'Retry',
-                style: GoogleFonts.dmSans(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ── View Details Bottom Sheet ──────────────────────────────────────────────
 void _showAuctionDetailsBottomSheet(BuildContext context, int auctionId) {
@@ -744,12 +682,9 @@ void _showAuctionDetailsBottomSheet(BuildContext context, int auctionId) {
               ),
               error: (err, _) => SizedBox(
                 height: 200,
-                child: Center(
-                  child: Text(
-                    'Error: $err',
-                    style: GoogleFonts.dmSans(color: Colors.red, fontSize: 13),
-                    textAlign: TextAlign.center,
-                  ),
+                child: CustomErrorWidget(
+                  error: err.toString().replaceAll('Exception: ', ''),
+                  onRetry: () => ref.invalidate(auctionDetailsProvider(auctionId)),
                 ),
               ),
             );

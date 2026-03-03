@@ -61,6 +61,8 @@ class ApiConfig {
   static const String profile = 'api/v1/admin/profile/';
   static const String members = 'api/v1/members/';
   static const String memberDashboard = 'api/v1/members/dashboard/';
+  static const String memberPayments = 'api/v1/members/payments/';
+  static const String memberProfile = 'api/v1/members/profile/';
   static const String membersCreate = 'api/v1/members/create/';
   static const String createCollector = 'api/v1/admin/collectors/create/';
   static const String collectors = 'api/v1/admin/collectors/';

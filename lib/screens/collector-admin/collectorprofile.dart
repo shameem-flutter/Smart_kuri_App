@@ -6,6 +6,7 @@ import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/groupadmin/collector_profile_model.dart';
 import 'package:kuri_app/screens/groupadmin/auth/login_screen.dart';
+import 'package:kuri_app/widgets/custom_error_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CollectorprofileScreen extends ConsumerStatefulWidget {
@@ -51,11 +52,9 @@ class _CollectorprofileScreenState
           data: (data) => _buildProfileContent(context, data),
           loading: () =>
               Center(child: CircularProgressIndicator(color: primaryColor)),
-          error: (error, stack) => Center(
-            child: Text(
-              'Error: $error',
-              style: GoogleFonts.poppins(color: Colors.red),
-            ),
+          error: (error, stack) => CustomErrorWidget(
+            error: error.toString().replaceAll('Exception: ', ''),
+            onRetry: () => ref.invalidate(collectorProfileProvider),
           ),
         ),
       ),

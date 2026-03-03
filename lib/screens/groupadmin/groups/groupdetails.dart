@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/models/groupadmin/group_details_model.dart';
 // Import Group model
 import 'package:kuri_app/providers/group_provider.dart';
+import 'package:kuri_app/widgets/custom_error_widget.dart';
 
 final groupDetailsProvider = FutureProvider.family<GroupDetailsResponse, int>((
   ref,
@@ -67,20 +68,9 @@ class GroupDetailsScreen extends ConsumerWidget {
             ),
           );
         },
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, color: Colors.red, size: 48),
-              const SizedBox(height: 16),
-              Text('Error: $error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => ref.refresh(groupDetailsProvider(id)),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (error, stack) => CustomErrorWidget(
+          error: error.toString().replaceAll('Exception: ', ''),
+          onRetry: () => ref.invalidate(groupDetailsProvider(id)),
         ),
         loading: () => const Center(
           child: CircularProgressIndicator(color: Color(0xFF2962FF)),

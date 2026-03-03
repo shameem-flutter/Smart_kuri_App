@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/collector/reports_model.dart';
+import 'package:kuri_app/widgets/custom_error_widget.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
   const ReportsScreen({super.key});
@@ -78,33 +79,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             child: reportsAsyncValue.when(
               data: (data) => _buildContent(data),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      color: Colors.red,
-                      size: 50,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error loading data',
-                      style: GoogleFonts.poppins(fontSize: 16),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                      ),
-                      onPressed: () => ref.invalidate(reportsProvider),
-                      child: Text(
-                        'Retry',
-                        style: GoogleFonts.inter(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
+              error: (error, stack) => CustomErrorWidget(
+                error: error.toString().replaceAll('Exception: ', ''),
+                onRetry: () => ref.invalidate(reportsProvider),
               ),
             ),
           ),

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/collector/pending_member_model.dart';
 import 'package:kuri_app/utilities/colors.dart';
+import 'package:kuri_app/widgets/custom_error_widget.dart';
 
 class Pendingmembers extends ConsumerWidget {
   const Pendingmembers({super.key});
@@ -44,7 +45,10 @@ class Pendingmembers extends ConsumerWidget {
               _buildTwoToneCard(data.members[index]),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text("Error: $e")),
+        error: (e, _) => CustomErrorWidget(
+          error: e.toString().replaceAll('Exception: ', ''),
+          onRetry: () => ref.invalidate(pendingMembersProvider),
+        ),
       ),
     );
   }
