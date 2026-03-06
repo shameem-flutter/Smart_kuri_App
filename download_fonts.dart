@@ -3,7 +3,7 @@ import 'dart:io';
 
 Future<void> main() async {
   final fonts = {
-    'inter': {'400': 'Inter-Regular.ttf', '500': 'Inter-Medium.ttf', '600': 'Inter-SemiBold.ttf', '700': 'Inter-Bold.ttf'},
+    'inter': {'400': 'Inter-Regular.ttf', '500': 'Inter-Medium.ttf', '600': 'Inter-SemiBold.ttf', '700': 'Inter-Bold.ttf', '400i': 'Inter-Italic.ttf'},
     'roboto': {'400': 'Roboto-Regular.ttf', '500': 'Roboto-Medium.ttf', '700': 'Roboto-Bold.ttf'},
     'dm-sans': {'400': 'DMSans-Regular.ttf', '500': 'DMSans-Medium.ttf', '700': 'DMSans-Bold.ttf'}
   };
@@ -26,10 +26,11 @@ Future<void> main() async {
       for (final variant in data['variants']) {
         final weight = variant['fontWeight'].toString();
         final style = variant['fontStyle'];
+        final fontKey = style == 'italic' ? '${weight}i' : weight;
         
-        if (style == 'normal' && fonts[family]!.containsKey(weight)) {
+        if (fonts[family]!.containsKey(fontKey)) {
           final ttfUrl = variant['ttf'];
-          final filename = fonts[family]![weight];
+          final filename = fonts[family]![fontKey];
           final dest = '${dir.path}/$filename';
           
           print('Downloading $dest from $ttfUrl');
