@@ -40,7 +40,9 @@ class TotalGroupScreen extends ConsumerWidget {
                       Icons.arrow_back_ios_new_rounded,
                       color: _kText,
                     ),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      ref.read(groupScreenIndexProvider.notifier).goTo(0);
+                    },
                   ),
                   Expanded(
                     child: Text(
@@ -219,7 +221,7 @@ class _GroupListCard extends StatelessWidget {
                     startDate: group.startDate,
                     duration: '${group.durationMonths} Months',
                     amount: '₹${group.monthlyAmount.toStringAsFixed(0)}',
-                    collector: "${group.parentGroup}",
+                    // collector: group.collectorName,
                   ),
 
                   const SizedBox(height: 20),
@@ -256,6 +258,7 @@ class _GroupListCard extends StatelessWidget {
                             monthlyAmount: group.monthlyAmount,
                             durationMonths: group.durationMonths,
                             startDate: group.startDate,
+                            collectorName: group.collectorName,
                           );
 
                           Navigator.push(
@@ -273,7 +276,14 @@ class _GroupListCard extends StatelessWidget {
                         label: 'Collect',
                         foreground: _kGreen,
                         background: _kGreenBg,
-                        onTap: () {}, // wire up collect action
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  GroupDetailsScreen(groupId: group.id),
+                            ),
+                          );
+                        },
                         flex: 2,
                         filled: true,
                       ),
@@ -390,7 +400,7 @@ class _AccentHeader extends StatelessWidget {
                     const SizedBox(width: 2),
                     Text(
                       id,
-                      style: GoogleFonts.dmMono(
+                      style: GoogleFonts.inter(
                         color: _kSubtext,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -458,13 +468,11 @@ class _DetailGrid extends StatelessWidget {
   final String startDate;
   final String duration;
   final String amount;
-  final String collector;
 
   const _DetailGrid({
     required this.startDate,
     required this.duration,
     required this.amount,
-    required this.collector,
   });
 
   @override
@@ -510,15 +518,6 @@ class _DetailGrid extends StatelessWidget {
                 ),
               ),
               Container(width: 1, height: 40, color: _kDivider),
-              Expanded(
-                child: _DetailItem(
-                  icon: Icons.person_rounded,
-                  iconColor: const Color(0xFF9333EA),
-                  label: 'Collector',
-                  value: collector,
-                  align: CrossAxisAlignment.end,
-                ),
-              ),
             ],
           ),
         ],

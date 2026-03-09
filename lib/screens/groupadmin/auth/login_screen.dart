@@ -6,8 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../utilities/validators.dart';
 import '../../../providers/auth_provider_riverpod.dart';
 import '../../../widgets/custom_button.dart';
+import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_text_field.dart';
-import '../home_screen.dart';
+import '../group_admin_main_screen.dart';
 import '../../member-admin/memberdashboardscreen.dart';
 import 'password_reset_screen.dart';
 import 'verify_otp_screen.dart';
@@ -110,7 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         );
       } else {
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(builder: (_) => const GroupAdminMainScreen()),
         );
       }
     }

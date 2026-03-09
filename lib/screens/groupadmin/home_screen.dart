@@ -13,23 +13,22 @@ import 'package:kuri_app/screens/groupadmin/member/memberlistscreen.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/utilities/gap_func.dart';
 import 'package:kuri_app/screens/groupadmin/dashboardscreen.dart';
-import 'package:kuri_app/widgets/ip_config_dialog.dart';
 
-class HomeScreen extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kuri_app/providers/group_provider.dart';
+
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  void _showGroupOptions(BuildContext context) {
+  void _showGroupOptions(BuildContext context, WidgetRef ref) {
     _showBottomSheet(context, [
       _BottomSheetOption(
         title: "Group List",
         icon: Icons.list_alt_rounded,
         color: Colors.purple,
         onTap: () {
-          Navigator.pop(context);
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const TotalGroupScreen()),
-          );
+          Navigator.pop(context); // Close bottom sheet
+          ref.read(groupScreenIndexProvider.notifier).goTo(1); // Assuming 1 is TotalGroupScreen
         },
       ),
       _BottomSheetOption(
@@ -55,7 +54,7 @@ class HomeScreen extends StatelessWidget {
     ]);
   }
 
-  void _showMemberOptions(BuildContext context) {
+  void _showMemberOptions(BuildContext context, WidgetRef ref) {
     _showBottomSheet(context, [
       _BottomSheetOption(
         title: "Member List",
@@ -115,7 +114,7 @@ class HomeScreen extends StatelessWidget {
     ]);
   }
 
-  void _showCollectionOptions(BuildContext context) {
+  void _showCollectionOptions(BuildContext context, WidgetRef ref) {
     _showBottomSheet(context, [
       _BottomSheetOption(
         title: "Add Collection",
@@ -142,7 +141,7 @@ class HomeScreen extends StatelessWidget {
     ]);
   }
 
-  void _showAuctionOptions(BuildContext context) {
+  void _showAuctionOptions(BuildContext context, WidgetRef ref) {
     _showBottomSheet(context, [
       _BottomSheetOption(
         title: "Auction List",
@@ -224,7 +223,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD), // Light gray background
       body: SafeArea(
@@ -235,34 +234,33 @@ class HomeScreen extends StatelessWidget {
             children: [
               // Header
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const IpConfigDialog(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2B3A4A), // Dark color for IP button
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Text(
-                        'IP',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-
+                  // GestureDetector(
+                  //   onTap: () {
+                  //     Navigator.push(
+                  //       context,
+                  //       MaterialPageRoute(
+                  //         builder: (context) => const IpConfigDialog(),
+                  //       ),
+                  //     );
+                  //   },
+                  //   child: Container(
+                  //     padding: const EdgeInsets.all(12),
+                  //     decoration: const BoxDecoration(
+                  //       color: Color(0xFF2B3A4A), // Dark color for IP button
+                  //       shape: BoxShape.circle,
+                  //     ),
+                  //     child: const Text(
+                  //       'IP',
+                  //       style: TextStyle(
+                  //         color: Colors.white,
+                  //         fontWeight: FontWeight.bold,
+                  //         fontSize: 12,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -317,7 +315,7 @@ class HomeScreen extends StatelessWidget {
                 subtitle: 'Manage your groups',
                 icon: Icons.layers_rounded,
                 iconColor: Colors.blue,
-                onTap: () => _showGroupOptions(context),
+                onTap: () => _showGroupOptions(context, ref),
               ),
               vertGap(08),
               _DashboardCard(
@@ -325,7 +323,7 @@ class HomeScreen extends StatelessWidget {
                 subtitle: 'View member details',
                 icon: Icons.people_rounded,
                 iconColor: Colors.blueAccent, // Lighter blue
-                onTap: () => _showMemberOptions(context),
+                onTap: () => _showMemberOptions(context, ref),
               ),
               vertGap(08),
               _DashboardCard(
@@ -333,7 +331,7 @@ class HomeScreen extends StatelessWidget {
                 subtitle: 'Track payment history',
                 icon: Icons.inventory_2_rounded,
                 iconColor: Colors.teal,
-                onTap: () => _showCollectionOptions(context),
+                onTap: () => _showCollectionOptions(context, ref),
               ),
               vertGap(08),
               _DashboardCard(
@@ -341,7 +339,7 @@ class HomeScreen extends StatelessWidget {
                 subtitle: 'Manage auctions',
                 icon: Icons.gavel_rounded,
                 iconColor: Colors.orange,
-                onTap: () => _showAuctionOptions(context),
+                onTap: () => _showAuctionOptions(context, ref),
               ),
             ],
           ),
@@ -474,5 +472,3 @@ Widget buildHeaderCard() {
     ],
   );
 }
-
-

@@ -5,9 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/groupadmin/collector_profile_model.dart';
+import 'package:kuri_app/providers/auth_provider_riverpod.dart';
 import 'package:kuri_app/screens/groupadmin/auth/login_screen.dart';
 import 'package:kuri_app/widgets/custom_error_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class CollectorprofileScreen extends ConsumerStatefulWidget {
   const CollectorprofileScreen({super.key});
@@ -19,6 +19,8 @@ class CollectorprofileScreen extends ConsumerStatefulWidget {
 
 class _CollectorprofileScreenState
     extends ConsumerState<CollectorprofileScreen> {
+  bool _isLoggingOut = false;
+
   @override
   Widget build(BuildContext context) {
     final profileData = ref.watch(collectorProfileProvider);
@@ -330,68 +332,90 @@ class _CollectorprofileScreenState
   }
 
   Future<void> _handleLogout(BuildContext context) async {
-    // Show confirmation dialog before logging out
-    final bool? confirm = await showDialog<bool>(
+    await showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Text(
-            'Confirm Logout',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF2B3A4A),
-            ),
-          ),
-          content: Text(
-            'Are you sure you want to log out?',
-            style: GoogleFonts.inter(color: Colors.grey[700]),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(
-                'Cancel',
+        return StatefulBuilder(
+          builder: (stfContext, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Text(
+                'Confirm Logout',
                 style: GoogleFonts.poppins(
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF2B3A4A),
                 ),
               ),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFFF5A5F),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
+              content: Text(
+                'Are you sure you want to log out?',
+                style: GoogleFonts.inter(color: Colors.grey[700]),
               ),
-              child: Text(
-                'Log Out',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+              actions: [
+                TextButton(
+                  onPressed: _isLoggingOut
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+                ElevatedButton(
+                  onPressed: _isLoggingOut
+                      ? null
+                      : () async {
+                          setDialogState(() => _isLoggingOut = true);
+                          try {
+                            await ref.read(authProvider.notifier).logout();
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isLoggingOut = false);
+                            }
+                          }
+
+                          if (!mounted) return;
+                          Navigator.of(dialogContext).pop();
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ),
+                            (Route<dynamic> route) => false,
+                          );
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF5A5F),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: _isLoggingOut
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Text(
+                          'Log Out',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
-
-    if (confirm == true && mounted) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('access_token');
-      await prefs.remove('refresh_token');
-      await prefs.remove('user_role');
-
-      if (!mounted) return;
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-        (Route<dynamic> route) => false,
-      );
-    }
   }
 }

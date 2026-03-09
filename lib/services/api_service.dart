@@ -25,6 +25,7 @@ import '../models/groupadmin/auction/spin_auction_model.dart';
 import '../models/groupadmin/collector_dashboard_model.dart';
 import '../models/groupadmin/assigned_member_model.dart';
 import '../models/groupadmin/member_history_model.dart';
+import '../models/groupadmin/member_details_model.dart';
 import '../models/groupadmin/collector_profile_model.dart';
 import '../models/collector/pending_member_model.dart';
 import '../models/collector/today_collections_model.dart';
@@ -189,6 +190,27 @@ class ApiService {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
       throw Exception(msg);
+    }
+  }
+
+  Future<void> logout(String identifier, String password) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.post(
+        ApiConfig.logout,
+        data: {
+          'identifier': identifier,
+          'password': password,
+        },
+      );
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Logout failed: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      // Don't throw if logout fails on server side to still clear local storage
+      debugPrint('Error logging out from backend: ${e.message}');
+    } catch (e) {
+      debugPrint('Error logging out from backend: $e');
     }
   }
 
@@ -572,6 +594,43 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> updateMember(
+    int id,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.put(
+        '${ApiConfig.memberUpdate}$id/update/',
+        data: data,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data as Map<String, dynamic>;
+      }
+      throw Exception('Failed to update member: ${response.statusCode}');
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String msg = 'Error updating member';
+      if (data is Map<String, dynamic>) {
+        msg = data['detail'] ?? data['message'] ?? data.toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
+  Future<MemberDetailsResponse> getMemberAdminDetails(int id) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.memberAdminDetails(id));
+      if (response.statusCode == 200) {
+        return MemberDetailsResponse.fromJson(response.data);
+      }
+      throw Exception('Failed to load member details: ${response.statusCode}');
+    } on DioException catch (e) {
+      throw Exception(_extractDioErrorMsg(e, 'Error fetching member details'));
+    }
+  }
+
   Future<Map<String, dynamic>> createCollector(CashCollectorModel data) async {
     try {
       final dio = await _authDio;
@@ -902,6 +961,18 @@ class ApiService {
       return MemberProfileResponse.fromJson(response.data);
     } on DioException catch (e) {
       throw Exception(_extractDioErrorMsg(e, 'Failed to load member profile'));
+    }
+  }
+
+  /// Get Member Auctions
+  Future<List<AuctionItem>> getMemberAuctions() async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.get(ApiConfig.memberAuctions);
+      final List<dynamic> data = response.data;
+      return data.map((e) => AuctionItem.fromJson(e)).toList();
+    } on DioException catch (e) {
+      throw Exception(_extractDioErrorMsg(e, 'Failed to load member auctions'));
     }
   }
 

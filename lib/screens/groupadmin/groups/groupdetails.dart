@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/models/groupadmin/group_details_model.dart';
-// Import Group model
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/widgets/custom_error_widget.dart';
 
@@ -395,5 +394,3 @@ class GroupDetailsScreen extends ConsumerWidget {
     );
   }
 }
-
-

@@ -30,8 +30,7 @@ class MemberDashboardResponse extends Equatable {
           .map((e) => AuctionItem.fromJson(e as Map<String, dynamic>))
           .toList(),
       latestAuction: json['latest_auction'] != null
-          ? AuctionItem.fromJson(
-              json['latest_auction'] as Map<String, dynamic>)
+          ? AuctionItem.fromJson(json['latest_auction'] as Map<String, dynamic>)
           : null,
       isWinner: json['is_winner'] ?? false,
     );
@@ -39,14 +38,14 @@ class MemberDashboardResponse extends Equatable {
 
   @override
   List<Object?> get props => [
-        member,
-        totalPaid,
-        totalAmount,
-        remaining,
-        auctions,
-        latestAuction,
-        isWinner,
-      ];
+    member,
+    totalPaid,
+    totalAmount,
+    remaining,
+    auctions,
+    latestAuction,
+    isWinner,
+  ];
 }
 
 class MemberDashboardInfo extends Equatable {
@@ -91,17 +90,17 @@ class MemberDashboardInfo extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        phone,
-        email,
-        isActive,
-        groupId,
-        groupName,
-        address,
-        joinDate,
-        aadhaarMasked,
-      ];
+    id,
+    name,
+    phone,
+    email,
+    isActive,
+    groupId,
+    groupName,
+    address,
+    joinDate,
+    aadhaarMasked,
+  ];
 }
 
 class AuctionItem extends Equatable {
@@ -154,14 +153,14 @@ class AuctionItem extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        group,
-        monthNo,
-        auctionDate,
-        winner,
-        winnerToken,
-        winnerName,
-        status,
-        action,
-      ];
+    id,
+    group,
+    monthNo,
+    auctionDate,
+    winner,
+    winnerToken,
+    winnerName,
+    status,
+    action,
+  ];
 }

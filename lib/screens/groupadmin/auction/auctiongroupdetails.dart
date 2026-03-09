@@ -333,7 +333,7 @@ class _AccentHeader extends StatelessWidget {
                     const SizedBox(width: 2),
                     Text(
                       id,
-                      style: GoogleFonts.dmMono(
+                      style: GoogleFonts.inter(
                         color: _kSubtext,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,

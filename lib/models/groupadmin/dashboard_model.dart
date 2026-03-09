@@ -45,6 +45,7 @@ class DashboardGroup extends Equatable {
   final double monthlyAmount;
   final int durationMonths;
   final String startDate;
+  final String collectorName;
 
   const DashboardGroup({
     required this.id,
@@ -55,6 +56,7 @@ class DashboardGroup extends Equatable {
     required this.monthlyAmount,
     required this.durationMonths,
     required this.startDate,
+    required this.collectorName,
   });
 
   factory DashboardGroup.fromJson(Map<String, dynamic> json) {
@@ -67,6 +69,7 @@ class DashboardGroup extends Equatable {
       monthlyAmount: double.tryParse(json['monthly_amount'].toString()) ?? 0.0,
       durationMonths: int.tryParse(json['duration_months'].toString()) ?? 0,
       startDate: json['start_date'] as String? ?? 'N/A',
+      collectorName: json['collector_name'] as String? ?? 'Not Assigned',
     );
   }
 
@@ -80,6 +83,7 @@ class DashboardGroup extends Equatable {
     monthlyAmount,
     durationMonths,
     startDate,
+    collectorName,
   ];
 }
 

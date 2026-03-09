@@ -5,7 +5,7 @@ import '../../../providers/auth_provider_riverpod.dart';
 import '../../../utilities/colors.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_text_field.dart';
-import '../home_screen.dart';
+import '../group_admin_main_screen.dart';
 
 /// Verify OTP Screen
 ///
@@ -63,7 +63,7 @@ class _VerifyOtpScreenState extends ConsumerState<VerifyOtpScreen> {
     if (authState.isAuthenticated) {
       Navigator.of(
         context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const GroupAdminMainScreen()));
     }
   }
 

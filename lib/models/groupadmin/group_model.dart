@@ -8,6 +8,7 @@ class Group extends Equatable {
   final double totalAmount;
   final String startDate;
   final int? parentGroup;
+  final String collectorName;
 
   const Group({
     required this.id,
@@ -17,6 +18,7 @@ class Group extends Equatable {
     required this.totalAmount,
     required this.startDate,
     this.parentGroup,
+    required this.collectorName,
   });
 
   factory Group.fromJson(Map<String, dynamic> json) {
@@ -30,6 +32,7 @@ class Group extends Equatable {
       parentGroup: json['parent_group'] != null
           ? int.tryParse(json['parent_group'].toString())
           : null,
+      collectorName: json['collector_name'] as String? ?? 'Not Assigned',
     );
   }
 
@@ -42,6 +45,7 @@ class Group extends Equatable {
         totalAmount,
         startDate,
         parentGroup,
+        collectorName,
       ];
 }
 

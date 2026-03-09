@@ -43,6 +43,29 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     }
   }
 
+  @override
+  void initState() {
+    super.initState();
+    // Set current month as default filter after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setCurrentMonthFilter();
+    });
+  }
+
+  void _setCurrentMonthFilter() {
+    final now = DateTime.now();
+    final firstDayOfMonth = DateTime(now.year, now.month, 1);
+    final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
+
+    final DateFormat formatter = DateFormat('yyyy-MM-dd');
+    ref
+        .read(reportFilterProvider.notifier)
+        .setFilters(
+          formatter.format(firstDayOfMonth),
+          formatter.format(lastDayOfMonth),
+        );
+  }
+
   void _clearFilters() {
     ref.read(reportFilterProvider.notifier).clearFilters();
   }
@@ -202,7 +225,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               end: Alignment.bottomRight,
               colors: [Color(0xFF302B63), Color(0xFF0F0C29)],
             ),
-            shadowColor: const Color(0xFF0F0C29).withOpacity(0.4),
+            shadowColor: const Color(0xFF0F0C29).withValues(alpha: 0.4),
           ),
         ),
         const SizedBox(width: 16),
@@ -217,7 +240,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               end: Alignment.bottomRight,
               colors: [Color(0xFF434343), Color(0xFF141414)],
             ),
-            shadowColor: const Color(0xFF141414).withOpacity(0.4),
+            shadowColor: const Color(0xFF141414).withValues(alpha: 0.4),
           ),
         ),
       ],
@@ -243,7 +266,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             offset: const Offset(0, 6),
           ),
           BoxShadow(
-            color: shadowColor.withOpacity(0.2),
+            color: shadowColor.withValues(alpha: 0.2),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -255,8 +278,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(
-                0.2,
+              color: Colors.white.withValues(
+                alpha: 0.2,
               ), // Frosted glass effect for the icon
               shape: BoxShape.circle,
             ),
@@ -267,7 +290,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             title,
             style: GoogleFonts.inter(
               fontSize: 13,
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -296,9 +319,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         boxShadow: [
           // A softer, wider shadow gives a beautiful "floating" elevation
           BoxShadow(
-            color: const Color(
-              0xFF1E3C72,
-            ).withOpacity(0.06), // Tinted shadow instead of pure black
+            color: const Color(0xFF1E3C72).withValues(alpha: 0.06),
             blurRadius: 20,
             spreadRadius: 2,
             offset: const Offset(0, 8),
@@ -317,13 +338,13 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  primaryColor.withOpacity(0.2),
-                  primaryColor.withOpacity(0.05),
+                  primaryColor.withValues(alpha: 0.2),
+                  primaryColor.withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: primaryColor.withOpacity(0.1),
+                color: primaryColor.withValues(alpha: 0.1),
                 width: 1.5,
               ),
             ),
@@ -407,7 +428,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E3C72).withOpacity(0.05),
+                  color: const Color(0xFF1E3C72).withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -426,5 +447,3 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 }
-
-

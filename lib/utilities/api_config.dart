@@ -33,6 +33,7 @@ class ApiConfig {
 
   // Auth endpoints
   static const String login = 'api/v1/login/';
+  static const String logout = 'api/v1/logout/';
   static const String token = 'api/v1/token/';
   static const String tokenRefresh = 'api/v1/token/refresh/';
   static const String passwordResetRequest = 'api/v1/password-reset/request/';
@@ -61,9 +62,12 @@ class ApiConfig {
   static const String profile = 'api/v1/admin/profile/';
   static const String members = 'api/v1/members/';
   static const String memberDashboard = 'api/v1/members/dashboard/';
+  static const String memberAuctions = 'api/v1/members/auctions/';
   static const String memberPayments = 'api/v1/members/payments/';
   static const String memberProfile = 'api/v1/members/profile/';
   static const String membersCreate = 'api/v1/members/create/';
+  static const String memberUpdate = 'api/v1/members/';
+  static String memberAdminDetails(int id) => 'api/v1/members/$id/';
   static const String createCollector = 'api/v1/admin/collectors/create/';
   static const String collectors = 'api/v1/admin/collectors/';
   static const String deleteCollector = 'api/v1/admin/collectors/';

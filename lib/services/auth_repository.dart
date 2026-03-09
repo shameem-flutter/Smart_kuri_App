@@ -90,7 +90,18 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
-    await _storageService.clearAll();
+    try {
+      final identifier = await _storageService.getCredentialIdentifier();
+      final password = await _storageService.getCredentialPassword();
+
+      if (identifier != null && password != null) {
+        await _apiService.logout(identifier, password);
+      }
+    } catch (e) {
+      // Ignore API / credential errors during logout, we want to clear local storage anyway
+    } finally {
+      await _storageService.clearAll();
+    }
   }
 
   Future<bool> isAuthenticated() async {

@@ -8,6 +8,7 @@ import '../models/groupadmin/cashcollector/cashcollector_list.dart';
 import '../models/groupadmin/collector_dashboard_model.dart';
 import '../models/groupadmin/assigned_member_model.dart';
 import '../models/groupadmin/member_history_model.dart';
+import '../models/groupadmin/member_details_model.dart';
 import '../models/groupadmin/collector_profile_model.dart';
 import '../models/collector/pending_member_model.dart';
 import '../models/collector/today_collections_model.dart';
@@ -31,6 +32,10 @@ class ScreenIndexNotifier extends Notifier<int> {
 }
 
 final collectorScreenIndexProvider = NotifierProvider<ScreenIndexNotifier, int>(
+  ScreenIndexNotifier.new,
+);
+
+final groupScreenIndexProvider = NotifierProvider<ScreenIndexNotifier, int>(
   ScreenIndexNotifier.new,
 );
 
@@ -92,6 +97,14 @@ final memberHistoryProvider = FutureProvider.family<MemberHistoryResponse, int>(
   },
 );
 
+// Admin Member Details provider
+final memberAdminDetailsProvider = FutureProvider.family<MemberDetailsResponse, int>(
+  (ref, memberId) async {
+    final apiService = ref.watch(apiServiceProvider);
+    return apiService.getMemberAdminDetails(memberId);
+  },
+);
+
 // Collector Profile provider
 final collectorProfileProvider = FutureProvider<CollectorProfileResponse>((
   ref,
@@ -114,12 +127,21 @@ final memberPaymentsProvider =
       return apiService.getMemberPayments();
     });
 
+// Member Auctions Provider
+final memberAuctionsProvider = FutureProvider.autoDispose<List<AuctionItem>>((
+  ref,
+) async {
+  final apiService = ref.read(apiServiceProvider);
+  return apiService.getMemberAuctions();
+});
+
 // Member Profile Provider
-final memberProfileProvider =
-    FutureProvider.autoDispose<MemberProfileResponse>((ref) async {
-      final apiService = ref.read(apiServiceProvider);
-      return apiService.getMemberProfile();
-    });
+final memberProfileProvider = FutureProvider.autoDispose<MemberProfileResponse>(
+  (ref) async {
+    final apiService = ref.read(apiServiceProvider);
+    return apiService.getMemberProfile();
+  },
+);
 
 // Group Admin Providers
 final groupListProvider = FutureProvider<GroupListResponse>((ref) async {
@@ -170,10 +192,15 @@ class ReportFilterState {
 
   ReportFilterState({this.fromDate, this.toDate});
 
-  ReportFilterState copyWith({String? fromDate, String? toDate}) {
+  static const _sentinel = Object();
+
+  ReportFilterState copyWith({
+    Object? fromDate = _sentinel,
+    Object? toDate = _sentinel,
+  }) {
     return ReportFilterState(
-      fromDate: fromDate ?? this.fromDate,
-      toDate: toDate ?? this.toDate,
+      fromDate: fromDate == _sentinel ? this.fromDate : fromDate as String?,
+      toDate: toDate == _sentinel ? this.toDate : toDate as String?,
     );
   }
 }

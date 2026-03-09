@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kuri_app/screens/groupadmin/member/membereditscreen.dart';
+import 'package:kuri_app/screens/groupadmin/member/memberdetails.dart';
+import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/utilities/gap_func.dart';
 import '../../../models/groupadmin/member_list.dart';
 import '../../../providers/group_provider.dart';
@@ -493,7 +496,100 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
                 ),
               ],
             ),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Divider(height: 1, color: Color(0xFFF0F0F0)),
+            ),
+            Row(
+              children: [
+                _buildActionBtn(
+                  icon: Icons.bar_chart_rounded,
+                  label: 'Details',
+                  foreground: const Color(0xFF1A56DB),
+                  background: const Color(0xFFEEF4FF),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            MemberDetailsScreen(memberId: member.id),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildActionBtn(
+                  icon: Icons.edit_rounded,
+                  label: 'Edit',
+                  foreground: const Color(0xFFF59E0B),
+                  background: const Color(0xFFFFFBEB),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => Membereditscreen(member: member),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildActionBtn(
+                  icon: Icons.info_outline_rounded,
+                  label: 'Delete',
+                  foreground: redColor,
+                  background: const Color(0xFFECFDF5),
+                  onTap: () {
+                    // TODO: Navigate to member details
+                  },
+                  flex: 2,
+                  filled: true,
+                ),
+              ],
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionBtn({
+    required IconData icon,
+    required String label,
+    required Color foreground,
+    required Color background,
+    required VoidCallback onTap,
+    int flex = 1,
+    bool filled = false,
+  }) {
+    return Expanded(
+      flex: flex,
+      child: Material(
+        color: filled ? foreground : background,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          splashColor: foreground.withValues(alpha: 0.15),
+          highlightColor: foreground.withValues(alpha: 0.08),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 16, color: filled ? Colors.white : foreground),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: GoogleFonts.dmSans(
+                    color: filled ? Colors.white : foreground,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.1,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -531,5 +627,3 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
     );
   }
 }
-
-

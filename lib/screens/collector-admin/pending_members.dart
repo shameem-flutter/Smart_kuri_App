@@ -25,7 +25,8 @@ class Pendingmembers extends ConsumerWidget {
             color: whiteColor,
             size: 20,
           ),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () =>
+              ref.read(collectorScreenIndexProvider.notifier).goTo(-1),
         ),
         title: Text(
           'Pending Dues',

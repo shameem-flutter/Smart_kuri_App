@@ -1,70 +1,103 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-class CustomErrorWidget extends StatelessWidget {
+class CustomErrorWidget extends StatefulWidget {
   final String error;
-  final VoidCallback onRetry;
+  final Future<void> Function()? onRetryFuture;
+  final VoidCallback? onRetry;
 
   const CustomErrorWidget({
     super.key,
     required this.error,
-    required this.onRetry,
+    this.onRetryFuture,
+    this.onRetry,
   });
+
+  @override
+  State<CustomErrorWidget> createState() => _CustomErrorWidgetState();
+}
+
+class _CustomErrorWidgetState extends State<CustomErrorWidget> {
+  bool _isLoading = false;
+
+  void _handleRetry() async {
+    if (_isLoading) return;
+
+    if (widget.onRetryFuture != null) {
+      setState(() {
+        _isLoading = true;
+      });
+      try {
+        await widget.onRetryFuture!();
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    } else if (widget.onRetry != null) {
+      // For synchronous callbacks (like ref.invalidate), we still show a brief loading state
+      // to give the user visual feedback that the button was clicked.
+      setState(() {
+        _isLoading = true;
+      });
+      widget.onRetry!();
+
+      // We don't necessarily reset _isLoading here because typically the
+      // parent widget (like a FutureProvider watch) will rebuild the entire UI
+      // into a loading state anyway. But add a small delay fallback just in case.
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: Colors.red[300],
+            const Icon(
+              Icons.error_outline,
+              color: Colors.redAccent,
+              size: 48.0,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 16.0),
             Text(
-              'Something went wrong',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF2B3A4A),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: Colors.grey[600],
-              ),
+              widget.error,
               textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16.0, color: Colors.black87),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 24.0),
             ElevatedButton.icon(
-              onPressed: onRetry,
+              onPressed:
+                  (widget.onRetry != null || widget.onRetryFuture != null) &&
+                      !_isLoading
+                  ? _handleRetry
+                  : null,
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh),
+              label: Text(_isLoading ? 'Retrying...' : 'Retry'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2962FF),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+                  horizontal: 24.0,
+                  vertical: 12.0,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              icon: const Icon(
-                Icons.refresh_rounded,
-                color: Colors.white,
-                size: 18,
-              ),
-              label: Text(
-                'Retry',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kuri_app/screens/groupadmin/collection/collectionlist.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupdetails.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupcreate.dart';
 import 'package:kuri_app/utilities/gap_func.dart';
@@ -166,7 +167,7 @@ class DashboardScreen extends ConsumerWidget {
                       startDate: group.startDate,
                       duration: '${group.durationMonths} months',
                       amount: '₹${group.monthlyAmount}',
-                      collector: 'Not Assigned', // Not provided in API
+                      collector: group.collectorName,
                       isActive: group.isActive,
                       onEdit: () {
                         Navigator.of(context).push(
@@ -184,7 +185,13 @@ class DashboardScreen extends ConsumerWidget {
                           ),
                         );
                       },
-                      onCollect: () {},
+                      onCollect: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => CollectionListScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -462,7 +469,7 @@ class _AccentHeader extends StatelessWidget {
                     const SizedBox(width: 2),
                     Text(
                       id,
-                      style: GoogleFonts.dmMono(
+                      style: GoogleFonts.inter(
                         color: _kSubtext,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -710,5 +717,3 @@ class _ActionBtn extends StatelessWidget {
     );
   }
 }
-
-
