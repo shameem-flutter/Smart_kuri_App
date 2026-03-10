@@ -72,6 +72,69 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
     }
   }
 
+  Future<void> _deleteMember(int id) async {
+    try {
+      showDialog(
+        context: context,
+        builder: (_) => const Center(
+          child: CircularProgressIndicator(color: Color(0xFF2962FF)),
+        ),
+        barrierDismissible: false,
+      );
+      await ref.read(apiServiceProvider).deleteMember(id);
+      if (mounted) Navigator.pop(context); // close loader
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Member deleted successfully'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      _loadMembers();
+    } catch (e) {
+      if (mounted) Navigator.pop(context); // close loader
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to delete member: ${e.toString().replaceAll("Exception: ", "")}',
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _confirmDelete(Member member) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Member'),
+        content: Text('Are you sure you want to delete ${member.name}?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: redColor),
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteMember(member.id);
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -527,20 +590,18 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => Membereditscreen(member: member),
+                        builder: (_) => MemberEditScreen(member: member),
                       ),
                     );
                   },
                 ),
                 const SizedBox(width: 8),
                 _buildActionBtn(
-                  icon: Icons.info_outline_rounded,
+                  icon: Icons.delete,
                   label: 'Delete',
                   foreground: redColor,
                   background: const Color(0xFFECFDF5),
-                  onTap: () {
-                    // TODO: Navigate to member details
-                  },
+                  onTap: () => _confirmDelete(member),
                   flex: 2,
                   filled: true,
                 ),
@@ -565,11 +626,11 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
       flex: flex,
       child: Material(
         color: filled ? foreground : background,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          splashColor: foreground.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(12),
+          splashColor: foreground.withValues(alpha: 0.50),
           highlightColor: foreground.withValues(alpha: 0.08),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 13),

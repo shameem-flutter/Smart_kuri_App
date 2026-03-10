@@ -83,6 +83,16 @@ class AuthRepository {
     return await _apiService.requestPasswordReset(request);
   }
 
+  Future<AuthResponse> firstLoginChangePassword(
+    String newPassword,
+    String confirmPassword,
+  ) async {
+    return await _apiService.firstLoginChangePassword(
+      newPassword,
+      confirmPassword,
+    );
+  }
+
   Future<AuthResponse> confirmPasswordReset(
     PasswordResetConfirmRequest request,
   ) async {

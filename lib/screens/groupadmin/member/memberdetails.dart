@@ -6,18 +6,173 @@ import '../../../providers/group_provider.dart';
 import '../../../widgets/custom_error_widget.dart';
 
 // ── Palette ──────────────────────────────────────────────────────────────────
-const _bg = Color(0xFFF0F4FF);
+const _bg = Color(0xFFF4F7FF);
 const _surface = Color(0xFFFFFFFF);
 const _primary = Color(0xFF2563EB);
-const _primaryDark = Color(0xFF1E40AF);
+const _primaryDark = Color(0xFF1D4ED8);
 const _green = Color(0xFF059669);
 const _greenSoft = Color(0xFFD1FAE5);
 const _amber = Color(0xFFD97706);
 const _amberSoft = Color(0xFFFEF3C7);
 const _ink = Color(0xFF0F172A);
 const _muted = Color(0xFF64748B);
-const _divider = Color(0xFFE2E8F0);
+const _rowAlt = Color(0xFFF8FAFF);
+const _border = Color(0xFFE2E8F0);
 
+// ── Shared card decoration ────────────────────────────────────────────────────
+BoxDecoration _cardDecoration({Color? shadowColor, double radius = 20}) =>
+    BoxDecoration(
+      color: _surface,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: _border.withValues(alpha: 0.5)),
+      boxShadow: [
+        BoxShadow(
+          color: (shadowColor ?? const Color(0xFF0F172A)).withValues(
+            alpha: 0.04,
+          ),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
+
+// ── Top Bar ───────────────────────────────────────────────────────────────────
+class _TopBar extends StatefulWidget {
+  final VoidCallback onBack;
+  final VoidCallback onRefresh;
+
+  const _TopBar({required this.onBack, required this.onRefresh});
+
+  @override
+  State<_TopBar> createState() => _TopBarState();
+}
+
+class _TopBarState extends State<_TopBar> {
+  bool _refreshing = false;
+
+  Future<void> _handleRefresh() async {
+    setState(() => _refreshing = true);
+    widget.onRefresh();
+    await Future.delayed(const Duration(milliseconds: 800));
+    if (mounted) setState(() => _refreshing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final topPad = MediaQuery.of(context).padding.top;
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, topPad + 10, 16, 10),
+      decoration: BoxDecoration(
+        color: _bg,
+        border: Border(
+          bottom: BorderSide(color: _border.withValues(alpha: 0.8), width: 1),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Back button
+          _BarIconButton(
+            icon: Icons.arrow_back_ios_new_rounded,
+            onTap: widget.onBack,
+          ),
+          const SizedBox(width: 14),
+          // Title + subtitle
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Member Details',
+                  style: GoogleFonts.poppins(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: _ink,
+                    letterSpacing: -0.4,
+                    height: 1.15,
+                  ),
+                ),
+                Text(
+                  'Profile & payment history',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: _muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Refresh button
+          GestureDetector(
+            onTap: _refreshing ? null : _handleRefresh,
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: _border),
+                boxShadow: [
+                  BoxShadow(
+                    color: _ink.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              alignment: Alignment.center,
+              child: _refreshing
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: _primary,
+                      ),
+                    )
+                  : const Icon(Icons.refresh_rounded, color: _ink, size: 20),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BarIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _BarIconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: _surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _border),
+          boxShadow: [
+            BoxShadow(
+              color: _ink.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, color: _ink, size: 18),
+      ),
+    );
+  }
+}
+
+// ── Main Screen ───────────────────────────────────────────────────────────────
 class MemberDetailsScreen extends ConsumerWidget {
   final int memberId;
   const MemberDetailsScreen({super.key, required this.memberId});
@@ -52,62 +207,44 @@ class MemberDetailsScreen extends ConsumerWidget {
   ) {
     return CustomScrollView(
       slivers: [
-        // ── Hero SliverAppBar ─────────────────────────────────────────────
+        // ── Top Bar ───────────────────────────────────────────────────────
         SliverAppBar(
-          expandedHeight: 220,
           pinned: true,
-          backgroundColor: _primaryDark,
+          backgroundColor: Colors.transparent,
           elevation: 0,
-          leading: IconButton(
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(
-                Icons.refresh_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              onPressed: () =>
-                  ref.invalidate(memberAdminDetailsProvider(memberId)),
-            ),
-          ],
-          flexibleSpace: FlexibleSpaceBar(
-            background: _buildHeroCard(data.member),
+          surfaceTintColor: Colors.transparent,
+          toolbarHeight: 80,
+          automaticallyImplyLeading: false,
+          flexibleSpace: _TopBar(
+            onBack: () => Navigator.pop(context),
+            onRefresh: () =>
+                ref.invalidate(memberAdminDetailsProvider(memberId)),
           ),
         ),
 
-        // ── Body Content ─────────────────────────────────────────────────
+        // ── Body ──────────────────────────────────────────────────────────
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Bento summary row
+                _buildHeroCard(data.member),
+                const SizedBox(height: 24),
+
+                _sectionLabel('Overview'),
+                const SizedBox(height: 12),
                 _buildBentoSummary(data),
                 const SizedBox(height: 28),
 
-                // Member info section
-                _sectionLabel('Member Information'),
+                _sectionLabel('Information'),
                 const SizedBox(height: 12),
                 _buildInfoCard(data),
                 const SizedBox(height: 28),
 
-                // Month-wise
-                _sectionLabel('Month-wise Payments'),
+                _sectionLabel('Timeline & Payments'),
                 const SizedBox(height: 12),
-                ...List.generate(data.monthWise.length, (i) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _buildMonthCard(data.monthWise[i]),
-                  );
-                }),
+                _buildMonthsCard(data.monthWise),
               ],
             ),
           ),
@@ -116,59 +253,45 @@ class MemberDetailsScreen extends ConsumerWidget {
     );
   }
 
-  // ── Hero ─────────────────────────────────────────────────────────────────
+  // ── Hero Card ─────────────────────────────────────────────────────────────
   Widget _buildHeroCard(MemberDetailInfo member) {
+    final isActive = member.status.toLowerCase() == 'active';
+
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF1E3A8A), Color(0xFF2563EB), Color(0xFF3B82F6)],
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [_primary, _primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
-      child: Stack(
+      child: Column(
         children: [
-          // Decorative circles
-          Positioned(
-            top: -40,
-            right: -40,
-            child: Container(
-              width: 180,
-              height: 180,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -20,
-            left: -20,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.06),
-              ),
-            ),
-          ),
-          // Content
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 70, 20, 20),
+            padding: const EdgeInsets.all(24),
             child: Row(
               children: [
-                // Avatar
                 Container(
-                  width: 68,
-                  height: 68,
+                  width: 64,
+                  height: 64,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -176,7 +299,7 @@ class MemberDetailsScreen extends ConsumerWidget {
                     style: GoogleFonts.poppins(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: _primary,
                     ),
                   ),
                 ),
@@ -184,30 +307,80 @@ class MemberDetailsScreen extends ConsumerWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         member.name,
                         style: GoogleFonts.poppins(
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
-                          height: 1.1,
+                          height: 1.2,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          _heroPill(Icons.group_rounded, member.group),
-                          const SizedBox(width: 8),
-                          _heroPill(
-                            Icons.confirmation_num_rounded,
-                            'TKN ${member.tokenNo}',
-                          ),
-                        ],
+                      const SizedBox(height: 4),
+                      Text(
+                        member.phone.isNotEmpty
+                            ? member.phone
+                            : 'No Phone Provided',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ],
                   ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isActive ? _green : _amber,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Text(
+                    member.status.toUpperCase(),
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.8,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(24),
+              ),
+            ),
+            child: Row(
+              children: [
+                _heroPill(Icons.group_work_rounded, 'Group', member.group),
+                Container(
+                  width: 1,
+                  height: 30,
+                  color: Colors.white.withValues(alpha: 0.2),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                _heroPill(
+                  Icons.confirmation_num_rounded,
+                  'Token',
+                  'TKN ${member.tokenNo}',
                 ),
               ],
             ),
@@ -217,28 +390,38 @@ class MemberDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _heroPill(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
+  Widget _heroPill(IconData icon, String label, String value) {
+    return Expanded(
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: Colors.white.withValues(alpha: 0.85)),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withValues(alpha: 0.9),
+          Icon(icon, color: Colors.white70, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            // ← constrains the Column
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                Text(
+                  value,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
             ),
           ),
         ],
@@ -248,103 +431,192 @@ class MemberDetailsScreen extends ConsumerWidget {
 
   // ── Bento Summary ─────────────────────────────────────────────────────────
   Widget _buildBentoSummary(MemberDetailsResponse data) {
-    return Row(
+    final monthsLeft = data.durationMonths - data.monthsPaid;
+    final progress = data.durationMonths > 0
+        ? data.monthsPaid / data.durationMonths
+        : 0.0;
+
+    return Column(
       children: [
-        Expanded(
-          child: _BentoCard(
-            label: 'Total Paid',
-            value: '₹${data.totalCollected.toStringAsFixed(0)}',
-            sub: '${data.monthsPaid} months',
-            icon: Icons.wallet_rounded,
-            iconBg: _greenSoft,
-            iconColor: _green,
-            accentColor: _green,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _bentoCard(
+                title: 'Total Paid',
+                amount: '₹${data.totalCollected.toStringAsFixed(0)}',
+                subtitle: '${data.monthsPaid} months',
+                icon: Icons.account_balance_wallet_rounded,
+                iconColor: _green,
+                bgColor: _greenSoft,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _bentoCard(
+                title: 'Total Due',
+                amount: '₹${data.totalDue.toStringAsFixed(0)}',
+                subtitle: '$monthsLeft months left',
+                icon: Icons.pending_actions_rounded,
+                iconColor: _amber,
+                bgColor: _amberSoft,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: _BentoCard(
-            label: 'Total Due',
-            value: '₹${data.totalDue.toStringAsFixed(0)}',
-            sub: '${data.durationMonths - data.monthsPaid} months left',
-            icon: Icons.hourglass_bottom_rounded,
-            iconBg: _amberSoft,
-            iconColor: _amber,
-            accentColor: _amber,
+        const SizedBox(height: 16),
+        Container(
+          decoration: _cardDecoration(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Payment Progress',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: _ink,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${(progress * 100).toInt()}%',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: _primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: LinearProgressIndicator(
+                  value: progress.clamp(0.0, 1.0),
+                  minHeight: 10,
+                  backgroundColor: _border,
+                  valueColor: const AlwaysStoppedAnimation<Color>(_primary),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${data.monthsPaid} of ${data.durationMonths} months completed',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: _muted,
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  // ── Section Label ─────────────────────────────────────────────────────────
-  Widget _sectionLabel(String title) {
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 18,
-          decoration: BoxDecoration(
-            color: _primary,
-            borderRadius: BorderRadius.circular(2),
+  Widget _bentoCard({
+    required String title,
+    required String amount,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+  }) {
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
+            child: Icon(icon, color: iconColor, size: 22),
           ),
-        ),
-        const SizedBox(width: 10),
-        Text(
-          title,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: _ink,
-            letterSpacing: -0.2,
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: _muted,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              amount,
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: _ink,
+                height: 1.1,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: iconColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   // ── Info Card ─────────────────────────────────────────────────────────────
   Widget _buildInfoCard(MemberDetailsResponse data) {
     final rows = [
-      _InfoRow('Name', data.member.name),
-      _InfoRow('Phone', data.member.phone.isEmpty ? '—' : data.member.phone),
-      _InfoRow('Email', data.member.email.isEmpty ? '—' : data.member.email),
+      _InfoRow(Icons.person_outline, 'Name', data.member.name),
       _InfoRow(
+        Icons.phone_outlined,
+        'Phone',
+        data.member.phone.isEmpty ? '—' : data.member.phone,
+      ),
+      _InfoRow(
+        Icons.email_outlined,
+        'Email',
+        data.member.email.isEmpty ? '—' : data.member.email,
+      ),
+      _InfoRow(
+        Icons.home_outlined,
         'Address',
         data.member.address.isEmpty ? '—' : data.member.address,
       ),
       _InfoRow(
+        Icons.badge_outlined,
         'Aadhaar',
         data.member.aadhaarNo.isEmpty ? '—' : data.member.aadhaarNo,
       ),
-      _InfoRow('Group', data.member.group),
-      _InfoRow('Monthly', '₹${data.monthlyAmount.toStringAsFixed(2)}'),
+      _InfoRow(Icons.category_outlined, 'Group', data.member.group),
       _InfoRow(
-        'Progress',
-        '${data.monthsPaid} / ${data.durationMonths} months',
-      ),
-      _InfoRow(
-        'Status',
-        data.member.status,
-        valueColor: data.member.status.toLowerCase() == 'active'
-            ? _green
-            : _amber,
-        isLast: true,
+        Icons.payments_outlined,
+        'Monthly',
+        '₹${data.monthlyAmount.toStringAsFixed(2)}',
       ),
     ];
 
     return Container(
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.06),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      decoration: _cardDecoration(),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: Column(
@@ -352,56 +624,142 @@ class MemberDetailsScreen extends ConsumerWidget {
             final isEven = e.key.isEven;
             final row = e.value;
             return Container(
-              color: isEven ? const Color(0xFFF8FAFF) : _surface,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              color: isEven ? _surface : _rowAlt,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Icon(row.icon, size: 20, color: _muted),
+                  const SizedBox(width: 16),
                   SizedBox(
-                    width: 100,
+                    width: 90,
                     child: Text(
                       row.label,
                       style: GoogleFonts.inter(
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                         color: _muted,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       row.value,
                       style: GoogleFonts.inter(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: row.valueColor ?? _ink,
+                        color: _ink,
                       ),
+                      textAlign: TextAlign.right,
                     ),
                   ),
-                  if (row.label == 'Status')
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: data.member.status.toLowerCase() == 'active'
-                            ? _greenSoft
-                            : _amberSoft,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        data.member.status.toUpperCase(),
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.6,
-                          color: data.member.status.toLowerCase() == 'active'
-                              ? _green
-                              : _amber,
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  // ── Months Card ───────────────────────────────────────────────────────────
+  Widget _buildMonthsCard(List<MonthWisePayment> months) {
+    return Container(
+      decoration: _cardDecoration(),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: months.asMap().entries.map((e) {
+            final i = e.key;
+            final item = e.value;
+            final isPaid = item.status.toLowerCase() == 'paid';
+            final isLast = i == months.length - 1;
+
+            return Container(
+              color: _surface,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: isPaid ? _greenSoft : _amberSoft,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: isPaid
+                              ? const Icon(Icons.check_rounded, color: _green)
+                              : Text(
+                                  '${item.month}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: _amber,
+                                  ),
+                                ),
                         ),
-                      ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Month ${item.month}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: _ink,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                isPaid && item.paidDate != null
+                                    ? 'Paid on ${item.paidDate}'
+                                    : 'Awaiting Payment',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: _muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              item.amount != null
+                                  ? '₹${item.amount!.toStringAsFixed(0)}'
+                                  : '—',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: _ink,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              isPaid ? 'PAID' : 'PENDING',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.5,
+                                color: isPaid ? _green : _amber,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!isLast)
+                    Divider(
+                      height: 1,
+                      indent: 76,
+                      color: _border.withValues(alpha: 0.5),
                     ),
                 ],
               ),
@@ -412,280 +770,22 @@ class MemberDetailsScreen extends ConsumerWidget {
     );
   }
 
-  // ── Month Card ────────────────────────────────────────────────────────────
-  Widget _buildMonthCard(MonthWisePayment item) {
-    final isPaid = item.status.toLowerCase() == 'paid';
-    final accent = isPaid ? _green : _amber;
-    final accentSoft = isPaid ? _greenSoft : _amberSoft;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isPaid
-              ? _green.withValues(alpha: 0.12)
-              : _amber.withValues(alpha: 0.12),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            // Colored left accent bar
-            Container(
-              width: 5,
-              decoration: BoxDecoration(
-                color: accent,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(18),
-                  bottomLeft: Radius.circular(18),
-                ),
-              ),
-            ),
-            // Month badge
-            Container(
-              width: 56,
-              alignment: Alignment.center,
-              margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: accentSoft,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Text(
-                '${item.month}',
-                style: GoogleFonts.poppins(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: accent,
-                  height: 1,
-                ),
-              ),
-            ),
-            // Details
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Month ${item.month}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: _ink,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      isPaid && item.paidDate != null
-                          ? item.paidDate!
-                          : 'Payment Pending',
-                      style: GoogleFonts.inter(fontSize: 12, color: _muted),
-                    ),
-                    if (isPaid &&
-                        item.collector != null &&
-                        item.collector!.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.person_outline_rounded,
-                            size: 12,
-                            color: _muted,
-                          ),
-                          const SizedBox(width: 4),
-                          Flexible(
-                            child: Text(
-                              item.collector!,
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: _muted,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            // Amount + badge
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 14, 16, 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    item.amount != null
-                        ? '₹${item.amount!.toStringAsFixed(0)}'
-                        : '—',
-                    style: GoogleFonts.poppins(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: _ink,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accentSoft,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isPaid
-                              ? Icons.check_circle_rounded
-                              : Icons.schedule_rounded,
-                          size: 11,
-                          color: accent,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          isPaid ? 'PAID' : 'PENDING',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                            color: accent,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+  Widget _sectionLabel(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.poppins(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: _ink,
+        letterSpacing: -0.3,
       ),
     );
   }
 }
 
-// ── Data helper ───────────────────────────────────────────────────────────────
 class _InfoRow {
-  final String label;
-  final String value;
-  final Color? valueColor;
-  final bool isLast;
-  const _InfoRow(
-    this.label,
-    this.value, {
-    this.valueColor,
-    this.isLast = false,
-  });
-}
-
-// ── Bento Card ────────────────────────────────────────────────────────────────
-class _BentoCard extends StatelessWidget {
-  final String label;
-  final String value;
-  final String sub;
   final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
-  final Color accentColor;
-
-  const _BentoCard({
-    required this.label,
-    required this.value,
-    required this.sub,
-    required this.icon,
-    required this.iconBg,
-    required this.iconColor,
-    required this.accentColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: iconColor, size: 18),
-              ),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: accentColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: _muted,
-              letterSpacing: 0.3,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: _ink,
-              height: 1.1,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            sub,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: accentColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  final String label;
+  final String value;
+  const _InfoRow(this.icon, this.label, this.value);
 }

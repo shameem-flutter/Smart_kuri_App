@@ -102,13 +102,47 @@ class _CreateMemberScreenState extends ConsumerState<CreateMemberScreen> {
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
-            title: const Text('Success'),
-            content: Text(response['message'] ?? 'Member created successfully'),
+            // 1. Modern rounded corners
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            // 2. Clear visual indicator of success
+            icon: const Icon(
+              Icons.check_circle_outline,
+              color: Colors.green,
+              size: 60,
+            ),
+            // 3. Centered, bold title
+            title: const Text(
+              'Success!',
+              style: TextStyle(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            // 4. Centered content
+            content: Text(
+              response['message'] ?? 'Member created successfully.',
+              textAlign: TextAlign.center,
+            ),
+            // 5. Center the button
+            actionsAlignment: MainAxisAlignment.center,
             actions: [
-              TextButton(
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Go back to member list
+                  // 6. Cleaner double-pop syntax using the cascade operator
+                  Navigator.of(context)
+                    ..pop() // Close dialog
+                    ..pop(); // Go back to member list
                 },
                 child: const Text('OK'),
               ),
@@ -490,5 +524,3 @@ class _CreateMemberScreenState extends ConsumerState<CreateMemberScreen> {
     );
   }
 }
-
-

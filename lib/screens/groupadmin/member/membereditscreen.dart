@@ -5,365 +5,609 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../models/groupadmin/member_list.dart';
 import '../../../providers/group_provider.dart';
 
-class Membereditscreen extends ConsumerStatefulWidget {
-  final Member member;
+// ── Palette (identical to MemberDetailsScreen) ────────────────────────────────
+const _bg = Color(0xFFF4F7FF);
+const _surface = Color(0xFFFFFFFF);
+const _primary = Color(0xFF2563EB);
+const _primaryDark = Color(0xFF1D4ED8);
+const _green = Color(0xFF059669);
+const _greenSoft = Color(0xFFD1FAE5);
+const _ink = Color(0xFF0F172A);
+const _muted = Color(0xFF64748B);
+const _border = Color(0xFFE2E8F0);
 
-  const Membereditscreen({super.key, required this.member});
+class MemberEditScreen extends ConsumerStatefulWidget {
+  final Member member;
+  const MemberEditScreen({super.key, required this.member});
 
   @override
-  ConsumerState<Membereditscreen> createState() => _MembereditscreenState();
+  ConsumerState<MemberEditScreen> createState() => _MemberEditScreenState();
 }
 
-class _MembereditscreenState extends ConsumerState<Membereditscreen> {
+class _MemberEditScreenState extends ConsumerState<MemberEditScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  late TextEditingController _phoneController;
-  late TextEditingController _addressController;
-  late TextEditingController _aadhaarController;
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _emailCtrl;
+  late final TextEditingController _phoneCtrl;
+  late final TextEditingController _addressCtrl;
+  late final TextEditingController _aadhaarCtrl;
 
   bool _isLoading = false;
-  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _nameController = TextEditingController(text: widget.member.name);
-    _emailController = TextEditingController(text: widget.member.email);
-    _phoneController = TextEditingController(text: widget.member.phone);
-    _addressController = TextEditingController(text: ""); // From the model, address and aadhaar may not be in MemberList Member model? Providing empty string fallback for now.
-    _aadhaarController = TextEditingController(text: ""); 
+    _nameCtrl = TextEditingController(text: widget.member.name);
+    _emailCtrl = TextEditingController(text: widget.member.email);
+    _phoneCtrl = TextEditingController(text: widget.member.phone);
+    _addressCtrl = TextEditingController();
+    _aadhaarCtrl = TextEditingController();
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    _aadhaarController.dispose();
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _addressCtrl.dispose();
+    _aadhaarCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _updateMember() async {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
+    setState(() => _isLoading = true);
     try {
-      final data = {
-        "name": _nameController.text.trim(),
-        "email": _emailController.text.trim(),
-        "phone": _phoneController.text.trim(),
-        "address": _addressController.text.trim(),
-        "aadhaar_no": _aadhaarController.text.trim(),
-      };
-
-      final response = await ref.read(apiServiceProvider).updateMember(
-        widget.member.id,
-        data,
-      );
-
+      final response = await ref
+          .read(apiServiceProvider)
+          .updateMember(widget.member.id, {
+            'name': _nameCtrl.text.trim(),
+            'email': _emailCtrl.text.trim(),
+            'phone': _phoneCtrl.text.trim(),
+            'address': _addressCtrl.text.trim(),
+            'aadhaar_no': _aadhaarCtrl.text.trim(),
+          });
+      if (mounted) _showSuccess(response['message']);
+    } catch (e) {
       if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => Dialog(
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(12),
             ),
-            backgroundColor: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_circle_rounded,
-                      color: Color(0xFF10B981),
-                      size: 48,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  void _showSuccess(String? message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: _surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: const BoxDecoration(
+                  color: _greenSoft,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: const Icon(Icons.check_rounded, color: _green, size: 38),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Updated!',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: _ink,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                message ?? 'Member updated successfully.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: _muted,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 28),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    ref.invalidate(memberListProvider);
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Success!',
+                  child: Text(
+                    'Done',
                     style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF2B3A4A),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    response['message'] ?? 'Member updated successfully',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
                       fontSize: 15,
-                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Close dialog
-                        ref.invalidate(memberListProvider);
-                        Navigator.pop(context); // Go back
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2962FF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final topPad = MediaQuery.of(context).padding.top;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: _bg,
+        body: Column(
+          children: [
+            // ── Top bar ────────────────────────────────────────────────────
+            Container(
+              padding: EdgeInsets.fromLTRB(16, topPad + 10, 16, 10),
+              decoration: BoxDecoration(
+                color: _bg,
+                border: Border(
+                  bottom: BorderSide(color: _border.withValues(alpha: 0.8)),
+                ),
+              ),
+              child: Row(
+                children: [
+                  _TopBarButton(
+                    icon: Icons.arrow_back_ios_new_rounded,
+                    onTap: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Edit Member',
+                          style: GoogleFonts.poppins(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: _ink,
+                            letterSpacing: -0.4,
+                            height: 1.15,
+                          ),
                         ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Continue',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                        Text(
+                          'Update profile details',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: _muted,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _error = e.toString().replaceAll('Exception: ', '');
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_error ?? 'An error occurred'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            color: Color(0xFF2B3A4A),
-            size: 20,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-          statusBarBrightness: Brightness.light,
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(18),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Edit Member',
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF2B3A4A),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+            // ── Body ───────────────────────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Member identity card (read-only, like the hero card)
+                      _buildMemberChip(),
+                      const SizedBox(height: 28),
+
+                      _SectionLabel('Personal Information'),
+                      const SizedBox(height: 12),
+
+                      // All fields in one grouped card
+                      _buildFieldsCard(),
+                      const SizedBox(height: 32),
+
+                      // Save button
+                      _buildSaveButton(),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                _buildSectionTitle('Personal Information'),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  controller: _nameController,
-                  label: 'Full Name',
-                  icon: Icons.person_outline_rounded,
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  controller: _emailController,
-                  label: 'Email Address',
-                  icon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Email is required' : null,
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  controller: _phoneController,
-                  label: 'Phone Number',
-                  icon: Icons.phone_outlined,
-                  keyboardType: TextInputType.phone,
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Phone is required' : null,
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  controller: _addressController,
-                  label: 'Address',
-                  icon: Icons.location_on_outlined,
-                  maxLines: 2,
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Address is required' : null,
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  controller: _aadhaarController,
-                  label: 'Aadhaar Number',
-                  icon: Icons.badge_outlined,
-                  keyboardType: TextInputType.number,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return 'Aadhaar number is required';
-                    }
-                    if (v.trim().length != 12) {
-                      return 'Enter a valid 12-digit Aadhaar';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _updateMember,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2962FF),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 4,
-                      shadowColor: const Color(0xFF2962FF).withValues(alpha: 0.4),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'Update Member',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title.toUpperCase(),
-      style: GoogleFonts.poppins(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: Colors.grey[500],
-        letterSpacing: 1,
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-    int maxLines = 1,
-  }) {
+  // ── Member identity chip ───────────────────────────────────────────────────
+  Widget _buildMemberChip() {
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
+            color: _ink.withValues(alpha: 0.04),
+            blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        validator: validator,
-        maxLines: maxLines,
-        style: GoogleFonts.inter(
-          fontSize: 15,
-          color: const Color(0xFF2B3A4A),
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: GoogleFonts.inter(
-            color: Colors.grey[500],
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 46,
+            height: 46,
+            decoration: const BoxDecoration(
+              color: Color(0xFFDBEAFE),
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              widget.member.name.isNotEmpty
+                  ? widget.member.name[0].toUpperCase()
+                  : '?',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: _primary,
+              ),
+            ),
           ),
-          prefixIcon: Icon(icon, color: const Color(0xFF2962FF), size: 22),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.member.name,
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: _ink,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+                Text(
+                  'ID #${widget.member.id}',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: _muted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF2962FF), width: 1.5),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDBEAFE),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Editing',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: _primary,
+                letterSpacing: 0.3,
+              ),
+            ),
           ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.red[300]!, width: 1.5),
+        ],
+      ),
+    );
+  }
+
+  // ── Fields card ────────────────────────────────────────────────────────────
+  Widget _buildFieldsCard() {
+    final fields = [
+      _FieldConfig(
+        icon: Icons.person_outline_rounded,
+        label: 'Full Name',
+        controller: _nameCtrl,
+        validator: (v) =>
+            (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+      ),
+      _FieldConfig(
+        icon: Icons.email_outlined,
+        label: 'Email Address',
+        controller: _emailCtrl,
+        keyboardType: TextInputType.emailAddress,
+        validator: (v) =>
+            (v == null || v.trim().isEmpty) ? 'Email is required' : null,
+      ),
+      _FieldConfig(
+        icon: Icons.phone_outlined,
+        label: 'Phone Number',
+        controller: _phoneCtrl,
+        keyboardType: TextInputType.phone,
+        validator: (v) =>
+            (v == null || v.trim().isEmpty) ? 'Phone is required' : null,
+      ),
+      _FieldConfig(
+        icon: Icons.home_outlined,
+        label: 'Address',
+        controller: _addressCtrl,
+        maxLines: 2,
+        validator: (v) =>
+            (v == null || v.trim().isEmpty) ? 'Address is required' : null,
+      ),
+      _FieldConfig(
+        icon: Icons.badge_outlined,
+        label: 'Aadhaar Number',
+        controller: _aadhaarCtrl,
+        keyboardType: TextInputType.number,
+        validator: (v) {
+          if (v == null || v.trim().isEmpty) return 'Aadhaar is required';
+          if (v.trim().length != 12) return 'Must be 12 digits';
+          return null;
+        },
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _border.withValues(alpha: 0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: _ink.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.red[300]!, width: 1.5),
-          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: List.generate(fields.length, (i) {
+            final f = fields[i];
+            final isLast = i == fields.length - 1;
+            return _buildFieldRow(config: f, isLast: isLast);
+          }),
         ),
       ),
     );
   }
+
+  Widget _buildFieldRow({required _FieldConfig config, required bool isLast}) {
+    return Container(
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : Border(bottom: BorderSide(color: _border.withValues(alpha: 0.6))),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        crossAxisAlignment: config.maxLines > 1
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.center,
+        children: [
+          Padding(
+            padding: EdgeInsets.only(
+              top: config.maxLines > 1 ? 18 : 0,
+              right: 14,
+            ),
+            child: Icon(config.icon, size: 20, color: _muted),
+          ),
+          Expanded(
+            child: TextFormField(
+              controller: config.controller,
+              keyboardType: config.keyboardType,
+              validator: config.validator,
+              maxLines: config.maxLines,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: _ink,
+              ),
+              decoration: InputDecoration(
+                labelText: config.label,
+                labelStyle: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: _muted,
+                ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                errorStyle: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: Color(0xFFEF4444),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Save button ────────────────────────────────────────────────────────────
+  Widget _buildSaveButton() {
+    return Container(
+      height: 54,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [_primary, _primaryDark],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _primary.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _submit,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          disabledBackgroundColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.save_alt_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Save Changes',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+class _TopBarButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _TopBarButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: _surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: _border),
+          boxShadow: [
+            BoxShadow(
+              color: _ink.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, color: _ink, size: 18),
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String title;
+  const _SectionLabel(this.title);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: _primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: _ink,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FieldConfig {
+  final IconData icon;
+  final String label;
+  final TextEditingController controller;
+  final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
+  final int maxLines;
+
+  const _FieldConfig({
+    required this.icon,
+    required this.label,
+    required this.controller,
+    this.keyboardType,
+    this.validator,
+    this.maxLines = 1,
+  });
 }

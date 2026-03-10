@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kuri_app/models/groupadmin/group_model.dart';
 import 'package:kuri_app/providers/group_provider.dart';
+import 'package:kuri_app/screens/groupadmin/collection/collectionlist.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupcreate.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupdetails.dart';
 import 'package:kuri_app/models/groupadmin/dashboard_model.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/widgets/custom_error_widget.dart';
 
 const _kPrimary = Color(0xFF1A56DB);
@@ -27,7 +29,7 @@ class TotalGroupScreen extends ConsumerWidget {
     final groupListAsync = ref.watch(groupListProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: bgGrey,
       body: SafeArea(
         child: Column(
           children: [
@@ -279,8 +281,7 @@ class _GroupListCard extends StatelessWidget {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  GroupDetailsScreen(groupId: group.id),
+                              builder: (context) => CollectionListScreen(),
                             ),
                           );
                         },

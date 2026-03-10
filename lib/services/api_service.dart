@@ -265,6 +265,33 @@ class ApiService {
     }
   }
 
+  Future<AuthResponse> firstLoginChangePassword(
+    String newPassword,
+    String confirmPassword,
+  ) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.post(
+        ApiConfig.firstLoginChangePassword,
+        data: {
+          'new_password': newPassword,
+          'confirm_password': confirmPassword,
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return AuthResponse.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw Exception('First login password change failed: ${response.statusCode}');
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String msg = 'Password change failed';
+      if (data is Map<String, dynamic>) {
+        msg = data['detail'] ?? data['message'] ?? data.toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
   Future<AuthResponse> confirmPasswordReset(
     PasswordResetConfirmRequest request,
   ) async {
@@ -611,6 +638,24 @@ class ApiService {
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Error updating member';
+      if (data is Map<String, dynamic>) {
+        msg = data['detail'] ?? data['message'] ?? data.toString();
+      }
+      throw Exception(msg);
+    }
+  }
+
+  Future<void> deleteMember(int id) async {
+    try {
+      final dio = await _authDio;
+      final response = await dio.delete(ApiConfig.deleteMember(id));
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return;
+      }
+      throw Exception('Failed to delete member: ${response.statusCode}');
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String msg = 'Error deleting member';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }

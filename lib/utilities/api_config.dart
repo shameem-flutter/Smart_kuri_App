@@ -38,6 +38,7 @@ class ApiConfig {
   static const String tokenRefresh = 'api/v1/token/refresh/';
   static const String passwordResetRequest = 'api/v1/password-reset/request/';
   static const String passwordResetConfirm = 'api/v1/password-reset/confirm/';
+  static const String firstLoginChangePassword = 'api/v1/first-login/change-password/';
   static const String register = 'api/v1/group/signup/';
   static const String verifyOtp = 'api/v1/group/verify-otp/';
 
@@ -68,6 +69,7 @@ class ApiConfig {
   static const String membersCreate = 'api/v1/members/create/';
   static const String memberUpdate = 'api/v1/members/';
   static String memberAdminDetails(int id) => 'api/v1/members/$id/';
+  static String deleteMember(int id) => 'api/v1/members/$id/delete/';
   static const String createCollector = 'api/v1/admin/collectors/create/';
   static const String collectors = 'api/v1/admin/collectors/';
   static const String deleteCollector = 'api/v1/admin/collectors/';

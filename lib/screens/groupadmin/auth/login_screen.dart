@@ -12,6 +12,7 @@ import '../group_admin_main_screen.dart';
 import '../../member-admin/memberdashboardscreen.dart';
 import 'password_reset_screen.dart';
 import 'verify_otp_screen.dart';
+import 'first_login_password_screen.dart';
 
 /// Login Screen
 class LoginScreen extends ConsumerStatefulWidget {
@@ -101,6 +102,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     }
 
     if (authState.isAuthenticated) {
+      if (authState.isFirstLogin) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const FirstLoginChangePasswordScreen(),
+          ),
+        );
+        return;
+      }
+
       if (authState.role == 'member') {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const MemberDashboardScreen()),

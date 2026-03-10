@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:kuri_app/screens/member-admin/memberhomescreen.dart';
 import 'providers/auth_provider_riverpod.dart';
-import 'screens/groupadmin/home_screen.dart';
+import 'screens/groupadmin/group_admin_main_screen.dart';
 import 'screens/groupadmin/auth/login_screen.dart';
 import 'screens/collector-admin/collectorhomescreen.dart';
 import 'utilities/api_config.dart';
+import 'screens/splash_screen.dart'; // Import the new Splash Screen
 
 import 'package:google_fonts/google_fonts.dart';
 
@@ -55,77 +56,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const AuthInitializer(),
-    );
-  }
-}
-
-class AuthInitializer extends ConsumerStatefulWidget {
-  const AuthInitializer({super.key});
-
-  @override
-  ConsumerState<AuthInitializer> createState() => _AuthInitializerState();
-}
-
-class _AuthInitializerState extends ConsumerState<AuthInitializer> {
-  @override
-  void initState() {
-    super.initState();
-    _initializeAuth();
-  }
-
-  Future<void> _initializeAuth() async {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await ref.read(authProvider.notifier).initialize();
-
-      if (!mounted) return;
-
-      final authState = ref.read(authProvider);
-
-      if (authState.isAuthenticated) {
-        if (authState.role == 'member') {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const Memberhomescreen()),
-          );
-        } else if (authState.role == 'collector') {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const Collectorhomescreen()),
-          );
-        } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-          );
-        }
-      } else {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-        );
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.lock_outline,
-              size: 80,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 24),
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            Text(
-              'Initializing...',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-          ],
-        ),
-      ),
+      home: const SplashScreen(),
     );
   }
 }

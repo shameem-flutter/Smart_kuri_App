@@ -15,6 +15,7 @@ class AuthState extends Equatable {
   final String? errorMessage;
   final String? successMessage;
   final String? role;
+  final bool isFirstLogin;
 
   const AuthState({
     this.isLoading = false,
@@ -22,6 +23,7 @@ class AuthState extends Equatable {
     this.errorMessage,
     this.successMessage,
     this.role,
+    this.isFirstLogin = false,
   });
 
   AuthState copyWith({
@@ -31,6 +33,7 @@ class AuthState extends Equatable {
     String? successMessage,
     String? role,
     bool clearMessages = false,
+    bool? isFirstLogin,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -40,6 +43,7 @@ class AuthState extends Equatable {
           ? null
           : (successMessage ?? this.successMessage),
       role: role ?? this.role,
+      isFirstLogin: isFirstLogin ?? this.isFirstLogin,
     );
   }
 
@@ -50,6 +54,7 @@ class AuthState extends Equatable {
     errorMessage,
     successMessage,
     role,
+    isFirstLogin,
   ];
 }
 
@@ -84,6 +89,7 @@ class AuthNotifier extends Notifier<AuthState> {
         isAuthenticated: true,
         successMessage: 'Login successful!',
         role: tokenResponse.role,
+        isFirstLogin: tokenResponse.isFirstLogin,
       );
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.message);
@@ -91,6 +97,31 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'An unexpected error occurred during login',
+      );
+    }
+  }
+
+  Future<void> firstLoginChangePassword({
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    state = state.copyWith(isLoading: true, clearMessages: true);
+    try {
+      final response = await _authRepository.firstLoginChangePassword(
+        newPassword,
+        confirmPassword,
+      );
+      state = state.copyWith(
+        isLoading: false,
+        isFirstLogin: false, // Update flag after success
+        successMessage: response.message ?? 'Password changed successfully!',
+      );
+    } on AppException catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.message);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'An unexpected error occurred while changing password.',
       );
     }
   }
