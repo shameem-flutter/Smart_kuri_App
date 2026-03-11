@@ -5,7 +5,6 @@ import '../../../providers/auth_provider_riverpod.dart';
 import '../../../utilities/colors.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_text_field.dart';
-import '../group_admin_main_screen.dart';
 
 /// Verify OTP Screen
 ///
@@ -61,9 +60,10 @@ class _VerifyOtpScreenState extends ConsumerState<VerifyOtpScreen> {
     }
 
     if (authState.isAuthenticated) {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const GroupAdminMainScreen()));
+      // main.dart's AnimatedSwitcher reacts to isAuthenticated and routes correctly
+      // Pop the OTP screen so the back-stack is clean
+      if (!mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }
 

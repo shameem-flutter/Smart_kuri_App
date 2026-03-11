@@ -6,7 +6,6 @@ import 'package:kuri_app/screens/groupadmin/cash_collector/createcashcollectorsc
 import 'package:kuri_app/screens/groupadmin/collection/addcollection.dart';
 import 'package:kuri_app/screens/groupadmin/collection/collectionlist.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupcreate.dart';
-import 'package:kuri_app/screens/groupadmin/groups/totalgroup.dart';
 import 'package:kuri_app/screens/groupadmin/settings_screen.dart';
 import 'package:kuri_app/screens/groupadmin/member/createmember.dart';
 import 'package:kuri_app/screens/groupadmin/member/memberlistscreen.dart';
@@ -28,7 +27,9 @@ class HomeScreen extends ConsumerWidget {
         color: Colors.purple,
         onTap: () {
           Navigator.pop(context); // Close bottom sheet
-          ref.read(groupScreenIndexProvider.notifier).goTo(1); // Assuming 1 is TotalGroupScreen
+          ref
+              .read(groupScreenIndexProvider.notifier)
+              .goTo(1); // Assuming 1 is TotalGroupScreen
         },
       ),
       _BottomSheetOption(

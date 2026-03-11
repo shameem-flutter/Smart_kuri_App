@@ -10,7 +10,8 @@ import 'password_reset_confirm_screen.dart';
 ///
 /// Screen for requesting password reset OTP with modern UI.
 class PasswordResetScreen extends ConsumerStatefulWidget {
-  const PasswordResetScreen({super.key});
+  final VoidCallback? onNavigateBack;
+  const PasswordResetScreen({super.key, this.onNavigateBack});
 
   @override
   ConsumerState<PasswordResetScreen> createState() =>
@@ -84,9 +85,13 @@ class _PasswordResetScreenState extends ConsumerState<PasswordResetScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(left: 20, top: 10),
-                  child: BackButton(color: Colors.white),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, top: 4),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new,
+                        color: Colors.white, size: 20),
+                    onPressed: widget.onNavigateBack ?? () => Navigator.pop(context),
+                  ),
                 ),
 
                 Padding(

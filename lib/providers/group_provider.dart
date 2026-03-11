@@ -98,12 +98,11 @@ final memberHistoryProvider = FutureProvider.family<MemberHistoryResponse, int>(
 );
 
 // Admin Member Details provider
-final memberAdminDetailsProvider = FutureProvider.family<MemberDetailsResponse, int>(
-  (ref, memberId) async {
-    final apiService = ref.watch(apiServiceProvider);
-    return apiService.getMemberAdminDetails(memberId);
-  },
-);
+final memberAdminDetailsProvider =
+    FutureProvider.family<MemberDetailsResponse, int>((ref, memberId) async {
+      final apiService = ref.watch(apiServiceProvider);
+      return apiService.getMemberAdminDetails(memberId);
+    });
 
 // Collector Profile provider
 final collectorProfileProvider = FutureProvider<CollectorProfileResponse>((
@@ -208,7 +207,17 @@ class ReportFilterState {
 // Reports filter provider
 class ReportFilterNotifier extends Notifier<ReportFilterState> {
   @override
-  ReportFilterState build() => ReportFilterState();
+  ReportFilterState build() {
+    // Default to current month so the API is never called without dates
+    final now = DateTime.now();
+    final firstDay = DateTime(now.year, now.month, 1);
+    final lastDay = DateTime(now.year, now.month + 1, 0);
+    String fmt(DateTime d) =>
+        '${d.year.toString().padLeft(4, '0')}-'
+        '${d.month.toString().padLeft(2, '0')}-'
+        '${d.day.toString().padLeft(2, '0')}';
+    return ReportFilterState(fromDate: fmt(firstDay), toDate: fmt(lastDay));
+  }
 
   void setFilters(String? fromDate, String? toDate) {
     state = state.copyWith(fromDate: fromDate, toDate: toDate);

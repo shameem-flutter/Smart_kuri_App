@@ -7,7 +7,6 @@ import 'package:kuri_app/providers/auth_provider_riverpod.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/widgets/custom_error_widget.dart';
-import 'package:kuri_app/screens/groupadmin/auth/login_screen.dart';
 
 class MemberProfileScreen extends ConsumerWidget {
   const MemberProfileScreen({super.key});
@@ -43,7 +42,7 @@ class MemberProfileScreen extends ConsumerWidget {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              _buildHeader(data),
+              _buildHeader(context, ref, data),
               SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                 sliver: SliverList(
@@ -66,7 +65,11 @@ class MemberProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(MemberProfileResponse data) {
+  Widget _buildHeader(
+    BuildContext context,
+    WidgetRef ref,
+    MemberProfileResponse data,
+  ) {
     return SliverToBoxAdapter(
       child: Container(
         decoration: BoxDecoration(
@@ -101,8 +104,11 @@ class MemberProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     const Spacer(),
-                    // Edit / settings button (wire up as needed)
-                    _NavCircleButton(icon: Icons.edit_outlined, onTap: () {}),
+                    _NavCircleButton(
+                      icon: Icons.logout,
+                      iconColor: redColor,
+                      onTap: () => _showLogoutDialog(context, ref),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -286,140 +292,113 @@ class MemberProfileScreen extends ConsumerWidget {
 // ─────────────────────────────────────────────────────────────
 // Logout Button
 // ─────────────────────────────────────────────────────────────
-class _LogoutButton extends ConsumerStatefulWidget {
+Future<void> _showLogoutDialog(BuildContext context, WidgetRef ref) async {
+  bool isLoggingOut = false;
+
+  await showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (dialogContext) => StatefulBuilder(
+      builder: (ctx, setDialogState) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.red.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.logout_rounded, color: Colors.red, size: 28),
+        ),
+        title: Text(
+          'Log Out?',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF0F172A),
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          'Are you sure you want to log out of your account?',
+          style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 14),
+          textAlign: TextAlign.center,
+        ),
+        actionsPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: isLoggingOut
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: isLoggingOut
+                      ? null
+                      : () async {
+                           setDialogState(() => isLoggingOut = true);
+                           // ref.listen in main.dart handles popping all
+                           // routes and transitioning to LoginScreen
+                           await ref.read(authProvider.notifier).logout();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF5A5F),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: isLoggingOut
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : Text(
+                          'Log Out',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _LogoutButton extends ConsumerWidget {
   const _LogoutButton({required this.ref});
-  // ignore: unused_field
   final WidgetRef ref;
 
   @override
-  ConsumerState<_LogoutButton> createState() => _LogoutButtonState();
-}
-
-class _LogoutButtonState extends ConsumerState<_LogoutButton> {
-  bool _isLoading = false;
-
-  Future<void> _handleLogout(BuildContext context) async {
-    final bool? confirm = await showDialog<bool>(
-      context: context,
-      barrierDismissible: !_isLoading,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          icon: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.logout_rounded,
-              color: Colors.red,
-              size: 28,
-            ),
-          ),
-          title: Text(
-            'Log Out?',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF0F172A),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          content: Text(
-            'Are you sure you want to log out of your account?',
-            style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 14),
-            textAlign: TextAlign.center,
-          ),
-          actionsPadding: const EdgeInsets.only(
-            left: 16,
-            right: 16,
-            bottom: 16,
-          ),
-          actions: [
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () => Navigator.of(dialogContext).pop(false),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      'Cancel',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isLoading
-                        ? null
-                        : () async {
-                            setDialogState(() {});
-                            setState(() => _isLoading = true);
-                            Navigator.of(dialogContext).pop(true);
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFFF5A5F),
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            'Log Out',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (confirm == true) {
-      await ref.read(authProvider.notifier).logout();
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-      }
-    } else {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref2) {
     return SizedBox(
       width: double.infinity,
       height: 54,
       child: ElevatedButton.icon(
-        onPressed: _isLoading ? null : () => _handleLogout(context),
+        onPressed: () => _showLogoutDialog(context, ref),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFFFF5A5F),
           elevation: 0,
@@ -427,18 +406,9 @@ class _LogoutButtonState extends ConsumerState<_LogoutButton> {
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        icon: _isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
+        icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 20),
         label: Text(
-          _isLoading ? 'Logging out…' : 'Log Out',
+          'Log Out',
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -560,28 +530,29 @@ class _Divider extends StatelessWidget {
 }
 
 class _NavCircleButton extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
   final VoidCallback onTap;
+  final Color? iconColor;
 
-  const _NavCircleButton({required this.icon, required this.onTap});
+  const _NavCircleButton({this.icon, this.iconColor, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 40,
-        height: 40,
+        width: 35,
+        height: 35,
         decoration: BoxDecoration(
           // Dark semi-transparent fill — same as reference
-          color: Colors.black.withValues(alpha: 0.25),
+          color: iconColor ?? Colors.black.withValues(alpha: 0.25),
           shape: BoxShape.circle,
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.15),
             width: 1,
           ),
         ),
-        child: Icon(icon, color: Colors.white, size: 18),
+        child: Icon(icon, color: whiteColor, size: 18),
       ),
     );
   }

@@ -43,31 +43,16 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    // Set current month as default filter after first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _setCurrentMonthFilter();
-    });
-  }
-
-  void _setCurrentMonthFilter() {
+  // Reset to current month instead of null so we never fetch all data
+  void _resetToCurrentMonth() {
     final now = DateTime.now();
-    final firstDayOfMonth = DateTime(now.year, now.month, 1);
-    final lastDayOfMonth = DateTime(now.year, now.month + 1, 0);
-
-    final DateFormat formatter = DateFormat('yyyy-MM-dd');
-    ref
-        .read(reportFilterProvider.notifier)
-        .setFilters(
-          formatter.format(firstDayOfMonth),
-          formatter.format(lastDayOfMonth),
-        );
-  }
-
-  void _clearFilters() {
-    ref.read(reportFilterProvider.notifier).clearFilters();
+    final firstDay = DateTime(now.year, now.month, 1);
+    final lastDay = DateTime(now.year, now.month + 1, 0);
+    final formatter = DateFormat('yyyy-MM-dd');
+    ref.read(reportFilterProvider.notifier).setFilters(
+      formatter.format(firstDay),
+      formatter.format(lastDay),
+    );
   }
 
   @override
@@ -100,7 +85,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
           _buildFilterBar(filters),
           Expanded(
             child: reportsAsyncValue.when(
-              data: (data) => _buildContent(data),
+              data: (data) => _buildContent(data, filters),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => CustomErrorWidget(
                 error: error.toString().replaceAll('Exception: ', ''),
@@ -158,20 +143,38 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               ),
             ),
           ),
-          if (hasFilters) ...[
-            const SizedBox(width: 12),
-            IconButton(
-              onPressed: _clearFilters,
-              icon: const Icon(Icons.clear, color: Colors.red),
-              tooltip: 'Clear Filters',
-            ),
-          ],
+          const SizedBox(width: 12),
+          IconButton(
+            onPressed: _resetToCurrentMonth,
+            icon: const Icon(Icons.refresh, color: Colors.grey),
+            tooltip: 'Reset to Current Month',
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildContent(ReportsResponse data) {
+  /// Filter members client-side based on paidDate vs selected date range.
+  /// This is a guarantee in case the backend doesn't filter properly.
+  List<ReportMember> _filterMembers(
+    List<ReportMember> members,
+    ReportFilterState filters,
+  ) {
+    if (filters.fromDate == null || filters.toDate == null) return members;
+    final from = DateTime.tryParse(filters.fromDate!);
+    final to = DateTime.tryParse(filters.toDate!);
+    if (from == null || to == null) return members;
+    final toEndOfDay = to.add(const Duration(days: 1));
+    return members.where((m) {
+      final paidOn = DateTime.tryParse(m.paidDate);
+      if (paidOn == null) return false;
+      return !paidOn.isBefore(from) && paidOn.isBefore(toEndOfDay);
+    }).toList();
+  }
+
+  Widget _buildContent(ReportsResponse data, ReportFilterState filters) {
+    final filtered = _filterMembers(data.paidMembers, filters);
+
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
@@ -193,18 +196,41 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             ),
           ),
         ),
-        if (data.paidMembers.isEmpty)
-          const SliverFillRemaining(
+        if (filtered.isEmpty)
+          SliverFillRemaining(
             child: Center(
-              child: Text('No transactions found for this period.'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.receipt_long_outlined,
+                      size: 64, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No transactions found',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (filters.fromDate != null && filters.toDate != null)
+                    Text(
+                      '${filters.fromDate} → ${filters.toDate}',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: Colors.grey[400],
+                      ),
+                    ),
+                ],
+              ),
             ),
           )
         else
           SliverList(
             delegate: SliverChildBuilderDelegate((context, index) {
-              final member = data.paidMembers[index];
-              return _buildTransactionCard(member);
-            }, childCount: data.paidMembers.length),
+              return _buildTransactionCard(filtered[index]);
+            }, childCount: filtered.length),
           ),
         const SliverToBoxAdapter(child: SizedBox(height: 20)),
       ],

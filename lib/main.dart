@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:kuri_app/screens/member-admin/memberhomescreen.dart';
-import 'providers/auth_provider_riverpod.dart';
-import 'screens/groupadmin/group_admin_main_screen.dart';
-import 'screens/groupadmin/auth/login_screen.dart';
-import 'screens/collector-admin/collectorhomescreen.dart';
 import 'utilities/api_config.dart';
-import 'screens/splash_screen.dart'; // Import the new Splash Screen
-
-import 'package:google_fonts/google_fonts.dart';
+import 'screens/splash_screen.dart';
+import 'screens/groupadmin/auth/login_screen.dart';
+import 'screens/groupadmin/auth/register_screen.dart';
+import 'screens/groupadmin/auth/password_reset_screen.dart';
+import 'screens/groupadmin/auth/first_login_password_screen.dart';
+import 'screens/collector-admin/collectorhomescreen.dart';
+import 'screens/member-admin/memberhomescreen.dart';
+import 'screens/groupadmin/group_admin_main_screen.dart';
+import 'providers/auth_provider_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await ApiConfig.init();
-  GoogleFonts.config.allowRuntimeFetching = false;
+  // GoogleFonts.config.allowRuntimeFetching = false;
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -28,12 +29,33 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
 
   @override
+  ConsumerState<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends ConsumerState<MyApp> {
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authProvider);
+
+    // Listen for logout: when auth goes from authenticated -> unauthenticated,
+    // pop all pushed routes (Settings, Profile, etc.) to reveal the home route.
+    // Deferred to post-frame to avoid popping mid-rebuild.
+    ref.listen<AuthState>(authProvider, (prev, next) {
+      if (prev != null && prev.isAuthenticated && !next.isAuthenticated) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+        });
+      }
+    });
+
     return MaterialApp(
+      navigatorKey: _navigatorKey,
       title: 'Kuri App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -56,7 +78,73 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const SplashScreen(),
+      home: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        switchInCurve: Curves.easeInOut,
+        switchOutCurve: Curves.easeInOut,
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        child: _buildHome(authState),
+      ),
+    );
+  }
+
+  Widget _buildHome(AuthState authState) {
+    if (!authState.isInitialized) {
+      return const SplashScreen(key: ValueKey('splash'));
+    }
+
+    if (authState.isAuthenticated) {
+      if (authState.isFirstLogin) {
+        return const FirstLoginChangePasswordScreen(key: ValueKey('first_login'));
+      }
+
+      if (authState.role == 'member') {
+        return const Memberhomescreen(key: ValueKey('member_home'));
+      } else if (authState.role == 'collector') {
+        return const Collectorhomescreen(key: ValueKey('collector_home'));
+      } else {
+        return const GroupAdminMainScreen(key: ValueKey('admin_home'));
+      }
+    }
+
+    // Unauthenticated — show auth views via IndexedStack (no route push = no blink)
+    return _buildAuthViews();
+  }
+
+  Widget _buildAuthViews() {
+    final currentView = ref.watch(authViewProvider);
+
+    return PopScope(
+      // Allow pop (app exit) only when on the login screen
+      canPop: currentView == AuthViewMode.login,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          // Back pressed on register/forgotPassword → go back to login
+          ref.read(authViewProvider.notifier).switchTo(AuthViewMode.login);
+        }
+      },
+      child: IndexedStack(
+        key: const ValueKey('auth'),
+        index: currentView.index,
+        children: [
+          LoginScreen(
+            onNavigateToRegister: () =>
+                ref.read(authViewProvider.notifier).switchTo(AuthViewMode.register),
+            onNavigateToForgotPassword: () =>
+                ref.read(authViewProvider.notifier).switchTo(AuthViewMode.forgotPassword),
+          ),
+          RegisterScreen(
+            onNavigateToLogin: () =>
+                ref.read(authViewProvider.notifier).switchTo(AuthViewMode.login),
+          ),
+          PasswordResetScreen(
+            onNavigateBack: () =>
+                ref.read(authViewProvider.notifier).switchTo(AuthViewMode.login),
+          ),
+        ],
+      ),
     );
   }
 }

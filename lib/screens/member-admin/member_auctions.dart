@@ -8,7 +8,7 @@ import 'package:kuri_app/models/member/member_dashboard_model.dart';
 import 'package:kuri_app/utilities/gap_func.dart';
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
-const _bg = Color(0xFFF5F6FA);
+
 const _surface = Color(0xFFFFFFFF);
 const _ink = Color(0xFF111827);
 const _inkSub = Color(0xFF9CA3AF);
@@ -113,28 +113,17 @@ class MemberAuctionsScreen extends ConsumerWidget {
 
   Widget _buildHeader(BuildContext context, int? total, int? completed) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Nav row ──
           Row(
             children: [
-              GestureDetector(
-                onTap: () => Navigator.of(context).maybePop(),
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: _surface,
-                    borderRadius: BorderRadius.circular(11),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    size: 16,
-                    color: _ink,
-                  ),
+              Builder(
+                builder: (ctx) => _NavCircleButton(
+                  icon: Icons.arrow_back_ios_new_rounded,
+                  onTap: () => Navigator.of(ctx).maybePop(),
                 ),
               ),
               const Spacer(),
@@ -382,6 +371,33 @@ class _EmptyState extends StatelessWidget {
             style: GoogleFonts.inter(fontSize: 13, color: _inkSub),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _NavCircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _NavCircleButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 35,
+        height: 35,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.25),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+        child: Icon(icon, color: Colors.white, size: 18),
       ),
     );
   }

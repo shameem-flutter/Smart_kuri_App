@@ -14,7 +14,9 @@ import '../models/auth/login_request.dart';
 import '../models/auth/password_reset_request.dart';
 import '../models/auth/register_request.dart';
 import '../models/auth/token_request.dart';
+import '../models/auth/plan_model.dart';
 import '../utilities/api_config.dart';
+import '../utilities/app_exception.dart';
 import '../models/groupadmin/group_create_model.dart';
 import '../models/groupadmin/collection_list_model.dart';
 import '../models/groupadmin/collection_create_model.dart';
@@ -130,30 +132,10 @@ class ApiService {
               }
             }
 
-            // Step 2: If tokenRefresh failed, use token endpoint with credentials
+            // Step 2: If tokenRefresh failed, we don't fallback to credentials. We trigger logout.
             if (newAccessToken == null) {
-              final identifier = await _storageService
-                  .getCredentialIdentifier();
-              final password = await _storageService.getCredentialPassword();
-
-              if (identifier == null || password == null) {
-                return handler.next(error);
-              }
-
-              final tokenResponse = await _dio.post(
-                ApiConfig.token,
-                data: {'username': identifier, 'password': password},
-              );
-
-              if (tokenResponse.statusCode != 200 &&
-                  tokenResponse.statusCode != 201) {
-                return handler.next(error);
-              }
-
-              newAccessToken = tokenResponse.data['access'] as String;
-              final newRefreshToken = tokenResponse.data['refresh'] as String;
-              await _storageService.saveAccessToken(newAccessToken);
-              await _storageService.saveRefreshToken(newRefreshToken);
+              await _storageService.clearAll();
+              throw UnauthorizedException('Session expired. Please login again.');
             }
 
             // Step 3: Retry the original request with the new token
@@ -182,14 +164,14 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return TokenResponse.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('Login failed: ${response.statusCode}');
+      throw ServerException('Login failed: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Login failed';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -204,7 +186,7 @@ class ApiService {
         },
       );
       if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Logout failed: ${response.statusCode}');
+        throw ServerException('Logout failed: ${response.statusCode}');
       }
     } on DioException catch (e) {
       // Don't throw if logout fails on server side to still clear local storage
@@ -220,9 +202,9 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return TokenResponse.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('Token generation failed: ${response.statusCode}');
+      throw ServerException('Token generation failed: ${response.statusCode}');
     } catch (e) {
-      throw Exception('Error generating token: $e');
+      throw ServerException('Error generating token: $e');
     }
   }
 
@@ -237,9 +219,9 @@ class ApiService {
           response.data as Map<String, dynamic>,
         );
       }
-      throw Exception('Token refresh failed: ${response.statusCode}');
+      throw ServerException('Token refresh failed: ${response.statusCode}');
     } catch (e) {
-      throw Exception('Error refreshing token: $e');
+      throw ServerException('Error refreshing token: $e');
     }
   }
 
@@ -254,14 +236,14 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return AuthResponse.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('Password reset request failed: ${response.statusCode}');
+      throw ServerException('Password reset request failed: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Password reset request failed';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -281,14 +263,14 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return AuthResponse.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('First login password change failed: ${response.statusCode}');
+      throw ServerException('First login password change failed: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Password change failed';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -303,14 +285,14 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return AuthResponse.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('Password reset confirm failed: ${response.statusCode}');
+      throw ServerException('Password reset confirm failed: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Password reset confirm failed';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -330,14 +312,14 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return AuthResponse.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('Registration failed: ${response.statusCode}');
+      throw ServerException('Registration failed: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Registration failed';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -356,14 +338,32 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return AuthResponse.fromJson(response.data as Map<String, dynamic>);
       }
-      throw Exception('OTP verification failed: ${response.statusCode}');
+      throw ServerException('OTP verification failed: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'OTP verification failed';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
+    }
+  }
+
+  Future<PlanListResponse> getPlans() async {
+    try {
+      final dio = _dio; // Plans API might not require authentication per postman example
+      final response = await dio.get(ApiConfig.plans);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return PlanListResponse.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw ServerException('Failed to fetch plans: ${response.statusCode}');
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      String msg = 'Failed to fetch plans';
+      if (data is Map<String, dynamic>) {
+        msg = data['detail'] ?? data['message'] ?? data.toString();
+      }
+      throw ServerException(msg);
     }
   }
 
@@ -376,9 +376,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return DashboardResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load dashboard: ${response.statusCode}');
+      throw ServerException('Failed to load dashboard: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching dashboard'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching dashboard'));
     }
   }
 
@@ -389,11 +389,11 @@ class ApiService {
       if (response.statusCode == 200) {
         return CollectorDashboardModel.fromJson(response.data);
       }
-      throw Exception(
+      throw ServerException(
         'Failed to load collector dashboard: ${response.statusCode}',
       );
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching collector dashboard'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching collector dashboard'));
     }
   }
 
@@ -404,9 +404,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return PendingMembersResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load pending members: ${response.statusCode}');
+      throw ServerException('Failed to load pending members: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching pending members'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching pending members'));
     }
   }
 
@@ -423,11 +423,11 @@ class ApiService {
       if (response.statusCode == 200) {
         return AssignedMemberResponse.fromJson(response.data);
       }
-      throw Exception(
+      throw ServerException(
         'Failed to load assigned members: ${response.statusCode}',
       );
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching assigned members'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching assigned members'));
     }
   }
 
@@ -443,7 +443,7 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data as Map<String, dynamic>;
       }
-      throw Exception('Failed to add collection: ${response.statusCode}');
+      throw ServerException('Failed to add collection: ${response.statusCode}');
     } on DioException catch (e) {
       final responseData = e.response?.data;
       String msg = 'Error adding collection';
@@ -453,7 +453,7 @@ class ApiService {
             responseData['message'] ??
             responseData.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -464,11 +464,11 @@ class ApiService {
       if (response.statusCode == 200) {
         return TodayCollectionsResponse.fromJson(response.data);
       }
-      throw Exception(
+      throw ServerException(
         'Failed to load today collections: ${response.statusCode}',
       );
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching today collections'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching today collections'));
     }
   }
 
@@ -488,9 +488,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return ReportsResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load reports: ${response.statusCode}');
+      throw ServerException('Failed to load reports: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching reports'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching reports'));
     }
   }
 
@@ -501,7 +501,7 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 204) {
         return;
       }
-      throw Exception('Failed to delete payment: ${response.statusCode}');
+      throw ServerException('Failed to delete payment: ${response.statusCode}');
     } on DioException catch (e) {
       final responseData = e.response?.data;
       String msg = 'Error deleting payment';
@@ -511,7 +511,7 @@ class ApiService {
             responseData['message'] ??
             responseData.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -522,9 +522,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return MemberHistoryResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load member history: ${response.statusCode}');
+      throw ServerException('Failed to load member history: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching member history'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching member history'));
     }
   }
 
@@ -535,11 +535,11 @@ class ApiService {
       if (response.statusCode == 200) {
         return CollectorProfileResponse.fromJson(response.data);
       }
-      throw Exception(
+      throw ServerException(
         'Failed to load collector profile: ${response.statusCode}',
       );
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching collector profile'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching collector profile'));
     }
   }
 
@@ -550,9 +550,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return GroupListResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load groups: ${response.statusCode}');
+      throw ServerException('Failed to load groups: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching groups'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching groups'));
     }
   }
 
@@ -566,14 +566,14 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return GroupCreateResponse.fromJson(response.data);
       }
-      throw Exception('Failed to create group: ${response.statusCode}');
+      throw ServerException('Failed to create group: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Error creating group';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -584,9 +584,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return ProfileResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load profile: ${response.statusCode}');
+      throw ServerException('Failed to load profile: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching profile'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching profile'));
     }
   }
 
@@ -597,9 +597,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return MemberListResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load members: ${response.statusCode}');
+      throw ServerException('Failed to load members: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching members'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching members'));
     }
   }
 
@@ -610,14 +610,14 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data as Map<String, dynamic>;
       }
-      throw Exception('Failed to create member: ${response.statusCode}');
+      throw ServerException('Failed to create member: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Error creating member';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -634,14 +634,14 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data as Map<String, dynamic>;
       }
-      throw Exception('Failed to update member: ${response.statusCode}');
+      throw ServerException('Failed to update member: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Error updating member';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -652,14 +652,14 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 204) {
         return;
       }
-      throw Exception('Failed to delete member: ${response.statusCode}');
+      throw ServerException('Failed to delete member: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Error deleting member';
       if (data is Map<String, dynamic>) {
         msg = data['detail'] ?? data['message'] ?? data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -670,9 +670,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return MemberDetailsResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load member details: ${response.statusCode}');
+      throw ServerException('Failed to load member details: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching member details'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching member details'));
     }
   }
 
@@ -686,7 +686,7 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data as Map<String, dynamic>;
       }
-      throw Exception('Failed to create collector: ${response.statusCode}');
+      throw ServerException('Failed to create collector: ${response.statusCode}');
     } on DioException catch (e) {
       final responseData = e.response?.data;
       String msg = 'Error creating collector';
@@ -696,7 +696,7 @@ class ApiService {
             responseData['message'] ??
             responseData.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -707,9 +707,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return CashCollectorListResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load collectors: ${response.statusCode}');
+      throw ServerException('Failed to load collectors: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching collectors'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching collectors'));
     }
   }
 
@@ -722,7 +722,7 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 204) {
         return;
       }
-      throw Exception('Failed to delete collector: ${response.statusCode}');
+      throw ServerException('Failed to delete collector: ${response.statusCode}');
     } on DioException catch (e) {
       final responseData = e.response?.data;
       String msg = 'Error deleting collector';
@@ -732,7 +732,7 @@ class ApiService {
             responseData['message'] ??
             responseData.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -756,7 +756,7 @@ class ApiService {
         }
         return {};
       }
-      throw Exception('Failed to update collector: ${response.statusCode}');
+      throw ServerException('Failed to update collector: ${response.statusCode}');
     } on DioException catch (e) {
       final responseData = e.response?.data;
       String msg = 'Error updating collector';
@@ -766,7 +766,7 @@ class ApiService {
             responseData['message'] ??
             responseData.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -777,9 +777,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return CollectionListResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load collections: ${response.statusCode}');
+      throw ServerException('Failed to load collections: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching collections'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching collections'));
     }
   }
 
@@ -795,7 +795,7 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data as Map<String, dynamic>;
       }
-      throw Exception('Failed to create collection: ${response.statusCode}');
+      throw ServerException('Failed to create collection: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Error creating collection';
@@ -810,7 +810,7 @@ class ApiService {
         // Handle direct list errors
         msg = data.join('\n');
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -828,7 +828,7 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data as Map<String, dynamic>;
       }
-      throw Exception('Failed to update group: ${response.statusCode}');
+      throw ServerException('Failed to update group: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Error updating group';
@@ -841,7 +841,7 @@ class ApiService {
       } else if (data is List) {
         msg = data.join('\n');
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -852,9 +852,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return GroupDetailsResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load group details: ${response.statusCode}');
+      throw ServerException('Failed to load group details: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching group details'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching group details'));
     }
   }
 
@@ -865,9 +865,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return GroupListResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load auctions: ${response.statusCode}');
+      throw ServerException('Failed to load auctions: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching auctions'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching auctions'));
     }
   }
 
@@ -882,11 +882,11 @@ class ApiService {
       if (response.statusCode == 200) {
         return AuctionGroupDetailsResponse.fromJson(response.data);
       }
-      throw Exception(
+      throw ServerException(
         'Failed to load auction group details: ${response.statusCode}',
       );
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching auction group details'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching auction group details'));
     }
   }
 
@@ -897,9 +897,9 @@ class ApiService {
       if (response.statusCode == 200) {
         return AuctionDetailsResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load auction details: ${response.statusCode}');
+      throw ServerException('Failed to load auction details: ${response.statusCode}');
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Error fetching auction details'));
+      throw ServerException(_extractDioErrorMsg(e, 'Error fetching auction details'));
     }
   }
 
@@ -910,7 +910,7 @@ class ApiService {
       if (response.statusCode == 200) {
         return SpinAuctionResponse.fromJson(response.data);
       }
-      throw Exception('Failed to load spin data: ${response.statusCode}');
+      throw ServerException('Failed to load spin data: ${response.statusCode}');
     } on DioException catch (e) {
       final data = e.response?.data;
       String msg = 'Error fetching spin data';
@@ -921,7 +921,7 @@ class ApiService {
             data['message'] ??
             data.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -938,7 +938,7 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data as Map<String, dynamic>;
       }
-      throw Exception('Failed to assign winner: ${response.statusCode}');
+      throw ServerException('Failed to assign winner: ${response.statusCode}');
     } on DioException catch (e) {
       final responseData = e.response?.data;
       String msg = 'Error assigning winner';
@@ -948,7 +948,7 @@ class ApiService {
             responseData['message'] ??
             responseData.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
 
@@ -959,7 +959,7 @@ class ApiService {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response.data as Map<String, dynamic>;
       }
-      throw Exception('Failed to create auction: ${response.statusCode}');
+      throw ServerException('Failed to create auction: ${response.statusCode}');
     } on DioException catch (e) {
       final responseData = e.response?.data;
       String msg = 'Error creating auction';
@@ -969,7 +969,7 @@ class ApiService {
             responseData['message'] ??
             responseData.toString();
       }
-      throw Exception(msg);
+      throw ServerException(msg);
     }
   }
   // ==========================================
@@ -983,7 +983,7 @@ class ApiService {
       final response = await dio.get(ApiConfig.memberDashboard);
       return MemberDashboardResponse.fromJson(response.data);
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Failed to load member dashboard'));
+      throw ServerException(_extractDioErrorMsg(e, 'Failed to load member dashboard'));
     }
   }
 
@@ -994,7 +994,7 @@ class ApiService {
       final response = await dio.get(ApiConfig.memberPayments);
       return MemberPaymentsResponse.fromJson(response.data);
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Failed to load payment history'));
+      throw ServerException(_extractDioErrorMsg(e, 'Failed to load payment history'));
     }
   }
 
@@ -1005,7 +1005,7 @@ class ApiService {
       final response = await dio.get(ApiConfig.memberProfile);
       return MemberProfileResponse.fromJson(response.data);
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Failed to load member profile'));
+      throw ServerException(_extractDioErrorMsg(e, 'Failed to load member profile'));
     }
   }
 
@@ -1017,7 +1017,7 @@ class ApiService {
       final List<dynamic> data = response.data;
       return data.map((e) => AuctionItem.fromJson(e)).toList();
     } on DioException catch (e) {
-      throw Exception(_extractDioErrorMsg(e, 'Failed to load member auctions'));
+      throw ServerException(_extractDioErrorMsg(e, 'Failed to load member auctions'));
     }
   }
 

@@ -6,7 +6,6 @@ import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/groupadmin/collector_profile_model.dart';
 import 'package:kuri_app/providers/auth_provider_riverpod.dart';
-import 'package:kuri_app/screens/groupadmin/auth/login_screen.dart';
 import 'package:kuri_app/widgets/custom_error_widget.dart';
 
 class CollectorprofileScreen extends ConsumerStatefulWidget {
@@ -370,24 +369,11 @@ class _CollectorprofileScreenState
                   onPressed: _isLoggingOut
                       ? null
                       : () async {
-                          setDialogState(() => _isLoggingOut = true);
-                          try {
-                            await ref.read(authProvider.notifier).logout();
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isLoggingOut = false);
-                            }
-                          }
-
-                          if (!mounted) return;
-                          Navigator.of(dialogContext).pop();
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                            (Route<dynamic> route) => false,
-                          );
-                        },
+                           setDialogState(() => _isLoggingOut = true);
+                           // ref.listen in main.dart handles popping all
+                           // routes and transitioning to LoginScreen
+                           await ref.read(authProvider.notifier).logout();
+                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFFF5A5F),
                     shape: RoundedRectangleBorder(

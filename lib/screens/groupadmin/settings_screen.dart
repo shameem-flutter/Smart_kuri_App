@@ -4,104 +4,113 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/screens/groupadmin/profilescreen.dart';
 import '../../providers/auth_provider_riverpod.dart';
-import 'auth/login_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
-  void _handleLogout(BuildContext context, WidgetRef ref) async {
-    await showDialog(
+  Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
+    bool isLoggingOut = false;
+
+    await showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        bool isLoggingOut = false;
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(
-                'Confirm Logout',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF2B3A4A),
-                ),
-              ),
-              content: Text(
-                'Are you sure you want to log out?',
-                style: GoogleFonts.inter(
-                  color: Colors.grey[600],
-                ),
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isLoggingOut ? null : () => Navigator.of(context).pop(),
-                  child: Text(
-                    'Cancel',
-                    style: GoogleFonts.inter(
-                      color: isLoggingOut ? Colors.grey[400] : Colors.grey[500],
-                      fontWeight: FontWeight.w600,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          icon: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.logout_rounded,
+              color: Colors.red,
+              size: 28,
+            ),
+          ),
+          title: Text(
+            'Log Out?',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF0F172A),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            'Are you sure you want to log out of your account?',
+            style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+          actionsPadding: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: 16,
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: isLoggingOut
+                        ? null
+                        : () => Navigator.of(dialogContext).pop(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: isLoggingOut
-                      ? null
-                      : () async {
-                          setState(() {
-                            isLoggingOut = true;
-                          });
-
-                          try {
-                            final authNotifier = ref.read(authProvider.notifier);
-                            await authNotifier.logout();
-
-                            if (!context.mounted) return;
-
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (_) => const LoginScreen()),
-                              (route) => false,
-                            );
-                          } catch (e) {
-                            if (!context.mounted) return;
-                            setState(() {
-                              isLoggingOut = false;
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Logout failed: $e')),
-                            );
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: isLoggingOut
+                        ? null
+                        : () async {
+                            setDialogState(() => isLoggingOut = true);
+                            // ref.listen in main.dart handles popping all
+                            // routes and transitioning to LoginScreen
+                            await ref.read(authProvider.notifier).logout();
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFF5A5F),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    elevation: 0,
+                    child: isLoggingOut
+                        ? const SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            'Log Out',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
-                  child: isLoggingOut
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          'Logout',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                 ),
               ],
-            );
-          },
-        );
-      },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -391,5 +400,3 @@ class _SettingsTile extends StatelessWidget {
     );
   }
 }
-
-

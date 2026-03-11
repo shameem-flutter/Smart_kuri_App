@@ -5,7 +5,6 @@ import '../../../utilities/validators.dart';
 import '../../../providers/auth_provider_riverpod.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_text_field.dart';
-import 'login_screen.dart';
 
 class PasswordResetConfirmScreen extends ConsumerStatefulWidget {
   final String identifier;
@@ -63,10 +62,8 @@ class _PasswordResetConfirmScreenState
         ),
       );
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
+      Navigator.of(context).pop(); // Pop Confirm
+      Navigator.of(context).pop(); // Pop Reset
     }
   }
 

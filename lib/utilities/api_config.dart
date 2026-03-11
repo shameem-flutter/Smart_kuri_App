@@ -41,6 +41,7 @@ class ApiConfig {
   static const String firstLoginChangePassword = 'api/v1/first-login/change-password/';
   static const String register = 'api/v1/group/signup/';
   static const String verifyOtp = 'api/v1/group/verify-otp/';
+  static const String plans = 'api/v1/plans/';
 
   // Admin endpoints
   static const String dashboard = 'api/v1/admin/dashboard/';

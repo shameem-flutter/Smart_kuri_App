@@ -323,7 +323,7 @@ class _ProfilescreenState extends ConsumerState<Profilescreen> {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(10),
@@ -431,9 +431,7 @@ class _ProfilescreenState extends ConsumerState<Profilescreen> {
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: statusColor.withValues(alpha: 0.2),
-                  ),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.2)),
                 ),
                 child: Row(
                   children: [
@@ -485,11 +483,7 @@ class _ProfilescreenState extends ConsumerState<Profilescreen> {
           // Time Left
           Row(
             children: [
-              Icon(
-                Icons.timer_outlined,
-                size: 18,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.timer_outlined, size: 18, color: Colors.grey[400]),
               const SizedBox(width: 8),
               Text(
                 'Expires in ',
@@ -609,8 +603,6 @@ class _ProfilescreenState extends ConsumerState<Profilescreen> {
     );
   }
 
-
-
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Row(
       children: [
@@ -651,5 +643,3 @@ class _ProfilescreenState extends ConsumerState<Profilescreen> {
     );
   }
 }
-
-

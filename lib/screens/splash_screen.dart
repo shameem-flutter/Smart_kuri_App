@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kuri_app/providers/auth_provider_riverpod.dart';
-import 'package:kuri_app/screens/member-admin/memberhomescreen.dart';
-import 'package:kuri_app/screens/groupadmin/group_admin_main_screen.dart';
-import 'package:kuri_app/screens/groupadmin/auth/login_screen.dart';
-import 'package:kuri_app/screens/collector-admin/collectorhomescreen.dart';
 import 'package:kuri_app/utilities/colors.dart';
+import 'package:lottie/lottie.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -69,38 +66,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   Future<void> _handleNavigation() async {
-    // Minimum splash duration to let the animation play
-    final minimumDelay = Future.delayed(const Duration(milliseconds: 2800));
-
-    // Auth initialization check
-    final authInitialization = ref.read(authProvider.notifier).initialize();
-
-    await Future.wait([minimumDelay, authInitialization]);
-
-    if (!mounted) return;
-
-    final authState = ref.read(authProvider);
-
-    Widget nextScreen;
-    if (authState.isAuthenticated) {
-      if (authState.role == 'member') {
-        nextScreen = const Memberhomescreen();
-      } else if (authState.role == 'collector') {
-        nextScreen = const Collectorhomescreen();
-      } else {
-        nextScreen = const GroupAdminMainScreen();
-      }
-    } else {
-      nextScreen = const LoginScreen();
-    }
-
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 600),
-        pageBuilder: (_, animation, __) =>
-            FadeTransition(opacity: animation, child: nextScreen),
-      ),
-    );
+    // Auth initialization check with minimum duration for animation
+    await ref
+        .read(authProvider.notifier)
+        .initialize(minimumDuration: const Duration(milliseconds: 2450));
   }
 
   @override
@@ -128,8 +97,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     child: Transform.scale(
                       scale: _logoScale.value,
                       child: Container(
-                        // width: 132, // 100 (image) + 16*2 (padding)
-                        // height: 132, // explicit size ensures a perfect circle
                         padding: const EdgeInsets.all(16),
                         decoration: const BoxDecoration(
                           color: Colors.white,
@@ -143,12 +110,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                             ),
                           ],
                         ),
-                        child: Image.asset(
-                          "assets/images/smartt.png",
-                          height: 80,
-                          width: 80,
+                        child: Lottie.asset(
+                          "assets/animation/SavingtheMoney.json",
+                          height: 180,
+                          width: 180,
                           fit: BoxFit
-                              .cover, // 'contain' prevents cropping your logo
+                              .contain, // 'contain' prevents cropping your logo
                           errorBuilder: (context, error, stackTrace) =>
                               const Icon(
                                 Icons.security,
@@ -160,7 +127,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 20),
 
                   // Text content with fade + slide up
                   Opacity(

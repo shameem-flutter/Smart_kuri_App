@@ -23,7 +23,7 @@ class MemberPaymentHistoryScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: bgGrey,
       body: paymentsAsync.when(
         loading: () =>
             Center(child: CircularProgressIndicator(color: primaryColor)),
@@ -44,34 +44,46 @@ class MemberPaymentHistoryScreen extends ConsumerWidget {
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                // ── Minimal top bar ──────────────────────────
-                SliverAppBar(
-                  pinned: true,
-                  backgroundColor: const Color(0xFFF5F6FA),
-                  elevation: 0,
-                  scrolledUnderElevation: 0,
-                  toolbarHeight: 56,
-                  automaticallyImplyLeading: false,
-                  flexibleSpace: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          Text(
-                            'Payments',
-                            style: GoogleFonts.poppins(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF111827),
+                // ── Stylized top bar ──────────────────────────
+                SliverToBoxAdapter(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.only(
+                        bottomLeft: Radius.circular(36),
+                        bottomRight: Radius.circular(36),
+                      ),
+                    ),
+                    child: SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                        child: Row(
+                          children: [
+                            // Back button
+                            Builder(
+                              builder: (ctx) => _NavCircleButton(
+                                icon: Icons.arrow_back_ios_new_rounded,
+                                onTap: () => Navigator.of(ctx).maybePop(),
+                              ),
                             ),
-                          ),
-                          const Spacer(),
-                          Icon(
-                            Icons.tune_rounded,
-                            size: 22,
-                            color: Colors.grey[500],
-                          ),
-                        ],
+                            const Spacer(),
+                            Text(
+                              'Payment History',
+                              style: GoogleFonts.poppins(
+                                color: blackColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                            const Spacer(),
+                            // Filter/Settings button
+                            _NavCircleButton(
+                              icon: Icons.tune_rounded,
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -459,6 +471,36 @@ class _EmptyState extends StatelessWidget {
             style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey[500]),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Helper Widgets
+// ─────────────────────────────────────────────────────────────
+class _NavCircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _NavCircleButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 35,
+        height: 35,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.25),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.15),
+            width: 1,
+          ),
+        ),
+        child: Icon(icon, color: Colors.white, size: 18),
       ),
     );
   }

@@ -16,6 +16,8 @@ class AuthState extends Equatable {
   final String? successMessage;
   final String? role;
   final bool isFirstLogin;
+  final bool isInitialized;
+  final bool isLoggingOut;
 
   const AuthState({
     this.isLoading = false,
@@ -24,6 +26,8 @@ class AuthState extends Equatable {
     this.successMessage,
     this.role,
     this.isFirstLogin = false,
+    this.isInitialized = false,
+    this.isLoggingOut = false,
   });
 
   AuthState copyWith({
@@ -34,6 +38,8 @@ class AuthState extends Equatable {
     String? role,
     bool clearMessages = false,
     bool? isFirstLogin,
+    bool? isInitialized,
+    bool? isLoggingOut,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -44,6 +50,8 @@ class AuthState extends Equatable {
           : (successMessage ?? this.successMessage),
       role: role ?? this.role,
       isFirstLogin: isFirstLogin ?? this.isFirstLogin,
+      isInitialized: isInitialized ?? this.isInitialized,
+      isLoggingOut: isLoggingOut ?? this.isLoggingOut,
     );
   }
 
@@ -55,6 +63,8 @@ class AuthState extends Equatable {
     successMessage,
     role,
     isFirstLogin,
+    isInitialized,
+    isLoggingOut,
   ];
 }
 
@@ -65,13 +75,32 @@ class AuthNotifier extends Notifier<AuthState> {
 
   AuthRepository get _authRepository => ref.read(authRepositoryProvider);
 
-  Future<void> initialize() async {
+  Future<void> initialize({Duration? minimumDuration}) async {
+    final start = DateTime.now();
     try {
       final isAuth = await _authRepository.isAuthenticated();
       final role = await _authRepository.getRole();
-      state = state.copyWith(isAuthenticated: isAuth, role: role);
+      
+      if (minimumDuration != null) {
+        final elapsed = DateTime.now().difference(start);
+        if (elapsed < minimumDuration) {
+          await Future.delayed(minimumDuration - elapsed);
+        }
+      }
+
+      state = state.copyWith(
+        isAuthenticated: isAuth,
+        role: role,
+        isInitialized: true,
+      );
     } catch (e) {
-      state = state.copyWith(isAuthenticated: false);
+      if (minimumDuration != null) {
+        final elapsed = DateTime.now().difference(start);
+        if (elapsed < minimumDuration) {
+          await Future.delayed(minimumDuration - elapsed);
+        }
+      }
+      state = state.copyWith(isAuthenticated: false, isInitialized: true);
     }
   }
 
@@ -164,9 +193,14 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearMessages: true);
     try {
       await _authRepository.verifyOtp(otp);
+      
+      // Fetch role after successful OTP verification
+      final role = await _authRepository.getRole();
+      
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,
+        role: role,
         successMessage: 'OTP Verified! Login successful.',
       );
     } on AppException catch (e) {
@@ -180,21 +214,13 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
-    state = state.copyWith(isLoading: true, clearMessages: true);
+    state = state.copyWith(isLoading: true, isLoggingOut: true);
     try {
       await _authRepository.logout();
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: false,
-        successMessage: 'Logged out successfully!',
-      );
-    } on AppException catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.message);
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'An unexpected error occurred during logout',
-      );
+    } catch (_) {
+      // Even if network fails, we should still clear local state
+    } finally {
+      state = const AuthState(isInitialized: true, isLoggingOut: false);
     }
   }
 
@@ -277,4 +303,18 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(
   AuthNotifier.new,
+);
+
+/// Which auth view is currently displayed (login / register / forgotPassword)
+enum AuthViewMode { login, register, forgotPassword }
+
+class AuthViewNotifier extends Notifier<AuthViewMode> {
+  @override
+  AuthViewMode build() => AuthViewMode.login;
+
+  void switchTo(AuthViewMode mode) => state = mode;
+}
+
+final authViewProvider = NotifierProvider<AuthViewNotifier, AuthViewMode>(
+  AuthViewNotifier.new,
 );

@@ -46,6 +46,7 @@ dependencies:
   audioplayers: ^6.1.0
   google_fonts: ^8.0.2
   google_nav_bar: ^5.0.7
+  lottie: ^3.3.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -73,6 +74,7 @@ flutter:
     - assets/sounds/
     - assets/google_fonts/
     - assets/images/
+    - assets/animation/
     - assets/logo.png
 
   # An image asset can refer to one or more resolution-specific "variants", see

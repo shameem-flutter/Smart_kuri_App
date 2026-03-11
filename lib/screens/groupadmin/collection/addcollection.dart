@@ -11,7 +11,8 @@ class AddCollectionScreen extends ConsumerStatefulWidget {
   const AddCollectionScreen({super.key});
 
   @override
-  ConsumerState<AddCollectionScreen> createState() => _AddCollectionScreenState();
+  ConsumerState<AddCollectionScreen> createState() =>
+      _AddCollectionScreenState();
 }
 
 class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
@@ -23,6 +24,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
 
   // State
   bool _isLoading = false;
+  bool _isFetchingAmount = false;
   bool _isLoadingData = true;
   String? _error;
 
@@ -87,12 +89,50 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
 
     setState(() {
       _selectedGroupId = groupId;
-      _selectedMemberId = null; // Reset member selection
+      _selectedMemberId = null;
+      _amountController.clear();
       // Filter members belonging to the selected group
       _filteredMembers = _allMembers
           .where((m) => m.groupId == groupId)
           .toList();
     });
+  }
+
+  Future<void> _onMemberChanged(int? memberId) async {
+    if (memberId == null) return;
+
+    setState(() {
+      _selectedMemberId = memberId;
+      _amountController.clear();
+      _isFetchingAmount = true;
+    });
+
+    final apiService = ref.read(apiServiceProvider);
+    try {
+      final history = await apiService.getMemberHistory(memberId);
+      if (mounted && _selectedMemberId == memberId) {
+        setState(() {
+          _amountController.text = history.summary.monthlyAmount
+              .toStringAsFixed(0);
+          _isFetchingAmount = false;
+        });
+      }
+    } catch (_) {
+      // Fallback: use the selected group's monthly amount
+      if (mounted && _selectedMemberId == memberId) {
+        final selectedGroup = _groups.firstWhere(
+          (g) => g.id == _selectedGroupId,
+          orElse: () => _groups.first,
+        );
+        setState(() {
+          if (selectedGroup.monthlyAmount > 0) {
+            _amountController.text = selectedGroup.monthlyAmount
+                .toStringAsFixed(0);
+          }
+          _isFetchingAmount = false;
+        });
+      }
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -275,16 +315,21 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
                         icon: Icons.person_outline_rounded,
                         onChanged: _selectedGroupId == null
                             ? null
-                            : (val) => setState(() => _selectedMemberId = val),
+                            : (val) => _onMemberChanged(val),
                       ),
                       const SizedBox(height: 16),
 
                       // Amount Field
                       _buildTextField(
                         controller: _amountController,
-                        label: 'Amount',
-                        icon: Icons.currency_rupee_rounded,
+                        label: _isFetchingAmount
+                            ? 'Fetching amount…'
+                            : 'Amount',
+                        icon: _isFetchingAmount
+                            ? Icons.hourglass_top_rounded
+                            : Icons.currency_rupee_rounded,
                         keyboardType: TextInputType.number,
+                        readOnly: true,
                         validator: (v) {
                           if (v?.isEmpty == true) return 'Amount is required';
                           if (double.tryParse(v!) == null) {
@@ -398,11 +443,12 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
     required String label,
     required IconData icon,
     TextInputType? keyboardType,
+    bool readOnly = false,
     String? Function(String?)? validator,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: readOnly ? const Color(0xFFF0F0F0) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -415,6 +461,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        readOnly: readOnly,
         validator: validator,
         style: GoogleFonts.inter(
           fontSize: 15,
@@ -423,6 +470,8 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
         ),
         decoration: InputDecoration(
           labelText: label,
+          floatingLabelBehavior: FloatingLabelBehavior.never,
+
           labelStyle: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
           prefixIcon: Icon(icon, color: const Color(0xFF2962FF), size: 22),
           border: InputBorder.none,
@@ -503,5 +552,3 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
     );
   }
 }
-
-

@@ -98,13 +98,13 @@ class _BentoDashboardLayout extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildMemberInfoCard(data.member),
-              const SizedBox(height: 16),
+              // _buildMemberInfoCard(data.member),
+              // const SizedBox(height: 16),
               _buildLatestAuctionBento(data.latestAuction),
-              if (data.auctions.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                _buildAuctionHistorySection(data.auctions, data.member.name),
-              ],
+              // if (data.auctions.isNotEmpty) ...[
+              //   const SizedBox(height: 16),
+              //   _buildAuctionHistorySection(data.auctions, data.member.name),
+              // ],
               const SizedBox(height: 90),
             ]),
           ),
@@ -350,7 +350,7 @@ class _BentoDashboardLayout extends StatelessWidget {
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(10),
@@ -393,100 +393,100 @@ class _BentoDashboardLayout extends StatelessWidget {
     }
   }
 
-  Widget _buildMemberInfoCard(MemberDashboardInfo member) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Member Details',
-            style: GoogleFonts.poppins(
-              color: const Color(0xFF0F172A),
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Account Status',
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF94A3B8),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: member.isActive
-                      ? const Color(0xFFD1FAE5)
-                      : const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: member.isActive
-                            ? const Color(0xFF059669)
-                            : const Color(0xFFDC2626),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      member.isActive ? 'Active' : 'Inactive',
-                      style: GoogleFonts.inter(
-                        color: member.isActive
-                            ? const Color(0xFF059669)
-                            : const Color(0xFFDC2626),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          if (member.aadhaarMasked.isNotEmpty)
-            _infoRow(Icons.fingerprint, 'Aadhaar', member.aadhaarMasked),
-          if (member.address.isNotEmpty)
-            _infoRow(Icons.location_on_outlined, 'Address', member.address),
-          if (member.joinDate.isNotEmpty)
-            _infoRow(
-              Icons.calendar_today_outlined,
-              'Joined',
-              _formatDate(member.joinDate),
-            ),
-          if (member.phone.isNotEmpty)
-            _infoRow(Icons.phone_outlined, 'Phone', member.phone),
-        ],
-      ),
-    );
-  }
+  // Widget _buildMemberInfoCard(MemberDashboardInfo member) {
+  //   return Container(
+  //     padding: const EdgeInsets.all(24),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(28),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withValues(alpha: 0.03),
+  //           blurRadius: 20,
+  //           offset: const Offset(0, 8),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Text(
+  //           'Member Details',
+  //           style: GoogleFonts.poppins(
+  //             color: const Color(0xFF0F172A),
+  //             fontSize: 18,
+  //             fontWeight: FontWeight.w700,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 20),
+  //         Row(
+  //           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //           children: [
+  //             Text(
+  //               'Account Status',
+  //               style: GoogleFonts.inter(
+  //                 color: const Color(0xFF94A3B8),
+  //                 fontSize: 14,
+  //                 fontWeight: FontWeight.w500,
+  //               ),
+  //             ),
+  //             Container(
+  //               padding: const EdgeInsets.symmetric(
+  //                 horizontal: 10,
+  //                 vertical: 4,
+  //               ),
+  //               decoration: BoxDecoration(
+  //                 color: member.isActive
+  //                     ? const Color(0xFFD1FAE5)
+  //                     : const Color(0xFFFEE2E2),
+  //                 borderRadius: BorderRadius.circular(20),
+  //               ),
+  //               child: Row(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 children: [
+  //                   Container(
+  //                     width: 6,
+  //                     height: 6,
+  //                     decoration: BoxDecoration(
+  //                       color: member.isActive
+  //                           ? const Color(0xFF059669)
+  //                           : const Color(0xFFDC2626),
+  //                       shape: BoxShape.circle,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(width: 6),
+  //                   Text(
+  //                     member.isActive ? 'Active' : 'Inactive',
+  //                     style: GoogleFonts.inter(
+  //                       color: member.isActive
+  //                           ? const Color(0xFF059669)
+  //                           : const Color(0xFFDC2626),
+  //                       fontSize: 12,
+  //                       fontWeight: FontWeight.w600,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         const SizedBox(height: 20),
+  //         if (member.aadhaarMasked.isNotEmpty)
+  //           _infoRow(Icons.fingerprint, 'Aadhaar', member.aadhaarMasked),
+  //         if (member.address.isNotEmpty)
+  //           _infoRow(Icons.location_on_outlined, 'Address', member.address),
+  //         if (member.joinDate.isNotEmpty)
+  //           _infoRow(
+  //             Icons.calendar_today_outlined,
+  //             'Joined',
+  //             _formatDate(member.joinDate),
+  //           ),
+  //         if (member.phone.isNotEmpty)
+  //           _infoRow(Icons.phone_outlined, 'Phone', member.phone),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _infoRow(IconData icon, String label, String value) {
     return Padding(
@@ -538,225 +538,386 @@ class _BentoDashboardLayout extends StatelessWidget {
     final hasAuction = latestAuction != null;
 
     return Container(
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
         borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A1A2E), Color(0xFF16213E), Color(0xFF0F3460)],
+          stops: [0.0, 0.5, 1.0],
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: const Color(0xFF0F3460).withValues(alpha: 0.5),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+            spreadRadius: -4,
           ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: hasAuction
-                  ? primaryColor.withValues(alpha: 0.1)
-                  : const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              hasAuction ? Icons.gavel_rounded : Icons.event_busy_rounded,
-              color: hasAuction ? primaryColor : const Color(0xFF94A3B8),
-              size: 26,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  hasAuction
-                      ? 'Latest Auction — Month ${latestAuction.monthNo}'
-                      : 'Latest Auction',
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF64748B),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  hasAuction
-                      ? 'Winner: ${latestAuction.winnerName}'
-                      : 'No Auctions Scheduled',
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF0F172A),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
-                if (hasAuction)
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_today_outlined,
-                        size: 14,
-                        color: Color(0xFF94A3B8),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        latestAuction.formattedDate,
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF64748B),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      _statusChip(latestAuction.status),
-                    ],
-                  )
-                else
-                  Text(
-                    'Check back later',
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFF94A3B8),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Auction History Section ───────────────────────────────────────────────
-
-  Widget _buildAuctionHistorySection(
-    List<AuctionItem> auctions,
-    String currentMemberName,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 12),
-          child: Text(
-            'Auction History',
-            style: GoogleFonts.poppins(
-              color: const Color(0xFF0F172A),
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        ListView.separated(
-          padding: EdgeInsets.zero,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: auctions.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, i) =>
-              _buildAuctionHistoryTile(auctions[i], currentMemberName),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAuctionHistoryTile(AuctionItem item, String currentMemberName) {
-    bool isMyWin =
-        currentMemberName.isNotEmpty &&
-        item.winnerName.isNotEmpty &&
-        item.winnerName.toLowerCase() == currentMemberName.toLowerCase();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: isMyWin
-            ? Border.all(color: const Color(0xFFFDE047), width: 1.5)
-            : null,
-        boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: const Color(0xFFE2B04A).withValues(alpha: 0.08),
+            blurRadius: 60,
+            offset: const Offset(0, 0),
           ),
         ],
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF1F5F9),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                'M${item.monthNo}',
-                style: GoogleFonts.poppins(
-                  color: const Color(0xFF1E293B),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
+          // Decorative orb glow top-right
+          Positioned(
+            top: -20,
+            right: -20,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFE2B04A).withValues(alpha: 0.15),
+                    Colors.transparent,
+                  ],
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
+          // Subtle grid lines overlay
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: CustomPaint(painter: _GridPatternPainter()),
+            ),
+          ),
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Winner: ${item.winnerName}',
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF0F172A),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      item.formattedDate,
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFF94A3B8),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    // Label pill
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE2B04A).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFE2B04A).withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: hasAuction
+                                  ? const Color(0xFF4ADE80)
+                                  : const Color(0xFF94A3B8),
+                              shape: BoxShape.circle,
+                              boxShadow: hasAuction
+                                  ? [
+                                      BoxShadow(
+                                        color: const Color(
+                                          0xFF4ADE80,
+                                        ).withValues(alpha: 0.6),
+                                        blurRadius: 6,
+                                        spreadRadius: 1,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            hasAuction
+                                ? 'Month ${latestAuction.monthNo}'
+                                : 'No Schedule',
+                            style: GoogleFonts.spaceGrotesk(
+                              color: const Color(0xFFE2B04A),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Token #${item.winnerToken ?? '-'}',
-                      style: GoogleFonts.inter(
-                        color: const Color(0xFFCBD5E1),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    // Gavel icon with glow
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: hasAuction
+                            ? const Color(0xFFE2B04A).withValues(alpha: 0.15)
+                            : const Color(0xFF334155).withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: hasAuction
+                              ? const Color(0xFFE2B04A).withValues(alpha: 0.35)
+                              : const Color(0xFF475569).withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                        boxShadow: hasAuction
+                            ? [
+                                BoxShadow(
+                                  color: const Color(
+                                    0xFFE2B04A,
+                                  ).withValues(alpha: 0.2),
+                                  blurRadius: 16,
+                                  spreadRadius: 2,
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Icon(
+                        hasAuction
+                            ? Icons.gavel_rounded
+                            : Icons.event_busy_rounded,
+                        color: hasAuction
+                            ? const Color(0xFFE2B04A)
+                            : const Color(0xFF64748B),
+                        size: 22,
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 20),
+                // Title
+                Text(
+                  'Latest Auction',
+                  style: GoogleFonts.spaceGrotesk(
+                    color: const Color(0xFF94A3B8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  hasAuction ? latestAuction.winnerName : 'No Auctions Yet',
+                  style: GoogleFonts.spaceGrotesk(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                    letterSpacing: -0.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 16),
+                // Divider
+                Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFE2B04A).withValues(alpha: 0.3),
+                        Colors.transparent,
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Bottom row
+                if (hasAuction)
+                  Row(
+                    children: [
+                      // Date chip
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.08),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.calendar_today_outlined,
+                              size: 12,
+                              color: Color(0xFF94A3B8),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              latestAuction.formattedDate,
+                              style: GoogleFonts.spaceGrotesk(
+                                color: const Color(0xFFCBD5E1),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _statusChip(latestAuction.status),
+                    ],
+                  )
+                else
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time_rounded,
+                        size: 14,
+                        color: Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Check back later',
+                        style: GoogleFonts.spaceGrotesk(
+                          color: const Color(0xFF64748B),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),
-          if (isMyWin) ...[
-            const Icon(Icons.star, color: Color(0xFFF59E0B), size: 18),
-            const SizedBox(width: 6),
-          ],
-          _statusChip(item.status),
         ],
       ),
     );
   }
+
+  // Subtle grid pattern painter
+
+  // ── Auction History Section ───────────────────────────────────────────────
+
+  // Widget _buildAuctionHistorySection(
+  //   List<AuctionItem> auctions,
+  //   String currentMemberName,
+  // ) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Padding(
+  //         padding: const EdgeInsets.only(left: 4, bottom: 12),
+  //         child: Text(
+  //           'Auction History',
+  //           style: GoogleFonts.poppins(
+  //             color: const Color(0xFF0F172A),
+  //             fontSize: 16,
+  //             fontWeight: FontWeight.w700,
+  //           ),
+  //         ),
+  //       ),
+  //       ListView.separated(
+  //         padding: EdgeInsets.zero,
+  //         shrinkWrap: true,
+  //         physics: const NeverScrollableScrollPhysics(),
+  //         itemCount: auctions.length,
+  //         separatorBuilder: (_, __) => const SizedBox(height: 12),
+  //         itemBuilder: (context, i) =>
+  //             _buildAuctionHistoryTile(auctions[i], currentMemberName),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  // Widget _buildAuctionHistoryTile(AuctionItem item, String currentMemberName) {
+  //   bool isMyWin =
+  //       currentMemberName.isNotEmpty &&
+  //       item.winnerName.isNotEmpty &&
+  //       item.winnerName.toLowerCase() == currentMemberName.toLowerCase();
+
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(20),
+  //       border: isMyWin
+  //           ? Border.all(color: const Color(0xFFFDE047), width: 1.5)
+  //           : null,
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withValues(alpha: 0.03),
+  //           blurRadius: 10,
+  //           offset: const Offset(0, 4),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Container(
+  //           width: 48,
+  //           height: 48,
+  //           decoration: const BoxDecoration(
+  //             color: Color(0xFFF1F5F9),
+  //             shape: BoxShape.circle,
+  //           ),
+  //           child: Center(
+  //             child: Text(
+  //               'M${item.monthNo}',
+  //               style: GoogleFonts.poppins(
+  //                 color: const Color(0xFF1E293B),
+  //                 fontWeight: FontWeight.w700,
+  //                 fontSize: 14,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         const SizedBox(width: 14),
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Text(
+  //                 'Winner: ${item.winnerName}',
+  //                 style: GoogleFonts.poppins(
+  //                   color: const Color(0xFF0F172A),
+  //                   fontSize: 14,
+  //                   fontWeight: FontWeight.w600,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 2),
+  //               Row(
+  //                 children: [
+  //                   Text(
+  //                     item.formattedDate,
+  //                     style: GoogleFonts.inter(
+  //                       color: const Color(0xFF94A3B8),
+  //                       fontSize: 12,
+  //                       fontWeight: FontWeight.w500,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(width: 8),
+  //                   Text(
+  //                     'Token #${item.winnerToken ?? '-'}',
+  //                     style: GoogleFonts.inter(
+  //                       color: const Color(0xFFCBD5E1),
+  //                       fontSize: 12,
+  //                       fontWeight: FontWeight.w500,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         if (isMyWin) ...[
+  //           const Icon(Icons.star, color: Color(0xFFF59E0B), size: 18),
+  //           const SizedBox(width: 6),
+  //         ],
+  //         _statusChip(item.status),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -780,4 +941,24 @@ class _BentoDashboardLayout extends StatelessWidget {
       ),
     );
   }
+}
+
+class _GridPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.025)
+      ..strokeWidth = 0.8;
+
+    const spacing = 32.0;
+    for (double x = 0; x < size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridPatternPainter oldDelegate) => false;
 }
