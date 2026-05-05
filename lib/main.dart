@@ -10,6 +10,7 @@ import 'screens/groupadmin/auth/first_login_password_screen.dart';
 import 'screens/collector-admin/collectorhomescreen.dart';
 import 'screens/member-admin/memberhomescreen.dart';
 import 'screens/groupadmin/group_admin_main_screen.dart';
+import 'screens/groupadmin/groups/onetimegroupcreation.dart';
 import 'providers/auth_provider_riverpod.dart';
 
 void main() async {
@@ -46,10 +47,19 @@ class _MyAppState extends ConsumerState<MyApp> {
     // Listen for logout: when auth goes from authenticated -> unauthenticated,
     // pop all pushed routes (Settings, Profile, etc.) to reveal the home route.
     // Deferred to post-frame to avoid popping mid-rebuild.
+    // Listen for state changes: when auth is lost OR setup is required,
+    // pop all pushed routes to ensure the correct root screen is shown.
     ref.listen<AuthState>(authProvider, (prev, next) {
-      if (prev != null && prev.isAuthenticated && !next.isAuthenticated) {
+      final wasAuth = prev?.isAuthenticated ?? false;
+      final isAuth = next.isAuthenticated;
+      final wasSetupNeeded = prev?.needsOnetimeSetup ?? false;
+      final isSetupNeeded = next.needsOnetimeSetup;
+
+      if ((wasAuth && !isAuth) || (!wasSetupNeeded && isSetupNeeded)) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          _navigatorKey.currentState?.popUntil((route) => route.isFirst);
+          if (_navigatorKey.currentState != null) {
+            _navigatorKey.currentState!.popUntil((route) => route.isFirst);
+          }
         });
       }
     });
@@ -98,6 +108,10 @@ class _MyAppState extends ConsumerState<MyApp> {
     if (authState.isAuthenticated) {
       if (authState.isFirstLogin) {
         return const FirstLoginChangePasswordScreen(key: ValueKey('first_login'));
+      }
+
+      if (authState.needsOnetimeSetup) {
+        return const Onetimegroupcreation(key: ValueKey('onetime_setup'));
       }
 
       if (authState.role == 'member') {
