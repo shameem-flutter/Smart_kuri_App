@@ -18,7 +18,7 @@ class AuthResponse extends Equatable {
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     return AuthResponse(
       message: json['message'] as String?,
-      data: json['data'] as Map<String, dynamic>?,
+      data: json, // Include full map as data
       success: json['success'] as bool? ?? true,
     );
   }

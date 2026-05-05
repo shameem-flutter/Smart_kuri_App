@@ -5,6 +5,7 @@ import 'package:kuri_app/screens/groupadmin/cash_collector/cashcollectorlist.dar
 import 'package:kuri_app/screens/groupadmin/cash_collector/createcashcollectorscreen.dart';
 import 'package:kuri_app/screens/groupadmin/collection/addcollection.dart';
 import 'package:kuri_app/screens/groupadmin/collection/collectionlist.dart';
+import 'package:kuri_app/screens/groupadmin/collection/pending_payments.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupcreate.dart';
 import 'package:kuri_app/screens/groupadmin/settings_screen.dart';
 import 'package:kuri_app/screens/groupadmin/member/createmember.dart';
@@ -15,11 +16,61 @@ import 'package:kuri_app/screens/groupadmin/dashboardscreen.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kuri_app/providers/group_provider.dart';
+import 'package:kuri_app/models/groupadmin/notification_model.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
-  void _showGroupOptions(BuildContext context, WidgetRef ref) {
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkNotifications();
+    });
+  }
+
+  void _checkNotifications() async {
+    final shown = ref.read(notificationShownProvider);
+    if (!shown) {
+      ref.read(notificationShownProvider.notifier).state = true;
+      try {
+        final response = await ref.read(notificationsProvider.future);
+        if (response.notifications.isNotEmpty) {
+          final notification = response.notifications.first;
+          _showNotificationPopUp(notification);
+        }
+      } catch (e) {
+        debugPrint('Error fetching notifications: $e');
+      }
+    }
+  }
+
+  void _showNotificationPopUp(NotificationModel notification) {
+    if (!mounted) return;
+
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => _NotificationPopUp(
+        title: notification.title,
+        message: notification.message,
+      ),
+    );
+
+    overlay.insert(overlayEntry);
+
+    Future.delayed(const Duration(seconds: 5), () {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    });
+  }
+
+  void _showGroupOptions(BuildContext context) {
     _showBottomSheet(context, [
       _BottomSheetOption(
         title: "Group List",
@@ -43,19 +94,10 @@ class HomeScreen extends ConsumerWidget {
           ).push(MaterialPageRoute(builder: (context) => GroupcreateScreen()));
         },
       ),
-      _BottomSheetOption(
-        title: "Reports",
-        icon: Icons.bar_chart_rounded,
-        color: Colors.blue,
-        onTap: () {
-          Navigator.pop(context);
-          // Navigate to Reports
-        },
-      ),
     ]);
   }
 
-  void _showMemberOptions(BuildContext context, WidgetRef ref) {
+  void _showMemberOptions(BuildContext context) {
     _showBottomSheet(context, [
       _BottomSheetOption(
         title: "Member List",
@@ -103,19 +145,10 @@ class HomeScreen extends ConsumerWidget {
           );
         },
       ),
-      _BottomSheetOption(
-        title: "Reports",
-        icon: Icons.analytics_outlined,
-        color: Colors.blue,
-        onTap: () {
-          Navigator.pop(context);
-          // Navigate to Reports
-        },
-      ),
     ]);
   }
 
-  void _showCollectionOptions(BuildContext context, WidgetRef ref) {
+  void _showCollectionOptions(BuildContext context) {
     _showBottomSheet(context, [
       _BottomSheetOption(
         title: "Add Collection",
@@ -139,10 +172,23 @@ class HomeScreen extends ConsumerWidget {
           );
         },
       ),
+      _BottomSheetOption(
+        title: "Pending Approvals",
+        icon: Icons.pending_actions_rounded,
+        color: Colors.green,
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const PendingPaymentsScreen(),
+            ),
+          );
+        },
+      ),
     ]);
   }
 
-  void _showAuctionOptions(BuildContext context, WidgetRef ref) {
+  void _showAuctionOptions(BuildContext context) {
     _showBottomSheet(context, [
       _BottomSheetOption(
         title: "Auction List",
@@ -156,6 +202,297 @@ class HomeScreen extends ConsumerWidget {
         },
       ),
     ]);
+  }
+
+  void _handleNotificationTap() {
+    final asyncData = ref.read(notificationsProvider);
+    final isCleared = ref.read(notificationClearedProvider);
+    if (!isCleared &&
+        asyncData.hasValue &&
+        asyncData.value!.notifications.isNotEmpty) {
+      _showNotificationDropdown(context, asyncData.value!.notifications.first);
+    } else {
+      _showNotificationDropdown(context, null);
+    }
+  }
+
+  void _showNotificationDropdown(
+    BuildContext context,
+    NotificationModel? notification,
+  ) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder:
+          (
+            BuildContext buildContext,
+            Animation animation,
+            Animation secondaryAnimation,
+          ) {
+            return SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 60, right: 24),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Consumer(
+                      builder: (context, ref, child) {
+                        final isCleared = ref.watch(
+                          notificationClearedProvider,
+                        );
+                        final hasNotification =
+                            !isCleared && notification != null;
+
+                        return Container(
+                          width: 320,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 20,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Header
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 16,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Notifications',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF1A1D1E),
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () {
+                                        ref
+                                                .read(
+                                                  notificationClearedProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            true;
+                                      },
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.delete_outline,
+                                            color: Colors.red,
+                                            size: 16,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Clear All',
+                                            style: GoogleFonts.inter(
+                                              color: Colors.red,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Divider(height: 1, color: Colors.grey[200]),
+
+                              // Notification Item
+                              if (hasNotification)
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const PendingPaymentsScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          width: 48,
+                                          height: 48,
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.withValues(
+                                              alpha: 0.15,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Center(
+                                            child: Icon(
+                                              Icons.monetization_on_outlined,
+                                              color: Colors.green,
+                                              size: 24,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Expanded(
+                                                    child: RichText(
+                                                      text: TextSpan(
+                                                        style:
+                                                            GoogleFonts.inter(
+                                                              color:
+                                                                  const Color(
+                                                                    0xFF1A1D1E,
+                                                                  ),
+                                                              fontSize: 14,
+                                                              height: 1.4,
+                                                            ),
+                                                        children: [
+                                                          TextSpan(
+                                                            text:
+                                                                '${notification.count ?? 1} Cash Handover ',
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                          ),
+                                                          const TextSpan(
+                                                            text:
+                                                                'pending your approval.',
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      ref
+                                                              .read(
+                                                                notificationClearedProvider
+                                                                    .notifier,
+                                                              )
+                                                              .state =
+                                                          true;
+                                                    },
+                                                    child: const Icon(
+                                                      Icons.close,
+                                                      size: 16,
+                                                      color: Colors.grey,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Amount: ₹${notification.amount?.toStringAsFixed(2) ?? '0.00'}',
+                                                style: GoogleFonts.inter(
+                                                  color: Colors.green,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Just now',
+                                                style: GoogleFonts.inter(
+                                                  color: Colors.grey[400],
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+
+                              if (hasNotification)
+                                Divider(height: 1, color: Colors.grey[200]),
+
+                              if (!hasNotification)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 30,
+                                  ),
+                                  child: Text(
+                                    'No new notifications',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.grey[500],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+
+                              if (!hasNotification)
+                                Divider(height: 1, color: Colors.grey[200]),
+
+                              // Footer
+                              InkWell(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const PendingPaymentsScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'View All History',
+                                    style: GoogleFonts.inter(
+                                      color: Colors.blue[700],
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+    );
   }
 
   void _showBottomSheet(
@@ -224,7 +561,7 @@ class HomeScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD), // Light gray background
       body: SafeArea(
@@ -235,33 +572,67 @@ class HomeScreen extends ConsumerWidget {
             children: [
               // Header
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // GestureDetector(
-                  //   onTap: () {
-                  //     Navigator.push(
-                  //       context,
-                  //       MaterialPageRoute(
-                  //         builder: (context) => const IpConfigDialog(),
-                  //       ),
-                  //     );
-                  //   },
-                  //   child: Container(
-                  //     padding: const EdgeInsets.all(12),
-                  //     decoration: const BoxDecoration(
-                  //       color: Color(0xFF2B3A4A), // Dark color for IP button
-                  //       shape: BoxShape.circle,
-                  //     ),
-                  //     child: const Text(
-                  //       'IP',
-                  //       style: TextStyle(
-                  //         color: Colors.white,
-                  //         fontWeight: FontWeight.bold,
-                  //         fontSize: 12,
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
+                  GestureDetector(
+                    onTap: _handleNotificationTap,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications,
+                            color: Color(0xFF2B3A4A),
+                            size: 22,
+                          ),
+                        ),
+                        ref
+                            .watch(notificationsProvider)
+                            .maybeWhen(
+                              data: (data) {
+                                final isCleared = ref.watch(
+                                  notificationClearedProvider,
+                                );
+                                if (!isCleared &&
+                                    data.notifications.isNotEmpty) {
+                                  final title = data.notifications.first.title;
+                                  final countStr =
+                                      RegExp(
+                                        r'\d+',
+                                      ).firstMatch(title)?.group(0) ??
+                                      '1';
+                                  return Positioned(
+                                    top: -5,
+                                    right: -5,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.red,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Text(
+                                        countStr,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              },
+                              orElse: () => const SizedBox.shrink(),
+                            ),
+                      ],
+                    ),
+                  ),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -316,7 +687,7 @@ class HomeScreen extends ConsumerWidget {
                 subtitle: 'Manage your groups',
                 icon: Icons.layers_rounded,
                 iconColor: Colors.blue,
-                onTap: () => _showGroupOptions(context, ref),
+                onTap: () => _showGroupOptions(context),
               ),
               vertGap(08),
               _DashboardCard(
@@ -324,7 +695,7 @@ class HomeScreen extends ConsumerWidget {
                 subtitle: 'View member details',
                 icon: Icons.people_rounded,
                 iconColor: Colors.blueAccent, // Lighter blue
-                onTap: () => _showMemberOptions(context, ref),
+                onTap: () => _showMemberOptions(context),
               ),
               vertGap(08),
               _DashboardCard(
@@ -332,7 +703,7 @@ class HomeScreen extends ConsumerWidget {
                 subtitle: 'Track payment history',
                 icon: Icons.inventory_2_rounded,
                 iconColor: Colors.teal,
-                onTap: () => _showCollectionOptions(context, ref),
+                onTap: () => _showCollectionOptions(context),
               ),
               vertGap(08),
               _DashboardCard(
@@ -340,7 +711,7 @@ class HomeScreen extends ConsumerWidget {
                 subtitle: 'Manage auctions',
                 icon: Icons.gavel_rounded,
                 iconColor: Colors.orange,
-                onTap: () => _showAuctionOptions(context, ref),
+                onTap: () => _showAuctionOptions(context),
               ),
             ],
           ),
@@ -472,4 +843,114 @@ Widget buildHeaderCard() {
       ),
     ],
   );
+}
+
+class _NotificationPopUp extends StatelessWidget {
+  final String title;
+  final String message;
+
+  const _NotificationPopUp({required this.title, required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 50,
+      left: 20,
+      right: 20,
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF2B3A4A), Color(0xFF3E4F5F)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.2),
+                blurRadius: 15,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.notifications_active_rounded,
+                      color: Colors.amber,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          message,
+                          style: GoogleFonts.inter(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            fontSize: 13,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const PendingPaymentsScreen(),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF2B3A4A),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  child: const Text(
+                    'Review and Approve',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

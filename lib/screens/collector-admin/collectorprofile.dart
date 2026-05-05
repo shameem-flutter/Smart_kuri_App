@@ -32,7 +32,12 @@ class _CollectorprofileScreenState
         elevation: 0,
         centerTitle: true,
         leading: GestureDetector(
-          onTap: () => ref.read(collectorScreenIndexProvider.notifier).goTo(-1),
+          onTap: () {
+            ref.read(collectorScreenIndexProvider.notifier).goTo(0);
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
             color: whiteColor,

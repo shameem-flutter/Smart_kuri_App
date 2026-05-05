@@ -23,6 +23,8 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
   List<Member> _members = [];
   List<Member> _filteredMembers = [];
   final TextEditingController _searchController = TextEditingController();
+  int? _loadingMemberId; // Tracks which member's edit is being fetched
+  int? _loadingDetailsId; // Tracks which member's details are being fetched
 
   @override
   void initState() {
@@ -102,6 +104,84 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
             content: Text(
               'Failed to delete member: ${e.toString().replaceAll("Exception: ", "")}',
             ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleDetailsMember(Member member) async {
+    setState(() => _loadingDetailsId = member.id);
+    try {
+      // Pre-populate the provider so navigation is instant & no secondary loader shows
+      await ref.read(memberAdminDetailsProvider(member.id).future);
+
+      if (mounted) {
+        setState(() => _loadingDetailsId = null);
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MemberDetailsScreen(memberId: member.id),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingDetailsId = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleEditMember(Member member) async {
+    setState(() => _loadingMemberId = member.id);
+    try {
+      final details = await ref
+          .read(apiServiceProvider)
+          .getMemberAdminDetails(member.id);
+      if (!mounted) return;
+
+      final completeMember = Member(
+        id: member.id,
+        name: details.member.name.isNotEmpty
+            ? details.member.name
+            : member.name,
+        phone: details.member.phone.isNotEmpty
+            ? details.member.phone
+            : member.phone,
+        email: details.member.email.isNotEmpty
+            ? details.member.email
+            : member.email,
+        isActive: member.isActive,
+        groupId: member.groupId,
+        groupName: member.groupName,
+        address: details.member.address,
+        aadhaarNo: details.member.aadhaarNo,
+      );
+
+      setState(() => _loadingMemberId = null);
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MemberEditScreen(member: completeMember),
+        ),
+      );
+      _loadMembers();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingMemberId = null);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -566,34 +646,31 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
             Row(
               children: [
                 _buildActionBtn(
-                  icon: Icons.bar_chart_rounded,
-                  label: 'Details',
+                  icon: _loadingDetailsId == member.id
+                      ? Icons.hourglass_top_rounded
+                      : Icons.bar_chart_rounded,
+                  label: _loadingDetailsId == member.id
+                      ? 'Loading...'
+                      : 'Details',
                   foreground: const Color(0xFF1A56DB),
                   background: const Color(0xFFEEF4FF),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            MemberDetailsScreen(memberId: member.id),
-                      ),
-                    );
-                  },
+                  isLoading: _loadingDetailsId == member.id,
+                  onTap: (_loadingMemberId != null || _loadingDetailsId != null)
+                      ? () {}
+                      : () => _handleDetailsMember(member),
                 ),
                 const SizedBox(width: 8),
                 _buildActionBtn(
-                  icon: Icons.edit_rounded,
-                  label: 'Edit',
+                  icon: _loadingMemberId == member.id
+                      ? Icons.hourglass_top_rounded
+                      : Icons.edit_rounded,
+                  label: _loadingMemberId == member.id ? 'Loading...' : 'Edit',
                   foreground: const Color(0xFFF59E0B),
                   background: const Color(0xFFFFFBEB),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => MemberEditScreen(member: member),
-                      ),
-                    );
-                  },
+                  isLoading: _loadingMemberId == member.id,
+                  onTap: (_loadingMemberId != null || _loadingDetailsId != null)
+                      ? () {} // Disable all edit buttons while one is loading
+                      : () => _handleEditMember(member),
                 ),
                 const SizedBox(width: 8),
                 _buildActionBtn(
@@ -602,7 +679,6 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
                   foreground: redColor,
                   background: const Color(0xFFECFDF5),
                   onTap: () => _confirmDelete(member),
-                  flex: 2,
                   filled: true,
                 ),
               ],
@@ -621,6 +697,7 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
     required VoidCallback onTap,
     int flex = 1,
     bool filled = false,
+    bool isLoading = false,
   }) {
     return Expanded(
       flex: flex,
@@ -637,15 +714,33 @@ class _MemberListScreenState extends ConsumerState<MemberListScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 16, color: filled ? Colors.white : foreground),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: GoogleFonts.dmSans(
+                if (isLoading)
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: foreground,
+                    ),
+                  )
+                else
+                  Icon(
+                    icon,
+                    size: 16,
                     color: filled ? Colors.white : foreground,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.1,
+                  ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: GoogleFonts.dmSans(
+                      color: filled ? Colors.white : foreground,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.1,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

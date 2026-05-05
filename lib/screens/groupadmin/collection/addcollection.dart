@@ -4,8 +4,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../models/groupadmin/collection_create_model.dart';
 import '../../../models/groupadmin/group_model.dart';
+import '../../../models/groupadmin/member_details_model.dart';
 import '../../../models/groupadmin/member_list.dart';
 import '../../../providers/group_provider.dart';
+
+// ── Palette ──────────────────────────────────────────────────────────────────
+const _primary = Color(0xFF5A57FF); // Indigo/Blue from mockup
+const _bg = Color(0xFFF9FAFF);
+const _surface = Color(0xFFFFFFFF);
+const _border = Color(0xFFE5E7EB);
+const _textMain = Color(0xFF1F2937);
+const _textMuted = Color(0xFF6B7280);
+const _red = Color(0xFFEF4444);
+const _redSoft = Color(0xFFFEF2F2);
 
 class AddCollectionScreen extends ConsumerStatefulWidget {
   const AddCollectionScreen({super.key});
@@ -35,6 +46,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
   int? _selectedGroupId;
   int? _selectedMemberId;
   DateTime? _selectedDate;
+  MemberDetailsResponse? _memberDetails; // Holds the status card data
 
   // Dropdown options
   final List<String> _paymentMethods = [
@@ -45,7 +57,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
   ];
   String? _selectedPaymentMethod;
 
-  final List<String> _paymentStatuses = ['Success', 'Failed', 'Pending'];
+  // final List<String> _paymentStatuses = ['Success', 'Failed', 'Pending'];
   String? _selectedPaymentStatus;
 
   @override
@@ -90,6 +102,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
     setState(() {
       _selectedGroupId = groupId;
       _selectedMemberId = null;
+      _memberDetails = null;
       _amountController.clear();
       // Filter members belonging to the selected group
       _filteredMembers = _allMembers
@@ -103,32 +116,58 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
 
     setState(() {
       _selectedMemberId = memberId;
+      _memberDetails = null;
       _amountController.clear();
       _isFetchingAmount = true;
     });
 
     final apiService = ref.read(apiServiceProvider);
     try {
-      final history = await apiService.getMemberHistory(memberId);
+      final details = await apiService.getMemberAdminDetails(memberId);
       if (mounted && _selectedMemberId == memberId) {
         setState(() {
-          _amountController.text = history.summary.monthlyAmount
-              .toStringAsFixed(0);
+          _memberDetails = details;
+          // Pre-fill with the total amount needed to be current (includes arrears + partial remainders)
+          final suggestedAmount = details.totalDue > 0
+              ? details.totalDue
+              : details.monthlyAmount;
+          _amountController.text = suggestedAmount.toStringAsFixed(0);
           _isFetchingAmount = false;
         });
       }
     } catch (_) {
-      // Fallback: use the selected group's monthly amount
+      // Fallback: use the selected group's monthly amount and show the card
       if (mounted && _selectedMemberId == memberId) {
         final selectedGroup = _groups.firstWhere(
           (g) => g.id == _selectedGroupId,
           orElse: () => _groups.first,
         );
+        final fallbackAmount = selectedGroup.monthlyAmount;
         setState(() {
-          if (selectedGroup.monthlyAmount > 0) {
-            _amountController.text = selectedGroup.monthlyAmount
-                .toStringAsFixed(0);
+          if (fallbackAmount > 0) {
+            _amountController.text = fallbackAmount.toStringAsFixed(0);
           }
+          // Build a minimal summary so the status card is always visible
+          _memberDetails = MemberDetailsResponse(
+            member: MemberDetailInfo(
+              id: memberId,
+              name: '',
+              phone: '',
+              email: '',
+              address: '',
+              aadhaarNo: '',
+              status: '',
+              tokenNo: 0,
+              group: '',
+            ),
+            totalCollected: 0.0,
+            totalDue: fallbackAmount,
+            monthsPaid: 0,
+            durationMonths: 0,
+            monthlyAmount: fallbackAmount,
+            monthWise: const [],
+            recentTransactions: const [],
+          );
           _isFetchingAmount = false;
         });
       }
@@ -176,10 +215,18 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
       _showSnackBar('Please select a payment method');
       return;
     }
-    if (_selectedPaymentStatus == null) {
-      _showSnackBar('Please select a payment status');
+
+    // ── Check if member is already finished ──────────────────────────
+    if (_memberDetails != null &&
+        _memberDetails!.monthsPaid >= _memberDetails!.durationMonths &&
+        _memberDetails!.totalDue <= 0) {
+      _showCompletionDialog();
       return;
     }
+    // if (_selectedPaymentStatus == null) {
+    //   _showSnackBar('Please select a payment status');
+    //   return;
+    // }
 
     setState(() {
       _isLoading = true;
@@ -193,7 +240,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
         amount: double.parse(_amountController.text.trim()),
         paidDate: _dateController.text.trim(),
         paymentMethod: _selectedPaymentMethod!.toLowerCase(),
-        paymentStatus: _selectedPaymentStatus!.toLowerCase(),
+        // paymentStatus: _selectedPaymentStatus!.toLowerCase(),
       );
 
       await ref.read(apiServiceProvider).createCollection(request);
@@ -203,13 +250,41 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
-            title: const Text('Success'),
-            content: const Text('Collection added successfully'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            icon: const Icon(
+              Icons.check_circle_outline,
+              color: Colors.green,
+              size: 60,
+            ),
+            title: const Text(
+              'Success!',
+              style: TextStyle(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            content: const Text(
+              'Collection added successfully.',
+              textAlign: TextAlign.center,
+            ),
+            actionsAlignment: MainAxisAlignment.center,
             actions: [
-              TextButton(
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Go back
+                  Navigator.of(context)
+                    ..pop() // Close dialog
+                    ..pop(); // Go back
                 },
                 child: const Text('OK'),
               ),
@@ -243,17 +318,42 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
     );
   }
 
+  void _showCompletionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, color: _primary),
+            const SizedBox(width: 10),
+            const Text('Fully Paid'),
+          ],
+        ),
+        content: const Text(
+          'This member has already completed all scheduled installments for this group.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Dismiss'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: _bg,
       appBar: AppBar(
         title: Text(
           'Add Collection',
           style: GoogleFonts.poppins(
-            color: const Color(0xFF2B3A4A),
+            color: _textMain,
             fontWeight: FontWeight.bold,
-            fontSize: 18,
+            fontSize: 20,
           ),
         ),
         backgroundColor: Colors.transparent,
@@ -262,7 +362,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_rounded,
-            color: Color(0xFF2B3A4A),
+            color: _textMain,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
@@ -270,66 +370,85 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
       ),
       body: SafeArea(
         child: _isLoadingData
-            ? const Center(
-                child: CircularProgressIndicator(color: Color(0xFF2962FF)),
-              )
+            ? const Center(child: CircularProgressIndicator(color: _primary))
             : SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 15,
+                  vertical: 8,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildSectionTitle('Transaction Details'),
-                      const SizedBox(height: 16),
-
-                      // Group Dropdown
+                      // ── 01. CHOOSE CHITTI GROUP ────────────────────────────
+                      _SectionHeader(
+                        number: '01',
+                        title: 'CHOOSE CHITTI GROUP',
+                        icon: Icons.layers_outlined,
+                        color: _primary,
+                      ),
+                      const SizedBox(height: 12),
                       _buildDropdown<int>(
                         value: _selectedGroupId,
-                        items: _groups
-                            .map(
-                              (g) => DropdownMenuItem(
-                                value: g.id,
-                                child: Text(g.name),
-                              ),
-                            )
-                            .toList(),
+                        items: _groups.map((g) {
+                          return DropdownMenuItem(
+                            value: g.id,
+                            child: Text(g.name),
+                          );
+                        }).toList(),
                         hint: 'Select Group',
-                        icon: Icons.group_work_outlined,
+                        icon: Icons.account_balance_outlined,
                         onChanged: _onGroupChanged,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 28),
 
-                      // Member Dropdown
+                      // ── 02. SELECT MEMBER ──────────────────────────────────
+                      _SectionHeader(
+                        number: '02',
+                        title: 'SELECT MEMBER',
+                        icon: Icons.person_outline_rounded,
+                        color: _primary,
+                      ),
+                      const SizedBox(height: 12),
                       _buildDropdown<int>(
                         value: _selectedMemberId,
-                        items: _filteredMembers
-                            .map(
-                              (m) => DropdownMenuItem(
-                                value: m.id,
-                                child: Text(m.name),
-                              ),
-                            )
-                            .toList(),
+                        items: _filteredMembers.map((m) {
+                          return DropdownMenuItem(
+                            value: m.id,
+                            child: Text(m.name),
+                          );
+                        }).toList(),
                         hint: 'Select Member',
-                        icon: Icons.person_outline_rounded,
+                        icon: Icons.person_search_outlined,
                         onChanged: _selectedGroupId == null
                             ? null
                             : (val) => _onMemberChanged(val),
                       ),
-                      const SizedBox(height: 16),
 
-                      // Amount Field
+                      // ── Member Status Card (Dynamic) ──────────────────────
+                      if (_memberDetails != null) ...[
+                        const SizedBox(height: 24),
+                        _MemberStatusCard(details: _memberDetails!),
+                      ],
+                      const SizedBox(height: 32),
+
+                      // ── 03. AMOUNT (INR) ──────────────────────────────────
+                      _SectionHeader(
+                        number: '03',
+                        title: 'AMOUNT (INR)',
+                        icon: Icons.payments_outlined,
+                        color: _primary,
+                      ),
+                      const SizedBox(height: 12),
                       _buildTextField(
                         controller: _amountController,
-                        label: _isFetchingAmount
-                            ? 'Fetching amount…'
-                            : 'Amount',
+                        label: _isFetchingAmount ? 'Fetching...' : 'Amount',
                         icon: _isFetchingAmount
                             ? Icons.hourglass_top_rounded
                             : Icons.currency_rupee_rounded,
                         keyboardType: TextInputType.number,
-                        readOnly: true,
+                        readOnly: false, // User might want to adjust
                         validator: (v) {
                           if (v?.isEmpty == true) return 'Amount is required';
                           if (double.tryParse(v!) == null) {
@@ -338,66 +457,84 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
                           return null;
                         },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 28),
 
-                      // Date Picker
+                      // ── 04. PAYMENT DATE ──────────────────────────────────
+                      _SectionHeader(
+                        number: '04',
+                        title: 'PAYMENT DATE',
+                        icon: Icons.calendar_today_outlined,
+                        color: _primary,
+                      ),
+                      const SizedBox(height: 12),
                       GestureDetector(
                         onTap: () => _selectDate(context),
                         child: AbsorbPointer(
                           child: _buildTextField(
                             controller: _dateController,
                             label: 'Paid Date',
-                            icon: Icons.calendar_today_rounded,
+                            icon: Icons.calendar_month_outlined,
+                            suffixIcon: const Icon(
+                              Icons.calendar_today_rounded,
+                              size: 18,
+                            ),
                             validator: (v) =>
                                 v?.isEmpty == true ? 'Date is required' : null,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 32),
 
-                      // Payment Method Dropdown
-                      _buildDropdown<String>(
-                        value: _selectedPaymentMethod,
-                        items: _paymentMethods
-                            .map(
-                              (m) => DropdownMenuItem(value: m, child: Text(m)),
-                            )
-                            .toList(),
-                        hint: 'Payment Method',
-                        icon: Icons.payment_rounded,
-                        onChanged: (val) =>
-                            setState(() => _selectedPaymentMethod = val),
+                      // ── Secondary Details (Method & Status) ────────────────
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildDropdown<String>(
+                              value: _selectedPaymentMethod,
+                              items: _paymentMethods.map((m) {
+                                return DropdownMenuItem(
+                                  value: m,
+                                  child: Text(m),
+                                );
+                              }).toList(),
+                              hint: 'Method',
+                              icon: Icons.payment_rounded,
+                              onChanged: (val) =>
+                                  setState(() => _selectedPaymentMethod = val),
+                            ),
+                          ),
+                          // const SizedBox(width: 16),
+                          // Expanded(
+                          //   child: _buildDropdown<String>(
+                          //     value: _selectedPaymentStatus,
+                          //     items: _paymentStatuses.map((s) {
+                          //       return DropdownMenuItem(
+                          //         value: s,
+                          //         child: Text(s),
+                          //       );
+                          //     }).toList(),
+                          //     hint: 'Status',
+                          //     icon: Icons.info_outline_rounded,
+                          //     onChanged: (val) =>
+                          //         setState(() => _selectedPaymentStatus = val),
+                          //   ),
+                          // ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
 
-                      // Payment Status Dropdown
-                      _buildDropdown<String>(
-                        value: _selectedPaymentStatus,
-                        items: _paymentStatuses
-                            .map(
-                              (s) => DropdownMenuItem(value: s, child: Text(s)),
-                            )
-                            .toList(),
-                        hint: 'Payment Status',
-                        icon: Icons.info_outline_rounded,
-                        onChanged: (val) =>
-                            setState(() => _selectedPaymentStatus = val),
-                      ),
+                      const SizedBox(height: 48),
 
-                      const SizedBox(height: 40),
+                      // ── Submit Button ──────────────────────────────────────
                       SizedBox(
-                        height: 56,
+                        height: 60,
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _submitCollection,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2962FF),
+                            backgroundColor: _primary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            elevation: 4,
-                            shadowColor: const Color(
-                              0xFF2962FF,
-                            ).withValues(alpha: 0.4),
+                            elevation: 0,
                           ),
                           child: _isLoading
                               ? const SizedBox(
@@ -409,7 +546,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
                                   ),
                                 )
                               : Text(
-                                  'Add Collection',
+                                  'Confirm & Record',
                                   style: GoogleFonts.poppins(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -418,6 +555,7 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
                                 ),
                         ),
                       ),
+                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
@@ -431,9 +569,9 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
       title,
       style: GoogleFonts.poppins(
         fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: Colors.grey[500],
-        letterSpacing: 1,
+        fontWeight: FontWeight.w700,
+        color: const Color(0xFF6366F1), // Specific indigo from mockup
+        letterSpacing: 0.5,
       ),
     );
   }
@@ -444,12 +582,20 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
     required IconData icon,
     TextInputType? keyboardType,
     bool readOnly = false,
+    Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
+    const radius = BorderRadius.all(Radius.circular(16));
+    final outlineBorder = OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide.none,
+    );
+
     return Container(
       decoration: BoxDecoration(
-        color: readOnly ? const Color(0xFFF0F0F0) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: _surface,
+        borderRadius: radius,
+        border: Border.all(color: _border.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -458,42 +604,42 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
           ),
         ],
       ),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        readOnly: readOnly,
-        validator: validator,
-        style: GoogleFonts.inter(
-          fontSize: 15,
-          color: const Color(0xFF2B3A4A),
-          fontWeight: FontWeight.w500,
-        ),
-        decoration: InputDecoration(
-          labelText: label,
-          floatingLabelBehavior: FloatingLabelBehavior.never,
-
-          labelStyle: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
-          prefixIcon: Icon(icon, color: const Color(0xFF2962FF), size: 22),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
+      child: ClipRRect(
+        // ← clips internal ink/fill
+        borderRadius: radius,
+        child: TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          readOnly: readOnly,
+          validator: validator,
+          style: GoogleFonts.inter(
+            fontSize: 16,
+            color: _textMain,
+            fontWeight: FontWeight.w600,
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Color(0xFF2962FF), width: 1.5),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.red[300]!, width: 1.5),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.red[300]!, width: 1.5),
+          decoration: InputDecoration(
+            hintText: label,
+            hintStyle: GoogleFonts.inter(
+              color: _textMuted.withValues(alpha: 0.4),
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(
+              icon,
+              color: _textMuted.withValues(alpha: 0.5),
+              size: 20,
+            ),
+            suffixIcon: suffixIcon,
+            border: outlineBorder, // ← all four states use same border
+            enabledBorder: outlineBorder,
+            focusedBorder: outlineBorder,
+            errorBorder: outlineBorder,
+            focusedErrorBorder: outlineBorder,
+            filled: true,
+            fillColor: _surface,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 18,
+            ),
           ),
         ),
       ),
@@ -508,10 +654,11 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
     required void Function(T?)? onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: _border.withValues(alpha: 0.5)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -525,29 +672,365 @@ class _AddCollectionScreenState extends ConsumerState<AddCollectionScreen> {
           value: value,
           hint: Row(
             children: [
-              Icon(icon, color: const Color(0xFF2962FF), size: 22),
+              Icon(icon, color: _textMuted.withValues(alpha: 0.5), size: 20),
               const SizedBox(width: 12),
               Text(
                 hint,
-                style: GoogleFonts.inter(color: Colors.grey[400], fontSize: 14),
+                style: GoogleFonts.inter(
+                  color: _textMuted.withValues(alpha: 0.4),
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
           icon: const Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: Colors.grey,
+            color: _textMuted,
+            size: 20,
           ),
           isExpanded: true,
           items: items,
           onChanged: onChanged,
           style: GoogleFonts.inter(
-            fontSize: 15,
-            color: const Color(0xFF2B3A4A),
-            fontWeight: FontWeight.w500,
+            fontSize: 16,
+            color: _textMain,
+            fontWeight: FontWeight.w600,
           ),
           dropdownColor: Colors.white,
           borderRadius: BorderRadius.circular(16),
         ),
+      ),
+    );
+  }
+}
+
+// ── Redesigned Helper Widgets ────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final String number;
+  final String title;
+  final IconData icon;
+  final Color color;
+
+  const _SectionHeader({
+    required this.number,
+    required this.title,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 10),
+        Text(
+          '$number. $title',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: color,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MemberStatusCard extends StatelessWidget {
+  final MemberDetailsResponse details;
+
+  const _MemberStatusCard({required this.details});
+
+  @override
+  Widget build(BuildContext context) {
+    final _StatusStyle style = _statusStyle(details);
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: _primary.withValues(alpha: 0.08)),
+      ),
+      color: _surface,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// 🔹 HEADER (STATUS BADGE)
+            Row(
+              children: [
+                _statusBadge(style),
+                const Spacer(),
+                Icon(
+                  Icons.verified_rounded,
+                  size: 18,
+                  color: _textMuted.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            /// 🔹 DIVIDER
+            Divider(color: _primary.withValues(alpha: 0.05)),
+
+            const SizedBox(height: 12),
+
+            /// 🔹 DATA SECTION
+            Row(
+              children: [
+                Expanded(
+                  child: _infoTile(
+                    'Paid to Date',
+                    '₹${details.totalCollected.toStringAsFixed(0)}',
+                    color: const Color(0xFF16A34A),
+                  ),
+                ),
+                _verticalDivider(),
+                Expanded(
+                  child: _infoTile(
+                    'Balance (Due)',
+                    '₹${details.totalDue.toStringAsFixed(0)}',
+                    color: details.totalDue > 0 ? _red : _textMain,
+                  ),
+                ),
+                _verticalDivider(),
+                Expanded(
+                  child: _infoTile(
+                    'Installment',
+                    '₹${details.monthlyAmount.toStringAsFixed(0)}',
+                    color: _textMain,
+                  ),
+                ),
+              ],
+            ),
+
+            if (details.monthWise.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Divider(color: _primary.withValues(alpha: 0.05)),
+              const SizedBox(height: 16),
+              Text(
+                'Payment Timeline',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: _textMuted,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 70,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: details.monthWise.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(width: 12),
+                  itemBuilder: (context, index) {
+                    final month = details.monthWise[index];
+                    return _MonthMetricTile(month: month);
+                  },
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 🔹 STATUS STYLE LOGIC (unchanged)
+  _StatusStyle _statusStyle(MemberDetailsResponse details) {
+    // ── Check if fully finished ──────────────────────────────────────
+    if (details.monthsPaid >= details.durationMonths && details.totalDue <= 0) {
+      return const _StatusStyle(
+        label: 'COMPLETED',
+        icon: Icons.workspace_premium_rounded,
+        fgColor: Color(0xFF0D9488),
+        bgColor: Color(0xFFF0FDFA),
+      );
+    }
+
+    if (details.totalDue <= 0) {
+      int nextPayment = details.monthsPaid;
+      return _StatusStyle(
+        label: 'CLEARED ${_getOrdinal(nextPayment)}',
+        icon: Icons.star_rounded,
+        fgColor: const Color(0xFF059669),
+        bgColor: const Color(0xFFECFDF5),
+      );
+    } else if (details.totalCollected > 0) {
+      return _StatusStyle(
+        label: 'PARTIALLY PAID',
+        icon: Icons.timelapse_rounded,
+        fgColor: const Color(0xFFD97706),
+        bgColor: const Color(0xFFFFFBEB),
+      );
+    } else {
+      return _StatusStyle(
+        label: 'DUE PENDING',
+        icon: Icons.access_time_filled_rounded,
+        fgColor: _red,
+        bgColor: _redSoft,
+      );
+    }
+  }
+
+  String _getOrdinal(int number) {
+    if (number >= 11 && number <= 13) return '${number}TH';
+    switch (number % 10) {
+      case 1:
+        return '${number}ST';
+      case 2:
+        return '${number}ND';
+      case 3:
+        return '${number}RD';
+      default:
+        return '${number}TH';
+    }
+  }
+
+  /// 🔹 INFO TILE (clean & spaced)
+  Widget _infoTile(String label, String value, {required Color color}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: _textMuted,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 🔹 VERTICAL DIVIDER
+  Widget _verticalDivider() {
+    return Container(
+      height: 32,
+      width: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      color: _primary.withValues(alpha: 0.06),
+    );
+  }
+}
+
+// ── Status badge data class ────────────────────────────────────────────────
+class _StatusStyle {
+  final String label;
+  final IconData? icon;
+  final Color fgColor;
+  final Color bgColor;
+
+  const _StatusStyle({
+    required this.label,
+    this.icon,
+    required this.fgColor,
+    required this.bgColor,
+  });
+}
+
+Widget _statusBadge(_StatusStyle style) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: style.bgColor,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(style.icon, size: 14, color: style.fgColor),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            style.label,
+            overflow: TextOverflow.visible,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+              color: style.fgColor,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _MonthMetricTile extends StatelessWidget {
+  final MonthWisePayment month;
+  const _MonthMetricTile({required this.month});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isPaid = month.status.toLowerCase() == 'paid';
+    final bool isPartial = month.status.toLowerCase() == 'partial';
+    final bool isPending = month.status.toLowerCase() == 'pending';
+    final bool isAdvance = month.isAdvance;
+
+    Color color;
+    if (isAdvance) {
+      color = Colors.indigo;
+    } else if (isPaid) {
+      color = const Color(0xFF059669);
+    } else if (isPartial) {
+      color = const Color(0xFFD97706);
+    } else {
+      color = _red;
+    }
+
+    return Container(
+      width: 70,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'MO ${month.month}',
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: _textMuted,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              month.status.toUpperCase(),
+              style: GoogleFonts.inter(
+                fontSize: 8,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -5,7 +5,6 @@ import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/screens/groupadmin/collection/collectionlist.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupcreate.dart';
 import 'package:kuri_app/screens/groupadmin/groups/groupdetails.dart';
-import 'package:kuri_app/models/groupadmin/dashboard_model.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/widgets/custom_error_widget.dart';
@@ -244,35 +243,35 @@ class _GroupListCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      _ActionBtn(
-                        icon: Icons.edit_rounded,
-                        label: 'Edit',
-                        foreground: _kOrange,
-                        background: _kOrangeBg,
-                        onTap: () {
-                          final dashboardGroup = DashboardGroup(
-                            id: group.id,
-                            name: group.name,
-                            code: '', // Not available in Group model
-                            isActive:
-                                true, // Defaulting as we don't have this field
-                            totalMembers: 0, // Not available
-                            monthlyAmount: group.monthlyAmount,
-                            durationMonths: group.durationMonths,
-                            startDate: group.startDate,
-                            collectorName: group.collectorName,
-                          );
+                      // _ActionBtn(
+                      //   icon: Icons.edit_rounded,
+                      //   label: 'Edit',
+                      //   foreground: _kOrange,
+                      //   background: _kOrangeBg,
+                      //   onTap: () {
+                      //     final dashboardGroup = DashboardGroup(
+                      //       id: group.id,
+                      //       name: group.name,
+                      //       code: '', // Not available in Group model
+                      //       isActive:
+                      //           true, // Defaulting as we don't have this field
+                      //       totalMembers: 0, // Not available
+                      //       monthlyAmount: group.monthlyAmount,
+                      //       durationMonths: group.durationMonths,
+                      //       startDate: group.startDate,
+                      //       collectorName: group.collectorName,
+                      //     );
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  GroupcreateScreen(group: dashboardGroup),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 8),
+                      //     Navigator.push(
+                      //       context,
+                      //       MaterialPageRoute(
+                      //         builder: (_) =>
+                      //             GroupcreateScreen(group: dashboardGroup),
+                      //       ),
+                      //     );
+                      //   },
+                      // ),
+                      // const SizedBox(width: 8),
                       _ActionBtn(
                         icon: Icons.account_balance_wallet_rounded,
                         label: 'Collect',

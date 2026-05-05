@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../../../models/groupadmin/member_details_model.dart';
 import '../../../providers/group_provider.dart';
 import '../../../widgets/custom_error_widget.dart';
@@ -245,6 +246,9 @@ class MemberDetailsScreen extends ConsumerWidget {
                 _sectionLabel('Timeline & Payments'),
                 const SizedBox(height: 12),
                 _buildMonthsCard(data.monthWise),
+                const SizedBox(height: 28),
+
+                _buildTransactionHistory(data.recentTransactions),
               ],
             ),
           ),
@@ -539,7 +543,7 @@ class MemberDetailsScreen extends ConsumerWidget {
       decoration: _cardDecoration(),
       padding: const EdgeInsets.all(20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
             padding: const EdgeInsets.all(10),
@@ -716,8 +720,8 @@ class MemberDetailsScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                isPaid && item.paidDate != null
-                                    ? 'Paid on ${item.paidDate}'
+                                isPaid
+                                    ? 'Payment Completed'
                                     : 'Awaiting Payment',
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
@@ -731,9 +735,11 @@ class MemberDetailsScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              item.amount != null
-                                  ? '₹${item.amount!.toStringAsFixed(0)}'
-                                  : '—',
+                              (item.paid != null && item.paid! > 0)
+                                  ? '₹${item.paid!.toStringAsFixed(0)}'
+                                  : (item.target != null
+                                        ? '₹${item.target!.toStringAsFixed(0)}'
+                                        : '—'),
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
@@ -750,6 +756,19 @@ class MemberDetailsScreen extends ConsumerWidget {
                                 color: isPaid ? _green : _amber,
                               ),
                             ),
+                            if (item.isAdvance)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  'ADVANCE',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
+                                    color: _primary,
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                       ],
@@ -767,6 +786,26 @@ class MemberDetailsScreen extends ConsumerWidget {
           }).toList(),
         ),
       ),
+    );
+  }
+
+  Widget _buildTransactionHistory(List<RecentTransaction> transactions) {
+    if (transactions.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.history_rounded, size: 20, color: _ink),
+            const SizedBox(width: 10),
+            _sectionLabel('Transaction History'),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        ...transactions.map((item) => _TransactionTile(item: item)),
+      ],
     );
   }
 
@@ -788,4 +827,149 @@ class _InfoRow {
   final String label;
   final String value;
   const _InfoRow(this.icon, this.label, this.value);
+}
+
+class _TransactionTile extends StatelessWidget {
+  final RecentTransaction item;
+
+  const _TransactionTile({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final String dateStr = _formatDate(item.paidDate);
+
+    final _TransactionStyle style = _getTransactionStyle(item);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: _cardDecoration(radius: 16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            /// 🔹 ICON
+            Container(
+              height: 44,
+              width: 44,
+              decoration: BoxDecoration(
+                color: style.bgColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(style.icon, size: 20, color: style.iconColor),
+            ),
+
+            const SizedBox(width: 12),
+
+            /// 🔹 CONTENT
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  /// Amount + Payment Type
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '₹${item.amount.toStringAsFixed(2)}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _ink,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 6),
+
+                  /// Date + Collector
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today_rounded,
+                        size: 12,
+                        color: _muted,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        dateStr,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: _muted,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+                      Container(width: 1, height: 12, color: _border),
+                      const SizedBox(width: 12),
+
+                      /// Collector
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Collected by ',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: _muted,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              TextSpan(
+                                text: item.collector,
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: _ink,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 🔹 Date Formatter (safe)
+  String _formatDate(String rawDate) {
+    try {
+      return DateFormat('d MMM, yyyy').format(DateTime.parse(rawDate));
+    } catch (_) {
+      return rawDate;
+    }
+  }
+
+  /// 🔹 Payment Badge
+
+  /// 🔹 Style Logic (Scalable)
+  _TransactionStyle _getTransactionStyle(RecentTransaction item) {
+    return _TransactionStyle(
+      icon: Icons.arrow_downward_rounded,
+      iconColor: const Color(0xFF16A34A),
+      bgColor: const Color(0xFFECFDF5),
+    );
+  }
+}
+
+class _TransactionStyle {
+  final IconData icon;
+  final Color iconColor;
+  final Color bgColor;
+
+  _TransactionStyle({
+    required this.icon,
+    required this.iconColor,
+    required this.bgColor,
+  });
 }

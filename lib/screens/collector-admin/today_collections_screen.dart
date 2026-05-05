@@ -140,7 +140,7 @@ class _TodayCollectionsScreenState
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () =>
-                ref.read(collectorScreenIndexProvider.notifier).goTo(-1),
+                ref.read(collectorScreenIndexProvider.notifier).goTo(0),
           ),
           flexibleSpace: FlexibleSpaceBar(
             titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
@@ -339,5 +339,3 @@ class _TodayCollectionsScreenState
     );
   }
 }
-
-

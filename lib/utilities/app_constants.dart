@@ -16,6 +16,7 @@ class AppConstants {
   static const String isLoggedInKey = 'is_logged_in';
   static const String credentialIdentifierKey = 'credential_identifier';
   static const String credentialPasswordKey = 'credential_password';
+  static const String needsOnetimeSetupKey = 'needs_onetime_setup';
 
   // Validation Patterns
   static final RegExp emailPattern = RegExp(

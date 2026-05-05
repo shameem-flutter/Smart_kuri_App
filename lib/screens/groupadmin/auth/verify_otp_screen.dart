@@ -49,20 +49,30 @@ class _VerifyOtpScreenState extends ConsumerState<VerifyOtpScreen> {
       );
       ref.read(authProvider.notifier).clearMessages();
     } else if (authState.successMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authState.successMessage!),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      final successMsg = authState.successMessage!;
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
       ref.read(authProvider.notifier).clearMessages();
+      
+      Future.delayed(const Duration(milliseconds: 300), () {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(successMsg),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      });
     }
 
     if (authState.isAuthenticated) {
       // main.dart's AnimatedSwitcher reacts to isAuthenticated and routes correctly
       // Pop the OTP screen so the back-stack is clean
       if (!mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } else if (authState.errorMessage == null) {
+      if (!mounted) return;
+      ref.read(authViewProvider.notifier).switchTo(AuthViewMode.login);
       Navigator.of(context).popUntil((route) => route.isFirst);
     }
   }

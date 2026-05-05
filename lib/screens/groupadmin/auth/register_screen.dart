@@ -4,10 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../utilities/colors.dart';
 import '../../../utilities/validators.dart';
 import '../../../providers/auth_provider_riverpod.dart';
-import '../../../providers/group_provider.dart';
+// import '../../../providers/group_provider.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_text_field.dart';
-import 'package:kuri_app/models/auth/plan_model.dart';
+// import 'package:kuri_app/models/auth/plan_model.dart';
 import 'verify_otp_screen.dart';
 
 /// Register Screen — separate from LoginScreen
@@ -28,33 +28,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
 
-  List<PlanModel> _plans = [];
-  bool _isLoadingPlans = false;
-  int? _selectedPlanId;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => _loadPlans());
-  }
-
-  Future<void> _loadPlans() async {
-    if (!mounted) return;
-    setState(() => _isLoadingPlans = true);
-    try {
-      final response = await ref.read(apiServiceProvider).getPlans();
-      if (mounted) {
-        setState(() {
-          _plans = response.plans.where((p) => p.isActive).toList();
-        });
-      }
-    } catch (e) {
-      debugPrint('Failed to load plans: $e');
-    } finally {
-      if (mounted) setState(() => _isLoadingPlans = false);
-    }
   }
 
   @override
@@ -69,29 +48,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
-
-    if (_selectedPlanId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a subscription plan'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
     FocusScope.of(context).unfocus();
 
     await ref
         .read(authProvider.notifier)
         .register(
-          groupName: _nameController.text.trim(),
+          name: _nameController.text.trim(),
           phone: _phoneController.text.trim(),
           email: _emailController.text.trim(),
           password: _passwordController.text,
           confirmPassword: _confirmPasswordController.text,
-          planId: _selectedPlanId!,
         );
 
     if (!mounted) return;
@@ -108,17 +74,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       );
       ref.read(authProvider.notifier).clearMessages();
     } else if (authState.successMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authState.successMessage!),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      final successMsg = authState.successMessage!;
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.clearSnackBars();
       ref.read(authProvider.notifier).clearMessages();
+
       Navigator.of(
         context,
       ).push(MaterialPageRoute(builder: (_) => const VerifyOtpScreen()));
+
+      Future.delayed(const Duration(milliseconds: 300), () {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(successMsg),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      });
     }
   }
 
@@ -220,51 +193,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // const SizedBox(height: 24),
-                            _sectionLabel('Choose a Plan'),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Select the plan that suits your group',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: Colors.grey[500],
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-
-                            if (_isLoadingPlans)
-                              const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(24),
-                                  child: CircularProgressIndicator(),
-                                ),
-                              )
-                            else if (_plans.isEmpty)
-                              Center(
-                                child: Text(
-                                  'No plans available',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                              )
-                            else
-                              Column(
-                                children: _plans
-                                    .asMap()
-                                    .entries
-                                    .map((e) => _buildPlanCard(e.value, e.key))
-                                    .toList(),
-                              ),
-                            const SizedBox(height: 12),
                             // ── Basic Info ──────────────────────────
                             _sectionLabel('Basic Information'),
                             const SizedBox(height: 12),
                             CustomTextField(
                               controller: _nameController,
                               label: '',
-                              hint: 'Group Name',
-                              prefixIcon: const Icon(Icons.group_work_outlined),
+                              hint: 'Name',
+                              prefixIcon: const Icon(Icons.person_outline),
                               validator: (v) =>
                                   v?.isEmpty ?? true ? 'Required' : null,
                             ),
@@ -398,178 +334,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         fontWeight: FontWeight.w700,
         color: const Color(0xFF2B3A4A),
       ),
-    );
-  }
-
-  // Palette of gradients cycling across plans
-  static const _planGradients = [
-    [Color(0xFF6C3DE8), Color(0xFF4A66F0)], // Purple → Blue
-    [Color(0xFF0C9B72), Color(0xFF1CB8A1)], // Green tones
-    [Color(0xFFF05A28), Color(0xFFFFAA00)], // Orange → Gold
-    [Color(0xFF1A237E), Color(0xFF283593)], // Deep Navy
-  ];
-
-  Widget _buildPlanCard(PlanModel plan, int index) {
-    final isSelected = _selectedPlanId == plan.id;
-    final gradient = _planGradients[index % _planGradients.length];
-    final price = double.tryParse(plan.price)?.toStringAsFixed(0) ?? plan.price;
-    final durationMonths = (plan.durationDays / 30).round();
-
-    return GestureDetector(
-      onTap: () => setState(() => _selectedPlanId = plan.id),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 14),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: gradient,
-                )
-              : null,
-          color: isSelected ? null : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade200,
-            width: 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? gradient[0].withValues(alpha: 0.35)
-                  : Colors.black.withValues(alpha: 0.04),
-              blurRadius: isSelected ? 16 : 8,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : gradient[0].withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  _planIcon(index),
-                  color: isSelected ? Colors.white : gradient[0],
-                  size: 26,
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              // Plan info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      plan.name.toUpperCase(),
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected
-                            ? Colors.white
-                            : const Color(0xFF2B3A4A),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    // Replace the Wrap widget in _buildPlanCard with this:
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _chip(
-                          Icons.people_outline,
-                          '${plan.maxMembers} members',
-                          isSelected,
-                        ),
-                        const SizedBox(height: 4),
-                        _chip(
-                          Icons.folder_outlined,
-                          '${plan.maxGroups} groups',
-                          isSelected,
-                        ),
-                        const SizedBox(height: 4),
-                        _chip(
-                          Icons.calendar_today_outlined,
-                          '$durationMonths months',
-                          isSelected,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Price + selection mark
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '₹$price',
-                    style: GoogleFonts.poppins(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: isSelected ? Colors.white : gradient[0],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isSelected ? Colors.white : Colors.transparent,
-                      border: Border.all(
-                        color: isSelected ? Colors.white : Colors.grey.shade400,
-                        width: 2,
-                      ),
-                    ),
-                    child: isSelected
-                        ? Icon(Icons.check, size: 14, color: gradient[0])
-                        : null,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _chip(IconData icon, String label, bool isSelected) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 12,
-          color: isSelected
-              ? Colors.white.withValues(alpha: 0.8)
-              : Colors.grey[500],
-        ),
-        const SizedBox(width: 3),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            color: isSelected
-                ? Colors.white.withValues(alpha: 0.9)
-                : Colors.grey[500],
-          ),
-        ),
-      ],
     );
   }
 

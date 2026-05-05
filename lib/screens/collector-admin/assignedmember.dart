@@ -6,6 +6,7 @@ import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/groupadmin/assigned_member_model.dart';
 import 'package:kuri_app/widgets/custom_error_widget.dart';
 import 'package:flutter/services.dart';
+import 'package:kuri_app/screens/collector-admin/member_history_screen.dart';
 
 class Assignedmember extends ConsumerStatefulWidget {
   const Assignedmember({super.key});
@@ -32,12 +33,12 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: primaryColor,
+        backgroundColor: transparent,
         leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
+          onTap: () => ref.read(collectorScreenIndexProvider.notifier).goTo(0),
           child: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: whiteColor,
+            color: blackColor,
             size: 18,
           ),
         ),
@@ -46,7 +47,7 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
           style: GoogleFonts.poppins(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            color: whiteColor,
+            color: blackColor,
           ),
         ),
       ),
@@ -120,7 +121,8 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
                 ),
                 error: (error, stack) => CustomErrorWidget(
                   error: error.toString().replaceAll('Exception: ', ''),
-                  onRetry: () => ref.invalidate(assignedMemberProvider(_params)),
+                  onRetry: () =>
+                      ref.invalidate(assignedMemberProvider(_params)),
                 ),
               ),
             ),
@@ -324,7 +326,26 @@ class _AssignedmemberState extends ConsumerState<Assignedmember> {
                       ref
                           .read(paymentHistoryMemberIdProvider.notifier)
                           .setId(member.id);
-                      ref.read(collectorScreenIndexProvider.notifier).goTo(7);
+                      Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder:
+                              (context, animation, secondaryAnimation) =>
+                                  MemberHistoryScreen(
+                                    memberId: member.id,
+                                    memberName: member.name,
+                                    memberPhone: member.phone,
+                                  ),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: child,
+                                );
+                              },
+                          transitionDuration: const Duration(milliseconds: 200),
+                        ),
+                      );
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Container(

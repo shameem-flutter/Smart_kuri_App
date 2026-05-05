@@ -41,8 +41,8 @@ class _MemberEditScreenState extends ConsumerState<MemberEditScreen> {
     _nameCtrl = TextEditingController(text: widget.member.name);
     _emailCtrl = TextEditingController(text: widget.member.email);
     _phoneCtrl = TextEditingController(text: widget.member.phone);
-    _addressCtrl = TextEditingController();
-    _aadhaarCtrl = TextEditingController();
+    _addressCtrl = TextEditingController(text: widget.member.address);
+    _aadhaarCtrl = TextEditingController(text: widget.member.aadhaarNo);
   }
 
   @override

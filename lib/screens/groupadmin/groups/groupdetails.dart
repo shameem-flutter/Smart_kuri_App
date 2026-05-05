@@ -161,9 +161,21 @@ class GroupDetailsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           _buildDetailRow(
+            Icons.group_rounded,
+            'Total Members',
+            '${group.totalMembers}',
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
             Icons.attach_money_rounded,
             'Monthly Amount',
             '₹${group.monthlyAmount}',
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            Icons.payments_rounded,
+            'Monthly Pot',
+            '₹${group.monthlyPot}',
           ),
           const SizedBox(height: 16),
           _buildDetailRow(
@@ -177,6 +189,44 @@ class GroupDetailsScreen extends ConsumerWidget {
             'Start Date',
             group.startDate,
           ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            Icons.event_available_rounded,
+            'End Date',
+            group.endDate,
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            Icons.timeline_rounded,
+            'Current Month',
+            '${group.currentMonth} / ${group.durationMonths}',
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            Icons.check_circle_outline_rounded,
+            'Total Collected',
+            '₹${group.totalCollected}',
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            Icons.pending_actions_rounded,
+            'Pending Total',
+            '₹${group.pendingTotal}',
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(
+            Icons.analytics_rounded,
+            'Efficiency',
+            '${group.collectionEfficiency}%',
+          ),
+          if (group.lastWinner.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _buildDetailRow(
+              Icons.emoji_events_rounded,
+              'Last Winner',
+              group.lastWinner,
+            ),
+          ],
         ],
       ),
     );
@@ -265,10 +315,11 @@ class GroupDetailsScreen extends ConsumerWidget {
                       ),
                     ),
                     Text(
-                      member.phone,
+                      'Token: ${member.tokenNo}',
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: Colors.grey[500],
+                        color: const Color(0xFF2962FF),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -305,92 +356,159 @@ class GroupDetailsScreen extends ConsumerWidget {
 
   Widget _buildAuctionsList(List<GroupAuction> auctions) {
     if (auctions.isEmpty) {
-      return Center(
-        child: Text(
-          'No auctions found',
-          style: GoogleFonts.inter(color: Colors.grey[500]),
-        ),
-      );
+      return const EmptyAuctionsState();
     }
+
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: auctions.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 12),
-      itemBuilder: (context, index) {
-        final auction = auctions[index];
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFF0F0F0)),
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) => AuctionCard(auction: auctions[index]),
+    );
+  }
+}
+
+class AuctionCard extends StatelessWidget {
+  final GroupAuction auction;
+
+  const AuctionCard({super.key, required this.auction});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFF0F0F0)),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [_buildHeader(), const SizedBox(height: 8), _buildDetails()],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          'Month ${auction.monthNo}',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            color: const Color(0xFF2B3A4A),
           ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Month ${auction.monthNo}',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: const Color(0xFF2B3A4A),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      auction.status,
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    size: 14,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    auction.auctionDate,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const Spacer(),
-                  if (auction.winnerName.isNotEmpty)
-                    Text(
-                      'Winner: ${auction.winnerName}',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: Colors.grey[800],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                ],
-              ),
-            ],
+        ),
+        StatusBadge(status: auction.status),
+      ],
+    );
+  }
+
+  Widget _buildDetails() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Date Info
+        Row(
+          children: [
+            Icon(
+              Icons.calendar_today_outlined,
+              size: 14,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(width: 4),
+            Text(
+              auction.auctionDate,
+              style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+        const Spacer(),
+        // Winner Details (Conditional)
+        if (auction.winner?.isNotEmpty ?? false) WinnerInfo(auction: auction),
+      ],
+    );
+  }
+}
+
+class StatusBadge extends StatelessWidget {
+  final String status;
+
+  const StatusBadge({super.key, required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        status,
+        style: GoogleFonts.inter(
+          fontSize: 10,
+          color: Colors.green,
+          // fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class WinnerInfo extends StatelessWidget {
+  final GroupAuction auction;
+
+  const WinnerInfo({super.key, required this.auction});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          'Winner: ${auction.winner}',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            color: Colors.grey[800],
+            fontWeight: FontWeight.w600,
           ),
-        );
-      },
+        ),
+        Text(
+          'Prize: ₹${auction.prize}',
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            color: Colors.green[700],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        if (auction.bidAmount != null)
+          Text(
+            'Bid: ₹${auction.bidAmount}',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: Colors.orange[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class EmptyAuctionsState extends StatelessWidget {
+  const EmptyAuctionsState({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(
+        'No auctions found',
+        style: GoogleFonts.inter(color: Colors.grey[500]),
+      ),
     );
   }
 }

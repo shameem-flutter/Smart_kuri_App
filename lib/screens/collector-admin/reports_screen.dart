@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/collector/reports_model.dart';
+import 'package:kuri_app/models/collector/handover_pending_model.dart';
 import 'package:kuri_app/widgets/custom_error_widget.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
@@ -15,6 +16,8 @@ class ReportsScreen extends ConsumerStatefulWidget {
 }
 
 class _ReportsScreenState extends ConsumerState<ReportsScreen> {
+  bool _isSending = false;
+
   Future<void> _selectDateRange(BuildContext context) async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -49,10 +52,9 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     final firstDay = DateTime(now.year, now.month, 1);
     final lastDay = DateTime(now.year, now.month + 1, 0);
     final formatter = DateFormat('yyyy-MM-dd');
-    ref.read(reportFilterProvider.notifier).setFilters(
-      formatter.format(firstDay),
-      formatter.format(lastDay),
-    );
+    ref
+        .read(reportFilterProvider.notifier)
+        .setFilters(formatter.format(firstDay), formatter.format(lastDay));
   }
 
   @override
@@ -68,7 +70,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, size: 18, color: whiteColor),
           onPressed: () =>
-              ref.read(collectorScreenIndexProvider.notifier).goTo(-1),
+              ref.read(collectorScreenIndexProvider.notifier).goTo(0),
         ),
         title: Text(
           'Reports',
@@ -93,9 +95,59 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               ),
             ),
           ),
+
+          // ── Send to Admin Button ─────────────────────────────────────────
         ],
       ),
     );
+  }
+
+  Future<void> _sendHandover(HandoverPendingModel hp) async {
+    setState(() => _isSending = true);
+    try {
+      final apiService = ref.read(apiServiceProvider);
+      await apiService.sendHandoverToAdmin();
+      if (mounted) {
+        ref.invalidate(handoverPendingProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  '₹${hp.handoverPending.toStringAsFixed(2)} sent to admin!',
+                  style: GoogleFonts.inter(color: Colors.white),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF11998E),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              e.toString().replaceAll('Exception: ', ''),
+              style: GoogleFonts.inter(color: Colors.white),
+            ),
+            backgroundColor: Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
   }
 
   Widget _buildFilterBar(ReportFilterState filters) {
@@ -202,8 +254,11 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.receipt_long_outlined,
-                      size: 64, color: Colors.grey[300]),
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 64,
+                    color: Colors.grey[300],
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     'No transactions found',

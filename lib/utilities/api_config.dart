@@ -38,7 +38,8 @@ class ApiConfig {
   static const String tokenRefresh = 'api/v1/token/refresh/';
   static const String passwordResetRequest = 'api/v1/password-reset/request/';
   static const String passwordResetConfirm = 'api/v1/password-reset/confirm/';
-  static const String firstLoginChangePassword = 'api/v1/first-login/change-password/';
+  static const String firstLoginChangePassword =
+      'api/v1/first-login/change-password/';
   static const String register = 'api/v1/group/signup/';
   static const String verifyOtp = 'api/v1/group/verify-otp/';
   static const String plans = 'api/v1/plans/';
@@ -54,13 +55,23 @@ class ApiConfig {
   static const String collectorReports = 'api/v1/collector/reports/';
   static const String collectorAddCollection =
       'api/v1/collector/add-collection/';
+  static const String collectorCollections = 'api/v1/collector/collections/';
+  static const String collectorHandoverPending =
+      'collectors/collector/handover-pending/';
   static String deletePayment(int id) =>
       'api/v1/collector/payments/$id/delete/';
+  static String resendPayment(int id) =>
+      'api/v1/collector/resend-payment/$id/';
+  static const String sendToAdmin =
+      'api/v1/collector/collections/send-to-admin/';
+  static const String resendGroupPayments =
+      'api/v1/collector/resend-group-payments/';
   static String memberHistory(int id) =>
       'api/v1/collector/members/$id/history/';
   static const String collectorProfile = 'api/v1/collector/profile/';
   static const String groups = 'api/v1/admin/groups/';
-  static const String groupCreate = 'api/v1/admin/groups/create/';
+  static const String groupCreate = 'api/v1/api/create-group/';
+  static const String groupCreateAdmin = 'api/v1/admin/groups/create/';
   static const String profile = 'api/v1/admin/profile/';
   static const String members = 'api/v1/members/';
   static const String memberDashboard = 'api/v1/members/dashboard/';
@@ -82,4 +93,21 @@ class ApiConfig {
   static const String auctions = 'api/v1/admin/auctions/';
   static const String auctionGroupDetails = 'api/v1/admin/auctions/group/';
   static const String createAuction = 'api/v1/admin/auctions/create/';
+  static const String pendingPayments = 'api/v1/admin/pending-payments/';
+  static String groupPayments(int groupId) =>
+      'api/v1/admin/group/$groupId/payments/';
+  static String approvePayment(int paymentId) =>
+      'api/v1/admin/approve/payment/$paymentId/';
+  static String rejectPayment(int paymentId) =>
+      'api/v1/admin/reject/payment/$paymentId/';
+  static String editAuctionDates(int groupId) =>
+      'api/v1/admin/groups/$groupId/edit-auction-dates/';
+  static const String notifications = 'api/v1/admin/notifications/';
+  static String assignAllWinners(int auctionId) =>
+      'api/v1/admin/auctions/$auctionId/assign-all/';
+  static String approveGroupPayments(int groupId) =>
+      'api/v1/admin/approve/group/$groupId/';
+  static String rejectGroupPayments(int groupId) =>
+      'api/v1/admin/reject/group/$groupId/';
 }
+

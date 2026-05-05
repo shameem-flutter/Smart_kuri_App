@@ -291,4 +291,39 @@ class StorageService {
       throw CacheException('Failed to delete session cookies', originalError: e);
     }
   }
+
+  // ── Onetime Setup Flag ──────────────────────────────────────────────────────
+
+  /// Mark that the newly-registered user still needs to create their first group.
+  Future<void> setNeedsOnetimeSetup(bool value) async {
+    try {
+      await _secureStorage.write(
+        key: AppConstants.needsOnetimeSetupKey,
+        value: value.toString(),
+      );
+    } catch (e) {
+      throw CacheException('Failed to save onetime setup flag', originalError: e);
+    }
+  }
+
+  /// Returns true if the user registered but has not yet created a group.
+  Future<bool> getNeedsOnetimeSetup() async {
+    try {
+      final value = await _secureStorage.read(
+        key: AppConstants.needsOnetimeSetupKey,
+      );
+      return value == 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Clear the flag once the group has been created.
+  Future<void> clearNeedsOnetimeSetup() async {
+    try {
+      await _secureStorage.delete(key: AppConstants.needsOnetimeSetupKey);
+    } catch (e) {
+      throw CacheException('Failed to clear onetime setup flag', originalError: e);
+    }
+  }
 }

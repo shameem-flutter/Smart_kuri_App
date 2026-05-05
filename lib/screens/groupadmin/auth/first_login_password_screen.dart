@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kuri_app/providers/auth_provider_riverpod.dart';
 import 'package:kuri_app/screens/collector-admin/collectorhomescreen.dart';
-import 'package:kuri_app/screens/groupadmin/group_admin_main_screen.dart';
+import 'package:kuri_app/screens/groupadmin/home_screen.dart';
 import 'package:kuri_app/screens/member-admin/memberdashboardscreen.dart';
 import 'package:kuri_app/utilities/colors.dart';
 import 'package:kuri_app/utilities/validators.dart';
@@ -38,10 +38,12 @@ class _FirstLoginChangePasswordScreenState
 
     FocusScope.of(context).unfocus();
 
-    await ref.read(authProvider.notifier).firstLoginChangePassword(
-      newPassword: _newPasswordController.text,
-      confirmPassword: _confirmPasswordController.text,
-    );
+    await ref
+        .read(authProvider.notifier)
+        .firstLoginChangePassword(
+          newPassword: _newPasswordController.text,
+          confirmPassword: _confirmPasswordController.text,
+        );
 
     if (!mounted) return;
 
@@ -79,7 +81,7 @@ class _FirstLoginChangePasswordScreenState
         );
       } else {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const GroupAdminMainScreen()),
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
           (route) => false,
         );
       }
@@ -181,9 +183,8 @@ class _FirstLoginChangePasswordScreenState
                                 : Icons.visibility_off_outlined,
                           ),
                           onPressed: () => setState(
-                            () =>
-                                _obscureConfirmPassword =
-                                    !_obscureConfirmPassword,
+                            () => _obscureConfirmPassword =
+                                !_obscureConfirmPassword,
                           ),
                         ),
                       ),

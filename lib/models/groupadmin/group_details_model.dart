@@ -8,8 +8,20 @@ class GroupDetail extends Equatable {
   final int durationMonths;
   final double totalAmount;
   final String startDate;
-  final String endDateCalculated;
+  final String registrationStartDate;
+  final String endDate;
   final bool isExpired;
+  final int totalMembers;
+  final double monthlyPot;
+  final int currentMonth;
+  final int completedMonths;
+  final int remainingMonths;
+  final double totalCollected;
+  final double pendingTotal;
+  final double collectionEfficiency;
+  final String lastWinner;
+  final double lastPrize;
+  final double lastDiscount;
 
   const GroupDetail({
     required this.id,
@@ -18,8 +30,20 @@ class GroupDetail extends Equatable {
     required this.durationMonths,
     required this.totalAmount,
     required this.startDate,
-    required this.endDateCalculated,
+    required this.registrationStartDate,
+    required this.endDate,
     required this.isExpired,
+    required this.totalMembers,
+    required this.monthlyPot,
+    required this.currentMonth,
+    required this.completedMonths,
+    required this.remainingMonths,
+    required this.totalCollected,
+    required this.pendingTotal,
+    required this.collectionEfficiency,
+    required this.lastWinner,
+    required this.lastPrize,
+    required this.lastDiscount,
   });
 
   factory GroupDetail.fromJson(Map<String, dynamic> json) {
@@ -30,8 +54,21 @@ class GroupDetail extends Equatable {
       durationMonths: int.tryParse(json['duration_months'].toString()) ?? 0,
       totalAmount: double.tryParse(json['total_amount'].toString()) ?? 0.0,
       startDate: json['start_date'] as String? ?? '',
-      endDateCalculated: json['end_date_calculated'] as String? ?? '',
+      registrationStartDate: json['registration_start_date'] as String? ?? '',
+      endDate: json['end_date'] as String? ?? '',
       isExpired: json['is_expired'] as bool? ?? false,
+      totalMembers: int.tryParse(json['total_members'].toString()) ?? 0,
+      monthlyPot: double.tryParse(json['monthly_pot'].toString()) ?? 0.0,
+      currentMonth: int.tryParse(json['current_month'].toString()) ?? 0,
+      completedMonths: int.tryParse(json['completed_months'].toString()) ?? 0,
+      remainingMonths: int.tryParse(json['remaining_months'].toString()) ?? 0,
+      totalCollected: double.tryParse(json['total_collected'].toString()) ?? 0.0,
+      pendingTotal: double.tryParse(json['pending_total'].toString()) ?? 0.0,
+      collectionEfficiency:
+          double.tryParse(json['collection_efficiency'].toString()) ?? 0.0,
+      lastWinner: json['last_winner'] as String? ?? '',
+      lastPrize: double.tryParse(json['last_prize'].toString()) ?? 0.0,
+      lastDiscount: double.tryParse(json['last_discount'].toString()) ?? 0.0,
     );
   }
 
@@ -43,8 +80,20 @@ class GroupDetail extends Equatable {
     durationMonths,
     totalAmount,
     startDate,
-    endDateCalculated,
+    registrationStartDate,
+    endDate,
     isExpired,
+    totalMembers,
+    monthlyPot,
+    currentMonth,
+    completedMonths,
+    remainingMonths,
+    totalCollected,
+    pendingTotal,
+    collectionEfficiency,
+    lastWinner,
+    lastPrize,
+    lastDiscount,
   ];
 }
 
@@ -79,52 +128,49 @@ class GroupMember extends Equatable {
 
 class GroupAuction extends Equatable {
   final int id;
-  final int group;
   final int monthNo;
+  final int auctionNo;
   final String auctionDate;
-  final int winner;
-  final int winnerToken;
-  final String winnerName;
-  final String status;
-  final String action;
+  final String? winner;
+  final double? bidAmount;
+  final double prize;
 
   const GroupAuction({
     required this.id,
-    required this.group,
     required this.monthNo,
+    required this.auctionNo,
     required this.auctionDate,
-    required this.winner,
-    required this.winnerToken,
-    required this.winnerName,
-    required this.status,
-    required this.action,
+    this.winner,
+    this.bidAmount,
+    required this.prize,
   });
 
   factory GroupAuction.fromJson(Map<String, dynamic> json) {
     return GroupAuction(
       id: int.tryParse(json['id'].toString()) ?? 0,
-      group: int.tryParse(json['group'].toString()) ?? 0,
       monthNo: int.tryParse(json['month_no'].toString()) ?? 0,
+      auctionNo: int.tryParse(json['auction_no'].toString()) ?? 0,
       auctionDate: json['auction_date'] as String? ?? '',
-      winner: int.tryParse(json['winner'].toString()) ?? 0,
-      winnerToken: int.tryParse(json['winner_token'].toString()) ?? 0,
-      winnerName: json['winner_name'] as String? ?? '',
-      status: json['status'] as String? ?? '',
-      action: json['action'] as String? ?? '',
+      winner: json['winner'] as String?,
+      bidAmount:
+          json['bid_amount'] != null
+              ? double.tryParse(json['bid_amount'].toString())
+              : null,
+      prize: double.tryParse(json['prize'].toString()) ?? 0.0,
     );
   }
+
+  String get status => winner != null ? 'Completed' : 'Pending';
 
   @override
   List<Object?> get props => [
     id,
-    group,
     monthNo,
+    auctionNo,
     auctionDate,
     winner,
-    winnerToken,
-    winnerName,
-    status,
-    action,
+    bidAmount,
+    prize,
   ];
 }
 
@@ -132,11 +178,13 @@ class GroupDetailsResponse extends Equatable {
   final GroupDetail group;
   final List<GroupMember> members;
   final List<GroupAuction> auctions;
+  final String today;
 
   const GroupDetailsResponse({
     required this.group,
     required this.members,
     required this.auctions,
+    required this.today,
   });
 
   factory GroupDetailsResponse.fromJson(Map<String, dynamic> json) {
@@ -152,9 +200,10 @@ class GroupDetailsResponse extends Equatable {
               ?.map((e) => GroupAuction.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      today: json['today'] as String? ?? '',
     );
   }
 
   @override
-  List<Object?> get props => [group, members, auctions];
+  List<Object?> get props => [group, members, auctions, today];
 }

@@ -11,6 +11,8 @@ class GroupAdminMainScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Fallback check: if the user is here but has 0 groups, force them back to setup.
+    // We listen to the group list provider to detect this state.
     final currentIndex = ref.watch(groupScreenIndexProvider);
 
     // Default to HomeScreen when index is -1
@@ -22,10 +24,14 @@ class GroupAdminMainScreen extends ConsumerWidget {
       // Add more screens here if you want them in the IndexedStack
     ];
 
-    return Scaffold(
-      body: IndexedStack(
-        index: effectiveIndex,
-        children: screens,
+    return PopScope(
+      canPop: effectiveIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        ref.read(groupScreenIndexProvider.notifier).goTo(0);
+      },
+      child: Scaffold(
+        body: IndexedStack(index: effectiveIndex, children: screens),
       ),
     );
   }

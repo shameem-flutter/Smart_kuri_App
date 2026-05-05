@@ -12,50 +12,189 @@ class Pendingmembers extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pendingMembersAsyncValue = ref.watch(pendingMembersProvider);
+    final currentStatus = ref.watch(pendingMembersStatusProvider);
 
     return Scaffold(
       backgroundColor: bgGrey,
       appBar: AppBar(
-        backgroundColor: primaryColor,
+        backgroundColor: transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: whiteColor,
+            color: blackColor,
             size: 20,
           ),
           onPressed: () =>
-              ref.read(collectorScreenIndexProvider.notifier).goTo(-1),
+              ref.read(collectorScreenIndexProvider.notifier).goTo(0),
         ),
         title: Text(
-          'Pending Dues',
+          'Payment Status',
           style: GoogleFonts.poppins(
-            color: whiteColor,
+            color: blackColor,
             fontWeight: FontWeight.w600,
             fontSize: 20,
           ),
         ),
       ),
-      body: pendingMembersAsyncValue.when(
-        data: (data) => ListView.separated(
-          padding: const EdgeInsets.all(20),
-          itemCount: data.members.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 20),
-          itemBuilder: (context, index) =>
-              _buildTwoToneCard(data.members[index]),
+      body: Column(
+        children: [
+          _buildStatusToggle(ref, currentStatus),
+          Expanded(
+            child: pendingMembersAsyncValue.when(
+              data: (data) {
+                if (data.members.isEmpty) {
+                  return _buildEmptyState(currentStatus);
+                }
+                return ListView.separated(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: data.members.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 20),
+                  itemBuilder: (context, index) =>
+                      _buildTwoToneCard(data.members[index]),
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => CustomErrorWidget(
+                error: e.toString().replaceAll('Exception: ', ''),
+                onRetry: () => ref.invalidate(pendingMembersProvider),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusToggle(WidgetRef ref, String currentStatus) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => CustomErrorWidget(
-          error: e.toString().replaceAll('Exception: ', ''),
-          onRetry: () => ref.invalidate(pendingMembersProvider),
+        child: Row(
+          children: [
+            Expanded(
+              child: _toggleButton(
+                ref,
+                'Pending',
+                'pending',
+                currentStatus == 'pending',
+                const Color(0xFFDC3545),
+              ),
+            ),
+            Expanded(
+              child: _toggleButton(
+                ref,
+                'Success',
+                'success',
+                currentStatus == 'success',
+                const Color(0xFF28A745),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
+  Widget _toggleButton(
+    WidgetRef ref,
+    String label,
+    String value,
+    bool isSelected,
+    Color activeColor,
+  ) {
+    return GestureDetector(
+      onTap: () =>
+          ref.read(pendingMembersStatusProvider.notifier).state = value,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? activeColor.withValues(alpha: 0.1)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              color: isSelected ? activeColor : Colors.grey[600],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String status) {
+    final isPending = status == 'pending';
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Icon(
+              isPending
+                  ? Icons.account_balance_wallet_outlined
+                  : Icons.check_circle_outline_rounded,
+              size: 40,
+              color: primaryColor.withValues(alpha: 0.5),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            isPending ? 'No pending payments' : 'No success payments',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF2B3A4A),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isPending
+                ? 'Everything is up to date!'
+                : 'Successful payments will appear here.',
+            style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[500]),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildTwoToneCard(PendingMember member) {
-    const redColor = Color(0xFFDC3545);
+    final isSuccess = member.status.toLowerCase() == 'success';
+    final statusColor = isSuccess
+        ? const Color(0xFF28A745)
+        : const Color(0xFFDC3545);
     const darkBlue = Color(0xFF2B3A4A);
 
     return Container(
@@ -164,11 +303,11 @@ class Pendingmembers extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
-              color: redColor.withValues(
+              color: statusColor.withValues(
                 alpha: 0.04,
-              ), // Very light red background
+              ), // Very light red/green background
               border: Border(
-                top: BorderSide(color: redColor.withValues(alpha: 0.05)),
+                top: BorderSide(color: statusColor.withValues(alpha: 0.05)),
               ),
             ),
             child: Row(
@@ -183,19 +322,21 @@ class Pendingmembers extends ConsumerWidget {
                         color: Colors.white,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.access_time_rounded,
+                      child: Icon(
+                        isSuccess
+                            ? Icons.check_circle_rounded
+                            : Icons.access_time_rounded,
                         size: 16,
-                        color: redColor,
+                        color: statusColor,
                       ),
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      "Payment Pending",
+                      isSuccess ? "Payment Success" : "Payment Pending",
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        color: redColor.withValues(alpha: 0.8),
+                        color: statusColor.withValues(alpha: 0.8),
                       ),
                     ),
                   ],
@@ -203,11 +344,13 @@ class Pendingmembers extends ConsumerWidget {
 
                 // Amount
                 Text(
-                  "₹${member.due.toStringAsFixed(0)}",
+                  isSuccess
+                      ? "₹${member.paid.toStringAsFixed(0)}"
+                      : "₹${member.due.toStringAsFixed(0)}",
                   style: GoogleFonts.poppins(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: redColor,
+                    color: statusColor,
                   ),
                 ),
               ],

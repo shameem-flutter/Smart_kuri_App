@@ -70,11 +70,16 @@ class AuctionMonth {
   });
 
   factory AuctionMonth.fromJson(Map<String, dynamic> json) {
+    AuctionDetail? detail;
+    if (json['auction'] != null) {
+      detail = AuctionDetail.fromJson(json['auction'] as Map<String, dynamic>);
+    } else if (json['auctions'] != null && (json['auctions'] as List).isNotEmpty) {
+      detail = AuctionDetail.fromJson(json['auctions'][0] as Map<String, dynamic>);
+    }
+
     return AuctionMonth(
       monthNo: json['month_no'] as int,
-      auction: json['auction'] != null
-          ? AuctionDetail.fromJson(json['auction'] as Map<String, dynamic>)
-          : null,
+      auction: detail,
     );
   }
 

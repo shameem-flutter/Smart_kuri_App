@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
+import 'package:kuri_app/models/member/member_profile_model.dart';
 import '../models/groupadmin/dashboard_model.dart';
 import '../models/groupadmin/group_model.dart';
 import '../models/groupadmin/profile_model.dart';
@@ -14,10 +16,15 @@ import '../models/collector/pending_member_model.dart';
 import '../models/collector/today_collections_model.dart';
 import '../models/member/member_dashboard_model.dart';
 import '../models/member/member_payments_model.dart';
-import '../models/member/member_profile_model.dart';
 import '../models/collector/reports_model.dart';
+import '../models/groupadmin/pending_payments_model.dart';
+import '../models/groupadmin/group_payments_history_model.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../models/auth/plan_model.dart';
+import '../models/groupadmin/notification_model.dart';
+import '../models/collector/collections_model.dart';
+import '../models/collector/handover_pending_model.dart';
 
 // Shared providers
 final storageServiceProvider = Provider<StorageService>((ref) {
@@ -69,12 +76,16 @@ final collectorDashboardProvider = FutureProvider<CollectorDashboardModel>((
   return apiService.getCollectorDashboardData();
 });
 
+// Status provider for Pending Members screen
+final pendingMembersStatusProvider = StateProvider<String>((ref) => 'pending');
+
 // Pending Members provider
 final pendingMembersProvider = FutureProvider<PendingMembersResponse>((
   ref,
 ) async {
   final apiService = ref.watch(apiServiceProvider);
-  return apiService.getPendingMembers();
+  final status = ref.watch(pendingMembersStatusProvider);
+  return apiService.getPendingMembers(status: status);
 });
 
 // Assigned Members provider
@@ -148,6 +159,13 @@ final groupListProvider = FutureProvider<GroupListResponse>((ref) async {
   return apiService.getGroups();
 });
 
+// Plans provider
+final plansProvider = FutureProvider.autoDispose<List<PlanModel>>((ref) async {
+  final apiService = ref.watch(apiServiceProvider);
+  final response = await apiService.getPlans();
+  return response.plans;
+});
+
 // Profile provider
 final profileProvider = FutureProvider<ProfileResponse>((ref) async {
   final apiService = ref.watch(apiServiceProvider);
@@ -175,6 +193,24 @@ final collectorListProvider = FutureProvider<CashCollectorListResponse>((
   final apiService = ref.watch(apiServiceProvider);
   return apiService.getCollectors();
 });
+
+// Pending Payments provider
+final pendingPaymentsProvider = FutureProvider<PendingPaymentsResponse>((
+  ref,
+) async {
+  final apiService = ref.watch(apiServiceProvider);
+  return apiService.getPendingPayments();
+});
+
+// Group Payments History provider
+final groupPaymentsProvider =
+    FutureProvider.family<GroupPaymentsHistoryResponse, int>((
+      ref,
+      groupId,
+    ) async {
+      final apiService = ref.watch(apiServiceProvider);
+      return apiService.getGroupPayments(groupId);
+    });
 
 // Today Collections provider
 final todayCollectionsProvider = FutureProvider<TodayCollectionsResponse>((
@@ -241,4 +277,30 @@ final reportsProvider = FutureProvider<ReportsResponse>((ref) async {
     fromDate: filters.fromDate,
     toDate: filters.toDate,
   );
+});
+
+// Notifications provider
+final notificationsProvider = FutureProvider<NotificationListResponse>((
+  ref,
+) async {
+  final apiService = ref.watch(apiServiceProvider);
+  return apiService.getNotifications();
+});
+
+// Flag to track if notifications have been shown in this session
+final notificationShownProvider = StateProvider<bool>((ref) => false);
+
+// Flag to track if notifications have been cleared locally by the user
+final notificationClearedProvider = StateProvider<bool>((ref) => false);
+
+// Collector Collections Provider
+final collectorCollectionsProvider = FutureProvider<CollectorCollectionsResponse>((ref) async {
+  final apiService = ref.watch(apiServiceProvider);
+  return apiService.getCollectorCollections();
+});
+
+// Handover Pending Provider
+final handoverPendingProvider = FutureProvider<HandoverPendingModel>((ref) async {
+  final apiService = ref.watch(apiServiceProvider);
+  return apiService.getHandoverPending();
 });

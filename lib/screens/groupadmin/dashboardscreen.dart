@@ -342,14 +342,14 @@ class DashboardScreen extends ConsumerWidget {
                         onTap: onView ?? () {},
                       ),
                       const SizedBox(width: 8),
-                      _ActionBtn(
-                        icon: Icons.edit_rounded,
-                        label: 'Edit',
-                        foreground: _kOrange,
-                        background: _kOrangeBg,
-                        onTap: onEdit ?? () {},
-                      ),
-                      const SizedBox(width: 8),
+                      // _ActionBtn(
+                      //   icon: Icons.edit_rounded,
+                      //   label: 'Edit',
+                      //   foreground: _kOrange,
+                      //   background: _kOrangeBg,
+                      //   onTap: onEdit ?? () {},
+                      // ),
+                      // const SizedBox(width: 8),
                       _ActionBtn(
                         icon: Icons.account_balance_wallet_rounded,
                         label: 'Collect',

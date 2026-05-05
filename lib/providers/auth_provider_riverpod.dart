@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:equatable/equatable.dart';
 import '../utilities/app_exception.dart';
 import '../models/auth/password_reset_request.dart';
@@ -18,6 +19,9 @@ class AuthState extends Equatable {
   final bool isFirstLogin;
   final bool isInitialized;
   final bool isLoggingOut;
+  final bool needsOnetimeSetup;
+  final String? registrationEmail;
+  final String? registrationPassword;
 
   const AuthState({
     this.isLoading = false,
@@ -28,6 +32,9 @@ class AuthState extends Equatable {
     this.isFirstLogin = false,
     this.isInitialized = false,
     this.isLoggingOut = false,
+    this.needsOnetimeSetup = false,
+    this.registrationEmail,
+    this.registrationPassword,
   });
 
   AuthState copyWith({
@@ -40,6 +47,10 @@ class AuthState extends Equatable {
     bool? isFirstLogin,
     bool? isInitialized,
     bool? isLoggingOut,
+    bool? needsOnetimeSetup,
+    String? registrationEmail,
+    String? registrationPassword,
+    bool clearRegistrationCredentials = false,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -52,6 +63,13 @@ class AuthState extends Equatable {
       isFirstLogin: isFirstLogin ?? this.isFirstLogin,
       isInitialized: isInitialized ?? this.isInitialized,
       isLoggingOut: isLoggingOut ?? this.isLoggingOut,
+      needsOnetimeSetup: needsOnetimeSetup ?? this.needsOnetimeSetup,
+      registrationEmail: clearRegistrationCredentials
+          ? null
+          : (registrationEmail ?? this.registrationEmail),
+      registrationPassword: clearRegistrationCredentials
+          ? null
+          : (registrationPassword ?? this.registrationPassword),
     );
   }
 
@@ -65,6 +83,9 @@ class AuthState extends Equatable {
     isFirstLogin,
     isInitialized,
     isLoggingOut,
+    needsOnetimeSetup,
+    registrationEmail,
+    registrationPassword,
   ];
 }
 
@@ -80,7 +101,36 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final isAuth = await _authRepository.isAuthenticated();
       final role = await _authRepository.getRole();
-      
+      // Restore the persistent onetime-setup flag so the user is redirected
+      // to the group-creation screen even after closing and reopening the app.
+      bool needsSetup = isAuth
+          ? await ref.read(storageServiceProvider).getNeedsOnetimeSetup()
+          : false;
+
+      // Self-healing: if the user is flagged for setup, verify if they still need it.
+      if (isAuth && needsSetup) {
+        if (role == 'member' || role == 'collector') {
+          debugPrint(
+            'Auth Init: Non-admin role detected, clearing setup flag.',
+          );
+          await completeOnetimeSetup();
+          needsSetup = false;
+        } else {
+          try {
+            final groupsResponse = await ref
+                .read(apiServiceProvider)
+                .getGroups();
+            if (groupsResponse.count > 0) {
+              debugPrint('Auth Init: Groups found, clearing stuck setup flag.');
+              await completeOnetimeSetup();
+              needsSetup = false;
+            }
+          } catch (e) {
+            debugPrint('Auth Init: Group check failed (likely offline): $e');
+          }
+        }
+      }
+
       if (minimumDuration != null) {
         final elapsed = DateTime.now().difference(start);
         if (elapsed < minimumDuration) {
@@ -91,6 +141,7 @@ class AuthNotifier extends Notifier<AuthState> {
       state = state.copyWith(
         isAuthenticated: isAuth,
         role: role,
+        needsOnetimeSetup: needsSetup,
         isInitialized: true,
       );
     } catch (e) {
@@ -113,12 +164,39 @@ class AuthNotifier extends Notifier<AuthState> {
       final tokenResponse = await _authRepository.login(
         LoginRequest(identifier: identifier, password: password),
       );
+      final role = tokenResponse.role;
+      bool needsSetup = await ref
+          .read(storageServiceProvider)
+          .getNeedsOnetimeSetup();
+
+      // Self-healing: if the user is flagged for setup, verify if they still need it.
+      if (needsSetup) {
+        if (role == 'member' || role == 'collector') {
+          await completeOnetimeSetup();
+          needsSetup = false;
+        } else {
+          try {
+            final groupsResponse = await ref
+                .read(apiServiceProvider)
+                .getGroups();
+            if (groupsResponse.count > 0) {
+              debugPrint(
+                'Auth Login: Groups found, clearing stuck setup flag.',
+              );
+              await completeOnetimeSetup();
+              needsSetup = false;
+            }
+          } catch (_) {}
+        }
+      }
+
       state = state.copyWith(
         isLoading: false,
         isAuthenticated: true,
         successMessage: 'Login successful!',
-        role: tokenResponse.role,
+        role: role,
         isFirstLogin: tokenResponse.isFirstLogin,
+        needsOnetimeSetup: needsSetup,
       );
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.message);
@@ -156,28 +234,29 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> register({
-    required String groupName,
+    required String name,
     required String phone,
     required String email,
     required String password,
     required String confirmPassword,
-    required int planId,
   }) async {
     state = state.copyWith(isLoading: true, clearMessages: true);
     try {
-      await _authRepository.register(
+      final response = await _authRepository.register(
         RegisterRequest(
-          groupName: groupName,
+          name: name,
           phone: phone,
           email: email,
           password: password,
           confirmPassword: confirmPassword,
-          planId: planId,
         ),
       );
       state = state.copyWith(
         isLoading: false,
-        successMessage: 'Registration successful! Please verify OTP.',
+        successMessage:
+            response.message ?? 'Registration successful! Please verify OTP.',
+        registrationEmail: email,
+        registrationPassword: password,
       );
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.message);
@@ -193,16 +272,43 @@ class AuthNotifier extends Notifier<AuthState> {
     state = state.copyWith(isLoading: true, clearMessages: true);
     try {
       await _authRepository.verifyOtp(otp);
-      
-      // Fetch role after successful OTP verification
-      final role = await _authRepository.getRole();
-      
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: true,
-        role: role,
-        successMessage: 'OTP Verified! Login successful.',
-      );
+
+      if (state.registrationEmail != null &&
+          state.registrationPassword != null) {
+        final tokenResponse = await _authRepository.login(
+          LoginRequest(
+            identifier: state.registrationEmail!,
+            password: state.registrationPassword!,
+          ),
+        );
+        // Persist the flag so it survives app kill/reopen.
+        await ref.read(storageServiceProvider).setNeedsOnetimeSetup(true);
+        state = state.copyWith(
+          isLoading: false,
+          isAuthenticated: true,
+          successMessage: 'OTP Verified! Login successful.',
+          role: tokenResponse.role,
+          isFirstLogin: tokenResponse.isFirstLogin,
+          needsOnetimeSetup: true,
+          clearRegistrationCredentials: true,
+        );
+      } else {
+        // Fallback
+        final role = await _authRepository.getRole();
+        final isAuth = await _authRepository.isAuthenticated();
+
+        // Persist the flag so it survives app kill/reopen.
+        await ref.read(storageServiceProvider).setNeedsOnetimeSetup(true);
+        state = state.copyWith(
+          isLoading: false,
+          isAuthenticated: isAuth,
+          role: role,
+          successMessage: isAuth
+              ? 'OTP Verified! Login successful.'
+              : 'OTP Verified! Please log in.',
+          needsOnetimeSetup: isAuth,
+        );
+      }
     } on AppException catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.message);
     } catch (e) {
@@ -291,6 +397,23 @@ class AuthNotifier extends Notifier<AuthState> {
 
   void clearMessages() {
     state = state.copyWith(clearMessages: true);
+  }
+
+  Future<void> completeOnetimeSetup() async {
+    state = state.copyWith(needsOnetimeSetup: false);
+    // Clear persisted flag so re-opening the app goes straight to the dashboard.
+    try {
+      await ref.read(storageServiceProvider).clearNeedsOnetimeSetup();
+    } catch (e) {
+      debugPrint(
+        'Warning: Failed to clear onetime setup storage flag, handled: $e',
+      );
+    }
+  }
+
+  Future<void> setNeedsOnetimeSetup(bool needsSetup) async {
+    await ref.read(storageServiceProvider).setNeedsOnetimeSetup(needsSetup);
+    state = state.copyWith(needsOnetimeSetup: needsSetup);
   }
 }
 

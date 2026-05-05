@@ -11,14 +11,20 @@ import '../../../providers/group_provider.dart';
 import '../../../widgets/custom_error_widget.dart';
 import 'spinscreen.dart';
 
-// ── Palette ────────────────────────────────────────────────────────────────
-const _kOrange = Color(0xFFF59E0B);
-const _kOrangeLight = Color(0xFFFEF3C7);
+// ─── Palette ──────────────────────────────────────────────────────────────────
 const _kSurface = Color(0xFFFFFFFF);
-const _kText = Color(0xFF111827);
-const _kSubtext = Color(0xFF6B7280);
-const _kDivider = Color(0xFFE5E7EB);
-const _kBg = Color(0xFFF8F9FD);
+const _kBg = Color(0xFFF6F7FB);
+const _kText = Color(0xFF1E293B);
+const _kSubtext = Color(0xFF94A3B8);
+const _kDivider = Color(0xFFF1F5F9);
+const _kGreen = Color(0xFF10B981);
+const _kGreenBg = Color(0xFFD1FAE5);
+const _kAmber = Color(0xFFF59E0B);
+const _kAmberBg = Color(0xFFFEF3C7);
+const _kBlue = Color(0xFF3B82F6);
+const _kBlueBg = Color(0xFFEFF6FF);
+
+// ─── Auction Group Details Screen ────────────────────────────────────────────
 
 class AuctionGroupDetailsScreen extends ConsumerWidget {
   final String groupId;
@@ -31,24 +37,20 @@ class AuctionGroupDetailsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: _kBg,
       appBar: AppBar(
-        backgroundColor: _kBg,
+        backgroundColor: primaryColor,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: _kText),
-          onPressed: () => Navigator.pop(context),
-        ),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: _kText),
+            icon: const Icon(Icons.refresh_rounded, color: Colors.white),
             onPressed: () =>
                 ref.invalidate(auctionGroupDetailsProvider(groupId)),
+            tooltip: 'Refresh',
           ),
         ],
       ),
       body: detailsAsync.when(
-        data: (data) {
-          return _DetailsBody(group: data.group, months: data.months);
-        },
+        data: (data) => _DetailsBody(group: data.group, months: data.months),
         error: (e, _) => CustomErrorWidget(
           error: e.toString().replaceAll('Exception: ', ''),
           onRetry: () => ref.invalidate(auctionGroupDetailsProvider(groupId)),
@@ -60,7 +62,8 @@ class AuctionGroupDetailsScreen extends ConsumerWidget {
   }
 }
 
-// ── Body ───────────────────────────────────────────────────────────────────
+// ─── Details Body ─────────────────────────────────────────────────────────────
+
 class _DetailsBody extends ConsumerStatefulWidget {
   final AuctionGroup group;
   final List<AuctionMonth> months;
@@ -79,47 +82,50 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: primaryColor,
-              onPrimary: Colors.white,
-              onSurface: _kText,
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: primaryColor,
+            onPrimary: Colors.white,
+            onSurface: _kText,
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
 
     if (date == null) return;
 
     final formattedDate =
-        "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+        '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: _kSurface,
         title: Text(
           'Confirm Auction',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
-            fontSize: 20,
+            fontSize: 18,
             color: _kText,
           ),
         ),
         content: Text(
-          'Are you sure you want to schedule an auction for $formattedDate?',
-          style: GoogleFonts.dmSans(fontSize: 15, color: _kSubtext),
+          'Schedule an auction for $formattedDate?',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: _kSubtext,
+            height: 1.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(
               'Cancel',
-              style: GoogleFonts.dmSans(
+              style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
                 color: _kSubtext,
               ),
@@ -128,18 +134,16 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
             onPressed: () => Navigator.pop(context, true),
             child: Text(
               'Confirm',
-              style: GoogleFonts.dmSans(
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -152,16 +156,21 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
     try {
       final apiService = ref.read(apiServiceProvider);
       await apiService.createAuction({
-        "group_id": widget.group.id,
-        "auction_date": formattedDate,
+        'group_id': widget.group.id,
+        'auction_date': formattedDate,
       });
-
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Auction created successfully!'),
+        SnackBar(
+          content: Text(
+            'Auction created successfully!',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+          ),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.green,
+          backgroundColor: _kGreen,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       ref.invalidate(auctionGroupDetailsProvider(widget.group.id.toString()));
@@ -169,9 +178,134 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to create auction: $e'),
+          content: Text(
+            'Failed to create auction: $e',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+          ),
           behavior: SnackBarBehavior.floating,
           backgroundColor: Colors.red,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isModifying = false);
+    }
+  }
+
+  Future<void> _showEditDateDialog(int auctionId) async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.light(
+            primary: primaryColor,
+            onPrimary: Colors.white,
+            onSurface: _kText,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+
+    if (date == null) return;
+
+    final formattedDate =
+        '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: _kSurface,
+        title: Text(
+          'Edit Auction Date',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w700,
+            fontSize: 18,
+            color: _kText,
+          ),
+        ),
+        content: Text(
+          'Change auction date to $formattedDate?',
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            color: _kSubtext,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                color: _kSubtext,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Confirm',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isModifying = true);
+    try {
+      final apiService = ref.read(apiServiceProvider);
+      await apiService.editAuctionDate(
+        groupId: widget.group.id,
+        auctionId: auctionId,
+        newDate: formattedDate,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Auction date updated successfully!',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: _kGreen,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      ref.invalidate(auctionGroupDetailsProvider(widget.group.id.toString()));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to update date: $e',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.red,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     } finally {
@@ -183,155 +317,126 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
   Widget build(BuildContext context) {
     final group = widget.group;
     final months = widget.months;
+
     return CustomScrollView(
       slivers: [
-        // ── Top section ─────────────────────────────────────────────────
+        // ── Hero Header ────────────────────────────────────────────────
         SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: Container(
+            color: primaryColor,
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title row
+                // Group name & duration
+                Text(
+                  group.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    height: 1.2,
+                  ),
+                ),
+                vertGap(4),
+                Text(
+                  '${group.durationMonths}-month auction group',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.white.withValues(alpha: 0.7),
+                  ),
+                ),
+                vertGap(16),
+
+                // Stats Row
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 4,
-                      height: 28,
-                      margin: const EdgeInsets.only(top: 2),
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                    _HeaderStatChip(
+                      icon: Icons.calendar_month_rounded,
+                      label: '${months.length} months',
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            group.name,
-                            style: GoogleFonts.dmSans(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              color: _kText,
-                              height: 1.1,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            '${group.durationMonths}-month auction group',
-                            style: GoogleFonts.dmSans(
-                              fontSize: 13,
-                              color: _kSubtext,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${months.length} months',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: primaryColor,
-                        ),
-                      ),
+                    horiGap(8),
+                    _HeaderStatChip(
+                      icon: Icons.check_circle_outline_rounded,
+                      label:
+                          '${months.where((m) => m.auction != null).length} scheduled',
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-
-                // Add Auction button
-                GestureDetector(
-                  onTap: _isModifying ? null : () => _showAddAuctionDialog(),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (_isModifying)
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        else
-                          const Icon(
-                            Icons.add_rounded,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Add Auction',
-                          style: GoogleFonts.dmSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                Text(
-                  'AUCTION SCHEDULE',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: _kSubtext,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 12),
               ],
             ),
           ),
         ),
 
-        // ── Month Cards ─────────────────────────────────────────────────
+        // ── Add Auction + Section Label ────────────────────────────────
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Auction Schedule',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: _kText,
+                  ),
+                ),
+                // _AddAuctionButton(
+                //   isLoading: _isModifying,
+                //   onTap: _showAddAuctionDialog,
+                // ),
+              ],
+            ),
+          ),
+        ),
+
+        // ── Month Cards ────────────────────────────────────────────────
         if (months.isEmpty)
           SliverFillRemaining(
             child: Center(
-              child: Text(
-                'No auction months found.',
-                style: GoogleFonts.dmSans(fontSize: 14, color: _kSubtext),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withValues(alpha: 0.07),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.event_note_outlined,
+                      size: 40,
+                      color: primaryColor.withValues(alpha: 0.45),
+                    ),
+                  ),
+                  vertGap(14),
+                  Text(
+                    'No auction months found',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: _kSubtext,
+                    ),
+                  ),
+                ],
               ),
             ),
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
             sliver: SliverList(
               delegate: SliverChildBuilderDelegate(
                 (context, index) => _MonthCard(
                   month: months[index],
                   groupId: group.id.toString(),
+                  startDate: group.startDate,
+                  onAddAuction: _showAddAuctionDialog,
+                  onEditDate: _showEditDateDialog,
                 ),
                 childCount: months.length,
               ),
@@ -342,31 +447,141 @@ class _DetailsBodyState extends ConsumerState<_DetailsBody> {
   }
 }
 
-// ── Month Card ─────────────────────────────────────────────────────────────
+// ─── Header Stat Chip ─────────────────────────────────────────────────────────
+
+class _HeaderStatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _HeaderStatChip({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: Colors.white),
+          horiGap(5),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Add Auction Button ───────────────────────────────────────────────────────
+
+// class _AddAuctionButton extends StatelessWidget {
+//   final bool isLoading;
+//   final VoidCallback onTap;
+//   const _AddAuctionButton({required this.isLoading, required this.onTap});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return GestureDetector(
+//       onTap: isLoading ? null : onTap,
+//       child: Container(
+//         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+//         decoration: BoxDecoration(
+//           color: primaryColor,
+//           borderRadius: BorderRadius.circular(10),
+//         ),
+//         child: Row(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             if (isLoading)
+//               const SizedBox(
+//                 width: 14,
+//                 height: 14,
+//                 child: CircularProgressIndicator(
+//                   strokeWidth: 2,
+//                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+//                 ),
+//               )
+//             else
+//               const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+//             horiGap(6),
+//             Text(
+//               'Add Auction',
+//               style: GoogleFonts.poppins(
+//                 fontSize: 12,
+//                 fontWeight: FontWeight.w600,
+//                 color: Colors.white,
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// ─── Month Card ───────────────────────────────────────────────────────────────
+
 class _MonthCard extends ConsumerWidget {
   final AuctionMonth month;
   final String groupId;
-  const _MonthCard({required this.month, required this.groupId});
+  final String? startDate;
+  final VoidCallback onAddAuction;
+  final Function(int)? onEditDate;
+
+  const _MonthCard({
+    required this.month,
+    required this.groupId,
+    this.startDate,
+    required this.onAddAuction,
+    this.onEditDate,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = month.auction;
+    final isScheduled = detail != null;
 
-    final String status = detail == null
+    final String status = !isScheduled
         ? 'Pending'
         : detail.isClosed
         ? 'Closed'
         : 'Active';
 
+    DateTime? expectedDate;
+    if (startDate != null) {
+      try {
+        final base = DateTime.parse(startDate!);
+        expectedDate = DateTime(
+          base.year,
+          base.month + (month.monthNo - 1),
+          base.day,
+        );
+      } catch (_) {}
+    }
+
     String dateStr = 'Not scheduled';
-    if (detail?.auctionDate != null) {
+    bool isAuto = false;
+
+    if (isScheduled && detail.auctionDate != null) {
       try {
         dateStr = DateFormat(
           'dd MMM yyyy',
-        ).format(DateTime.parse(detail!.auctionDate!));
+        ).format(DateTime.parse(detail.auctionDate!));
       } catch (_) {
-        dateStr = detail!.auctionDate!;
+        dateStr = detail.auctionDate!;
       }
+    } else if (expectedDate != null) {
+      dateStr = '${DateFormat('dd MMM yyyy').format(expectedDate)} (Auto)';
+      isAuto = true;
     }
 
     final winner = (detail?.winner != null && detail!.winner!.isNotEmpty)
@@ -374,76 +589,107 @@ class _MonthCard extends ConsumerWidget {
         : null;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: _kSurface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.04),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(14),
-              ),
-            ),
+          // ── Card Header ───────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Month number badge
+                // Month Badge
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: primaryColor,
-                    borderRadius: BorderRadius.circular(10),
+                    color: primaryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     '${month.monthNo}',
-                    style: GoogleFonts.dmSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: primaryColor,
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
-                // Month label + date
+                horiGap(12),
+
+                // Date & Winner
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Month ${month.monthNo}',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 15,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: _kText,
                         ),
                       ),
-                      const SizedBox(height: 3),
+                      vertGap(3),
                       Row(
                         children: [
-                          const Icon(
-                            Icons.calendar_today_outlined,
-                            size: 11,
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 13,
+                            color: isAuto ? _kSubtext : primaryColor,
+                          ),
+                          horiGap(5),
+                          Flexible(
+                            child: Text(
+                              dateStr,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: isAuto ? _kSubtext : _kText,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      vertGap(3),
+                      Row(
+                        children: [
+                          Icon(
+                            winner != null
+                                ? Icons.emoji_events_outlined
+                                : Icons.person_outline_rounded,
+                            size: 13,
                             color: _kSubtext,
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            dateStr,
-                            style: GoogleFonts.dmSans(
-                              fontSize: 12,
-                              color: _kSubtext,
+                          horiGap(5),
+                          Flexible(
+                            child: Text(
+                              winner ??
+                                  (detail == null
+                                      ? 'Pending auction'
+                                      : 'No winner yet'),
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                color: _kSubtext,
+                                fontStyle: winner == null
+                                    ? FontStyle.italic
+                                    : FontStyle.normal,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -451,108 +697,137 @@ class _MonthCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                _StatusBadge(status: status),
+
+                // Status Badge
+                _StatusBadge(
+                  status: isScheduled
+                      ? (status == 'Pending' ? 'UPCOMING' : status)
+                      : 'EMPTY',
+                ),
               ],
             ),
           ),
 
-          const Divider(height: 1, thickness: 1, color: _kDivider),
+          Divider(height: 1, thickness: 1, color: _kDivider),
 
           // ── Card Footer ───────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Winner section
-                Expanded(
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: winner != null
-                              ? Colors.green.withValues(alpha: 0.10)
-                              : _kDivider,
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Icon(
-                          winner != null
-                              ? Icons.emoji_events_rounded
-                              : Icons.person_outline_rounded,
-                          size: 16,
-                          color: winner != null
-                              ? const Color(0xFF15803D)
-                              : _kSubtext,
+                if (!isScheduled) ...[
+                  if (expectedDate != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.07),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        DateFormat('dd-MM-yyyy').format(expectedDate),
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: primaryColor,
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'WINNER',
-                              style: GoogleFonts.dmSans(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: _kSubtext,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              winner ??
-                                  (detail == null
-                                      ? 'No auction yet'
-                                      : 'No winner yet'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.dmSans(
-                                fontSize: 13,
-                                fontWeight: winner != null
-                                    ? FontWeight.w600
-                                    : FontWeight.w400,
-                                color: winner != null ? _kText : _kSubtext,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
+                    horiGap(8),
+                  ],
+                  _ActionBtn(
+                    label: 'Set Date',
+                    icon: Icons.calendar_month_rounded,
+                    bgColor: _kGreen,
+                    textColor: Colors.white,
+                    onTap: onAddAuction,
                   ),
-                ),
-
-                // Action buttons — only shown if auction exists
-                if (detail != null) ...[
-                  const SizedBox(width: 12),
+                ] else ...[
                   _ActionBtn(
                     label: 'View',
                     icon: Icons.visibility_outlined,
-                    bgColor: const Color(0xFFEFF6FF),
-                    textColor: const Color(0xFF2563EB),
-                    onTap: () {
-                      _showAuctionDetailsBottomSheet(context, detail.id);
-                    },
+                    bgColor: const Color(0xFFF1F5F9),
+                    textColor: _kText,
+                    onTap: () => _showAuctionDetailsBottomSheet(
+                      context,
+                      detail.id,
+                      groupId,
+                      onEditDate,
+                    ),
                   ),
-                  const SizedBox(width: 8),
-                  _ActionBtn(
-                    label: 'Spin',
-                    icon: Icons.rotate_right_rounded,
-                    bgColor: const Color(0xFFFFF7ED),
-                    textColor: _kOrange,
-                    onTap: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => SpinScreen(auctionId: detail.id),
-                        ),
-                      );
-                      // Refresh the group details to show the updated winner
-                      ref.invalidate(auctionGroupDetailsProvider(groupId));
-                    },
-                  ),
+                  if (!detail.isClosed) ...[
+                    horiGap(8),
+                    _ActionBtn(
+                      label: 'Edit',
+                      icon: Icons.edit_calendar_rounded,
+                      bgColor: _kAmber,
+                      textColor: Colors.white,
+                      onTap: () => onEditDate?.call(detail.id),
+                    ),
+                    if (detail.auctionDate != null &&
+                        detail.auctionDate!.isNotEmpty) ...[
+                      horiGap(8),
+                      _ActionBtn(
+                        label: 'Spin',
+                        icon: Icons.rotate_right_rounded,
+                        bgColor: primaryColor,
+                        textColor: Colors.white,
+                        onTap: () async {
+                          final now = DateTime.now();
+                          final auctionDate = DateTime.tryParse(
+                            detail.auctionDate ?? '',
+                          );
+
+                          if (auctionDate != null) {
+                            final today = DateTime(
+                              now.year,
+                              now.month,
+                              now.day,
+                            );
+                            final target = DateTime(
+                              auctionDate.year,
+                              auctionDate.month,
+                              auctionDate.day,
+                            );
+
+                            if (target.isAfter(today)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Auction date is yet to come (${DateFormat('dd MMM yyyy').format(target)})',
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: _kAmber,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SpinScreen(
+                                auctionId: detail.id,
+                                groupId: groupId,
+                                auctionDate: detail.auctionDate,
+                              ),
+                            ),
+                          );
+                          ref.invalidate(auctionGroupDetailsProvider(groupId));
+                        },
+                      ),
+                    ],
+                  ],
                 ],
               ],
             ),
@@ -563,6 +838,8 @@ class _MonthCard extends ConsumerWidget {
   }
 }
 
+// ─── Status Badge ─────────────────────────────────────────────────────────────
+
 class _StatusBadge extends StatelessWidget {
   final String status;
   const _StatusBadge({required this.status});
@@ -570,34 +847,32 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (Color bg, Color fg, IconData icon) = switch (status) {
-      'Closed' => (
-        Colors.green.withValues(alpha: 0.12),
-        const Color(0xFF15803D),
-        Icons.check_circle_outline_rounded,
+      'Closed' => (_kGreenBg, _kGreen, Icons.check_circle_outline_rounded),
+      'Active' => (_kBlueBg, _kBlue, Icons.radio_button_checked_rounded),
+      'UPCOMING' => (_kBlueBg, _kBlue, Icons.calendar_month_rounded),
+      'EMPTY' => (
+        primaryColor.withValues(alpha: 0.08),
+        primaryColor,
+        Icons.hourglass_empty_rounded,
       ),
-      'Active' => (
-        const Color(0xFFEFF6FF),
-        const Color(0xFF2563EB),
-        Icons.radio_button_checked_rounded,
-      ),
-      _ => (_kOrangeLight, _kOrange, Icons.schedule_rounded),
+      _ => (_kAmberBg, _kAmber, Icons.schedule_rounded),
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 11, color: fg),
-          const SizedBox(width: 4),
+          horiGap(4),
           Text(
             status,
-            style: GoogleFonts.dmSans(
-              fontSize: 11,
+            style: GoogleFonts.poppins(
+              fontSize: 10,
               fontWeight: FontWeight.w700,
               color: fg,
             ),
@@ -608,7 +883,8 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
-// ── Action Button ──────────────────────────────────────────────────────────
+// ─── Action Button ────────────────────────────────────────────────────────────
+
 class _ActionBtn extends StatelessWidget {
   final String label;
   final IconData icon;
@@ -629,21 +905,21 @@ class _ActionBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 13, color: textColor),
-            const SizedBox(width: 5),
+            Icon(icon, size: 14, color: textColor),
+            horiGap(6),
             Text(
               label,
-              style: GoogleFonts.dmSans(
+              style: GoogleFonts.poppins(
                 fontSize: 12,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w600,
                 color: textColor,
               ),
             ),
@@ -654,170 +930,254 @@ class _ActionBtn extends StatelessWidget {
   }
 }
 
+// ─── Auction Details Bottom Sheet ─────────────────────────────────────────────
 
-// ── View Details Bottom Sheet ──────────────────────────────────────────────
-void _showAuctionDetailsBottomSheet(BuildContext context, int auctionId) {
+void _showAuctionDetailsBottomSheet(
+  BuildContext context,
+  int auctionId,
+  String groupId,
+  Function(int)? onEditDate,
+) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) {
-      return Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.all(24),
-        child: Consumer(
-          builder: (context, ref, _) {
-            final auctionAsync = ref.watch(auctionDetailsProvider(auctionId));
+    builder: (context) => Container(
+      decoration: const BoxDecoration(
+        color: _kSurface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Consumer(
+        builder: (context, ref, _) {
+          final auctionAsync = ref.watch(auctionDetailsProvider(auctionId));
 
-            return auctionAsync.when(
-              data: (data) => _buildAuctionDetailsContent(context, data),
-              loading: () => SizedBox(
-                height: 200,
-                child: Center(
-                  child: CircularProgressIndicator(color: primaryColor),
-                ),
-              ),
-              error: (err, _) => SizedBox(
-                height: 200,
-                child: CustomErrorWidget(
-                  error: err.toString().replaceAll('Exception: ', ''),
-                  onRetry: () => ref.invalidate(auctionDetailsProvider(auctionId)),
-                ),
-              ),
-            );
-          },
-        ),
-      );
-    },
-  );
-}
-
-Widget _buildAuctionDetailsContent(
-  BuildContext context,
-  AuctionDetailsResponse data,
-) {
-  String dateStr = data.auctionDate ?? 'Not set';
-  if (data.auctionDate != null) {
-    try {
-      dateStr = DateFormat(
-        'MMM. dd, yyyy',
-      ).format(DateTime.parse(data.auctionDate!));
-    } catch (_) {}
-  }
-
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 0),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Title
-        Align(
-          alignment: Alignment.center,
-          child: Text(
-            'Auction Details',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF2E3165),
+          return auctionAsync.when(
+            data: (data) => _AuctionDetailsSheet(
+              data: data,
+              ref: ref,
+              groupId: groupId,
+              onEditDate: onEditDate,
             ),
-          ),
-        ),
-        const SizedBox(height: 22),
-
-        _buildDetailRow('GROUP', data.group),
-        _buildDetailRow('DATE', dateStr),
-        _buildDetailRow(
-          'WINNER',
-          data.isClosed && data.winner != null
-              ? data.winner!.name
-              : 'Not yet spun',
-          showDivider: false,
-        ),
-
-        const SizedBox(height: 16),
-
-        // Spin Button
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context); // Close bottom sheet
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => SpinScreen(auctionId: data.id)),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(
-              0xFF333385,
-            ), // Custom dark purple matching the button
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+            loading: () => const SizedBox(
+              height: 200,
+              child: Center(child: CircularProgressIndicator()),
             ),
-            elevation: 4,
-            shadowColor: const Color(0xFF333385).withValues(alpha: 0.4),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('🎯', style: TextStyle(fontSize: 18)),
-              const SizedBox(width: 8),
-              Text(
-                'Spin Auction',
-                style: GoogleFonts.dmSans(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+            error: (err, _) => SizedBox(
+              height: 200,
+              child: CustomErrorWidget(
+                error: err.toString().replaceAll('Exception: ', ''),
+                onRetry: () =>
+                    ref.invalidate(auctionDetailsProvider(auctionId)),
               ),
-            ],
-          ),
-        ),
-        vertGap(10),
-      ],
+            ),
+          );
+        },
+      ),
     ),
   );
 }
 
-Widget _buildDetailRow(String label, String value, {bool showDivider = true}) {
-  return Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: GoogleFonts.dmSans(
-                  fontSize: 14,
+// ─── Auction Details Sheet Content ───────────────────────────────────────────
+
+class _AuctionDetailsSheet extends StatelessWidget {
+  final AuctionDetailsResponse data;
+  final WidgetRef ref;
+  final String groupId;
+  final Function(int)? onEditDate;
+
+  const _AuctionDetailsSheet({
+    required this.data,
+    required this.ref,
+    required this.groupId,
+    this.onEditDate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    String dateStr = data.auctionDate ?? 'Not set';
+    if (data.auctionDate != null) {
+      try {
+        dateStr = DateFormat(
+          'MMM. dd, yyyy',
+        ).format(DateTime.parse(data.auctionDate!));
+      } catch (_) {}
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ── Handle ──
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+
+          // ── Title ──
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.gavel_rounded, color: primaryColor, size: 18),
+              ),
+              horiGap(12),
+              Text(
+                'Auction Details',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1F2937),
-                  letterSpacing: 0.5,
+                  color: _kText,
                 ),
               ),
-            ),
-            Text(
-              value,
-              style: GoogleFonts.dmSans(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF111827),
-              ),
-              textAlign: TextAlign.right,
+            ],
+          ),
+          vertGap(24),
+
+          // ── Detail Rows ──
+          _DetailRow(label: 'Group', value: data.group),
+          _DetailRow(label: 'Date', value: dateStr),
+          _DetailRow(
+            label: 'Winner',
+            value: data.isClosed && data.winner != null
+                ? data.winner!.name
+                : 'Not yet spun',
+            showDivider: false,
+          ),
+          vertGap(24),
+
+          // ── Spin & Edit Buttons ──
+          if (!data.isClosed) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      onEditDate?.call(data.id);
+                    },
+                    icon: const Icon(Icons.edit_calendar_rounded, size: 18),
+                    label: Text(
+                      'Edit Date',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _kAmber,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+                horiGap(12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      Navigator.pop(context);
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SpinScreen(
+                            auctionId: data.id,
+                            groupId: groupId,
+                          ),
+                        ),
+                      );
+                      ref.invalidate(auctionGroupDetailsProvider(groupId));
+                    },
+                    icon: const Text('🎯', style: TextStyle(fontSize: 16)),
+                    label: Text(
+                      'Spin Now',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
-        ),
+        ],
       ),
-      if (showDivider)
-        const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
-    ],
-  );
+    );
+  }
 }
 
+// ─── Detail Row ───────────────────────────────────────────────────────────────
 
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final bool showDivider;
+
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    this.showDivider = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: _kSubtext,
+                  ),
+                ),
+              ),
+              Text(
+                value,
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: _kText,
+                ),
+                textAlign: TextAlign.right,
+              ),
+            ],
+          ),
+        ),
+        if (showDivider)
+          const Divider(height: 1, thickness: 1, color: _kDivider),
+      ],
+    );
+  }
+}

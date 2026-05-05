@@ -97,21 +97,41 @@ class _CashCollectorScreenState extends ConsumerState<Createcashcollectorscreen>
           context: context,
           barrierDismissible: false,
           builder: (context) => AlertDialog(
-            title: const Text('Success'),
-            content: Text(
-              response['message'] ?? 'Cash Collector created successfully',
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
+            icon: const Icon(
+              Icons.check_circle_outline,
+              color: Colors.green,
+              size: 60,
+            ),
+            title: const Text(
+              'Success!',
+              style: TextStyle(fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            content: Text(
+              response['message'] ?? 'Cash Collector created successfully.',
+              textAlign: TextAlign.center,
+            ),
+            actionsAlignment: MainAxisAlignment.center,
             actions: [
-              TextButton(
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 onPressed: () {
-                  Navigator.pop(context);
-                  _usernameController.clear();
-                  _emailController.clear();
-                  _phoneController.clear();
-                  _passwordController.clear();
-                  setState(() {
-                    _selectedGroupId = null;
-                  });
+                  Navigator.of(context)
+                    ..pop() // Close dialog
+                    ..pop(); // Go back to collector list
                 },
                 child: const Text('OK'),
               ),

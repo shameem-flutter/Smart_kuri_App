@@ -17,49 +17,82 @@ class GroupcreateScreen extends ConsumerStatefulWidget {
 class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _amountController = TextEditingController();
   final _durationController = TextEditingController();
+  final _auctionsPerMonthController = TextEditingController(text: '1');
   final _startDateController = TextEditingController();
-  DateTime? _selectedDate;
+  final _intervalMonthsController = TextEditingController();
+  final List<TextEditingController> _auctionDateCtrls = [];
+
+  bool get _isInterval => _auctionType == 'interval';
+
+  String _formatIsoDate(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  String _formatDisplayDate(DateTime d) =>
+      '${d.day.toString().padLeft(2, '0')}-${d.month.toString().padLeft(2, '0')}-${d.year}';
+
+  String _auctionType = 'monthly';
   bool _isLoading = false;
-  // Removed: PlanDetails? _planDetails;
 
   @override
   void initState() {
     super.initState();
+    _auctionsPerMonthController.addListener(_onAuctionsCountChanged);
+    // Initialize with 1 auction date controller
+    _auctionDateCtrls.add(TextEditingController());
+
     if (widget.group != null) {
       _nameController.text = widget.group!.name;
       _amountController.text = widget.group!.monthlyAmount.toString();
       _durationController.text = widget.group!.durationMonths.toString();
       _startDateController.text = widget.group!.startDate;
+    }
+  }
 
-      // Parse start date for DatePicker
-      // Assuming format is DD-MM-YYYY or similar from API
-      try {
-        final parts = widget.group!.startDate.split('-');
-        if (parts.length == 3) {
-          // Basic parsing attempt assuming DD-MM-YYYY
-          int day = int.parse(parts[0]);
-          int month = int.parse(parts[1]);
-          int year = int.parse(parts[2]);
-          _selectedDate = DateTime(year, month, day);
+  void _onAuctionsCountChanged() {
+    final text = _auctionsPerMonthController.text.trim();
+    if (text.isEmpty) return;
+    final count = int.tryParse(text) ?? 1;
+    if (count < 1 || count > 20) return;
+
+    if (_auctionDateCtrls.length != count) {
+      setState(() {
+        while (_auctionDateCtrls.length < count) {
+          _auctionDateCtrls.add(TextEditingController());
         }
-      } catch (e) {
-        debugPrint('Error parsing date: $e');
-      }
+        while (_auctionDateCtrls.length > count) {
+          _auctionDateCtrls.last.dispose();
+          _auctionDateCtrls.removeLast();
+        }
+      });
     }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
     _amountController.dispose();
     _durationController.dispose();
+    _auctionsPerMonthController.removeListener(_onAuctionsCountChanged);
+    _auctionsPerMonthController.dispose();
+    _intervalMonthsController.dispose();
     _startDateController.dispose();
+    for (var ctrl in _auctionDateCtrls) {
+      ctrl.dispose();
+    }
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context) async {
+  Future<void> _selectDate(
+    BuildContext context,
+    TextEditingController controller, {
+    bool isStartDate = false,
+  }) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -83,12 +116,13 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
         );
       },
     );
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null) {
       setState(() {
-        _selectedDate = picked;
-        // Format as DD-MM-YYYY
-        _startDateController.text =
-            "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}";
+        if (isStartDate) {
+          controller.text = _formatDisplayDate(picked);
+        } else {
+          controller.text = _formatIsoDate(picked);
+        }
       });
     }
   }
@@ -130,11 +164,30 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
           }
         } else {
           // Creating
+          // Construct request with modern field names
           final request = GroupCreateRequest(
             name: _nameController.text,
-            monthlyAmount: double.parse(_amountController.text),
+            monthlyAmount: int.tryParse(_amountController.text) ?? 0,
             durationMonths: int.parse(_durationController.text),
             startDate: _startDateController.text,
+            auctionType: _auctionType,
+            auctionsPerMonth:
+                int.tryParse(_auctionsPerMonthController.text) ?? 1,
+            auctionIntervalMonths: _isInterval
+                ? int.tryParse(_intervalMonthsController.text)
+                : null,
+            auctionDate1:
+                _auctionDateCtrls.isNotEmpty &&
+                    _auctionDateCtrls[0].text.isNotEmpty
+                ? _auctionDateCtrls[0].text
+                : null,
+            otherAuctionDates: _auctionDateCtrls.length > 1
+                ? _auctionDateCtrls
+                      .sublist(1)
+                      .map((c) => c.text.trim())
+                      .where((t) => t.isNotEmpty)
+                      .toList()
+                : [],
           );
 
           final response = await apiService.createGroup(request);
@@ -146,10 +199,16 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
 
             setState(() {
               _nameController.clear();
+              _phoneController.clear();
+              _emailController.clear();
               _amountController.clear();
               _durationController.clear();
+              _auctionsPerMonthController.text = '1';
+              _intervalMonthsController.clear();
               _startDateController.clear();
-              _selectedDate = null;
+              for (var ctrl in _auctionDateCtrls) {
+                ctrl.clear();
+              }
             });
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
@@ -221,7 +280,7 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
                   Text(
                     widget.group != null
                         ? 'Edit Group Details'
-                        : 'Group Details',
+                        : 'Group Information',
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -246,6 +305,56 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // Contact Info
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _phoneController,
+                          label: 'Phone Number',
+                          hint: '90000 00000',
+                          icon: Icons.phone_outlined,
+                          keyboardType: TextInputType.phone,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Required';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _emailController,
+                          label: 'Email Address',
+                          hint: 'test@gmail.com',
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Required';
+                            }
+                            if (!value.contains('@')) return 'Invalid email';
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  Text(
+                    'Chitty Settings',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
                   Row(
                     children: [
                       Expanded(
@@ -260,7 +369,7 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
                               return 'Required';
                             }
                             if (double.tryParse(value) == null) {
-                              return 'Invalid amount';
+                              return 'Invalid';
                             }
                             return null;
                           },
@@ -271,16 +380,14 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
                         child: _buildTextField(
                           controller: _durationController,
                           label: 'Duration (Months)',
-                          hint: '0',
+                          hint: '10',
                           icon: Icons.timer_outlined,
                           keyboardType: TextInputType.number,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Required';
                             }
-                            if (int.tryParse(value) == null) {
-                              return 'Invalid duration';
-                            }
+                            if (int.tryParse(value) == null) return 'Invalid';
                             return null;
                           },
                         ),
@@ -289,19 +396,116 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Date Field
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDropdown(
+                          label: 'Auction Type',
+                          value: _auctionType,
+                          items: const ['monthly', 'interval'],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() {
+                                _auctionType = val;
+                                if (val == 'interval') {
+                                  _auctionsPerMonthController.text = '1';
+                                } else {
+                                  _intervalMonthsController.clear();
+                                }
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildTextField(
+                          controller: _auctionsPerMonthController,
+                          label: 'Auctions / Month',
+                          hint: '1',
+                          icon: Icons.repeat_rounded,
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Required';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_isInterval) ...[
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: _intervalMonthsController,
+                      label: 'Auction Interval (Months)',
+                      hint: '2',
+                      icon: Icons.calendar_view_day_rounded,
+                      keyboardType: TextInputType.number,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Required for interval';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 32),
+
+                  Text(
+                    'Timeline',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
                   _buildDateField(
                     controller: _startDateController,
                     label: 'Start Date',
                     hint: 'DD-MM-YYYY',
-                    onTap: () => _selectDate(context),
+                    onTap: () => _selectDate(
+                      context,
+                      _startDateController,
+                      isStartDate: true,
+                    ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please select a start date';
-                      }
+                      if (value == null || value.isEmpty) return 'Required';
                       return null;
                     },
                   ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Auction Dates',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ..._auctionDateCtrls.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final ctrl = entry.value;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: _buildDateField(
+                        controller: ctrl,
+                        label: 'Auction Date ${index + 1}',
+                        hint: 'YYYY-MM-DD',
+                        onTap: () => _selectDate(context, ctrl),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Required';
+                          return null;
+                        },
+                      ),
+                    );
+                  }),
 
                   const SizedBox(height: 40),
 
@@ -492,6 +696,52 @@ class _GroupcreateScreenState extends ConsumerState<GroupcreateScreen> {
       ],
     );
   }
+
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> items,
+    required Function(String?) onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: const Color(0xFF2B3A4A),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              icon: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: Colors.grey[400],
+              ),
+              style: GoogleFonts.inter(
+                color: const Color(0xFF2B3A4A),
+                fontWeight: FontWeight.w500,
+                fontSize: 15,
+              ),
+              items: items.map((String item) {
+                return DropdownMenuItem<String>(value: item, child: Text(item));
+              }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
-
-

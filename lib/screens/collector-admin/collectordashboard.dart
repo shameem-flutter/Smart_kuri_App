@@ -7,6 +7,8 @@ import 'package:kuri_app/providers/group_provider.dart';
 import 'package:kuri_app/models/groupadmin/collector_dashboard_model.dart';
 import 'package:kuri_app/widgets/custom_error_widget.dart';
 import 'package:intl/intl.dart';
+import 'package:kuri_app/screens/collector-admin/collectorprofile.dart'
+    as kuri_app_profile;
 
 class Collectordashboard extends ConsumerStatefulWidget {
   const Collectordashboard({super.key});
@@ -19,7 +21,6 @@ class _CollectordashboardState extends ConsumerState<Collectordashboard> {
   Widget build(BuildContext context) {
     final dashboardData = ref.watch(collectorDashboardProvider);
 
-  
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
 
     return Scaffold(
@@ -50,22 +51,55 @@ class _CollectordashboardState extends ConsumerState<Collectordashboard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Header ─────────────────────────────────────────────────────
-              Text(
-                'Overview',
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF2B3A4A),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                DateFormat('EEEE, d MMMM').format(DateTime.now()),
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: Colors.grey[500],
-                  fontWeight: FontWeight.w500,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Overview',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF2B3A4A),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        DateFormat('EEEE, d MMMM').format(DateTime.now()),
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: Colors.grey[500],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const kuri_app_profile.CollectorprofileScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.person_outline_rounded,
+                        color: primaryColor,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
 
@@ -257,7 +291,7 @@ class _CollectordashboardState extends ConsumerState<Collectordashboard> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -304,5 +338,3 @@ class _CollectordashboardState extends ConsumerState<Collectordashboard> {
     );
   }
 }
-
-

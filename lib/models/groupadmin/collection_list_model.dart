@@ -12,15 +12,25 @@ class CollectionListResponse extends Equatable {
   });
 
   factory CollectionListResponse.fromJson(Map<String, dynamic> json) {
+    final paymentsList = (json['payments'] as List<dynamic>? ?? json['results'] as List<dynamic>?)
+            ?.map((e) => Payment.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    double parsedTotal = double.tryParse(json['total_collected']?.toString() ?? '') ??
+        double.tryParse(json['total_amount']?.toString() ?? '') ?? 0.0;
+
+    if (parsedTotal == 0.0 && paymentsList.isNotEmpty) {
+      parsedTotal = paymentsList.fold(
+        0.0,
+        (sum, p) => p.status.toLowerCase() == 'success' ? sum + p.amount : sum,
+      );
+    }
+
     return CollectionListResponse(
-      totalCollected:
-          double.tryParse(json['total_collected'].toString()) ?? 0.0,
-      count: json['count'] as int? ?? 0,
-      payments:
-          (json['payments'] as List<dynamic>?)
-              ?.map((e) => Payment.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
+      totalCollected: parsedTotal,
+      count: json['count'] as int? ?? paymentsList.length,
+      payments: paymentsList,
     );
   }
 

@@ -9,8 +9,8 @@ import 'screens/groupadmin/auth/password_reset_screen.dart';
 import 'screens/groupadmin/auth/first_login_password_screen.dart';
 import 'screens/collector-admin/collectorhomescreen.dart';
 import 'screens/member-admin/memberhomescreen.dart';
-import 'screens/groupadmin/group_admin_main_screen.dart';
 import 'screens/groupadmin/groups/onetimegroupcreation.dart';
+import 'screens/groupadmin/group_admin_main_screen.dart';
 import 'providers/auth_provider_riverpod.dart';
 
 void main() async {
@@ -55,7 +55,9 @@ class _MyAppState extends ConsumerState<MyApp> {
       final wasSetupNeeded = prev?.needsOnetimeSetup ?? false;
       final isSetupNeeded = next.needsOnetimeSetup;
 
-      if ((wasAuth && !isAuth) || (!wasSetupNeeded && isSetupNeeded)) {
+      if ((wasAuth && !isAuth) ||
+          (!wasSetupNeeded && isSetupNeeded) ||
+          (wasSetupNeeded && !isSetupNeeded)) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_navigatorKey.currentState != null) {
             _navigatorKey.currentState!.popUntil((route) => route.isFirst);
@@ -107,10 +109,14 @@ class _MyAppState extends ConsumerState<MyApp> {
 
     if (authState.isAuthenticated) {
       if (authState.isFirstLogin) {
-        return const FirstLoginChangePasswordScreen(key: ValueKey('first_login'));
+        return const FirstLoginChangePasswordScreen(
+          key: ValueKey('first_login'),
+        );
       }
 
-      if (authState.needsOnetimeSetup) {
+      if (authState.needsOnetimeSetup &&
+          authState.role != 'member' &&
+          authState.role != 'collector') {
         return const Onetimegroupcreation(key: ValueKey('onetime_setup'));
       }
 
@@ -144,18 +150,22 @@ class _MyAppState extends ConsumerState<MyApp> {
         index: currentView.index,
         children: [
           LoginScreen(
-            onNavigateToRegister: () =>
-                ref.read(authViewProvider.notifier).switchTo(AuthViewMode.register),
-            onNavigateToForgotPassword: () =>
-                ref.read(authViewProvider.notifier).switchTo(AuthViewMode.forgotPassword),
+            onNavigateToRegister: () => ref
+                .read(authViewProvider.notifier)
+                .switchTo(AuthViewMode.register),
+            onNavigateToForgotPassword: () => ref
+                .read(authViewProvider.notifier)
+                .switchTo(AuthViewMode.forgotPassword),
           ),
           RegisterScreen(
-            onNavigateToLogin: () =>
-                ref.read(authViewProvider.notifier).switchTo(AuthViewMode.login),
+            onNavigateToLogin: () => ref
+                .read(authViewProvider.notifier)
+                .switchTo(AuthViewMode.login),
           ),
           PasswordResetScreen(
-            onNavigateBack: () =>
-                ref.read(authViewProvider.notifier).switchTo(AuthViewMode.login),
+            onNavigateBack: () => ref
+                .read(authViewProvider.notifier)
+                .switchTo(AuthViewMode.login),
           ),
         ],
       ),

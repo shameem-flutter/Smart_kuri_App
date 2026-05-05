@@ -36,7 +36,7 @@ class MemberProfileScreen extends ConsumerWidget {
             } catch (_) {}
           },
         ),
-        data: (data) => RefreshIndicator(
+        data: (MemberProfileResponse data) => RefreshIndicator(
           color: primaryColor,
           onRefresh: () async => ref.invalidate(memberProfileProvider),
           child: CustomScrollView(

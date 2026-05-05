@@ -20,8 +20,6 @@ class Memberhomescreen extends StatefulWidget {
 
 class _MemberhomescreenState extends State<Memberhomescreen> {
   late int _currentIndex;
-  bool hasNavigatedAway = false;
-
   final PageStorageBucket _bucket = PageStorageBucket();
 
   final List<Widget> _screens = const [
@@ -37,31 +35,17 @@ class _MemberhomescreenState extends State<Memberhomescreen> {
     _currentIndex = widget.initialIndex;
   }
 
-  Future<bool> _handleBackButton() async {
-    if (_currentIndex != 0) {
-      setState(() {
-        _currentIndex = 0;
-        hasNavigatedAway = true;
-      });
-      return false;
-    }
-    return true;
-  }
-
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
 
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
+      canPop: _currentIndex == 0,
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-
-        final shouldPop = await _handleBackButton();
-
-        if (!shouldPop && context.mounted) {
-          Navigator.of(context).maybePop();
-        }
+        setState(() {
+          _currentIndex = 0;
+        });
       },
       child: Scaffold(
         extendBody: true,

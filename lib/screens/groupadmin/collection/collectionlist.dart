@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:kuri_app/utilities/colors.dart';
 import '../../../models/groupadmin/collection_list_model.dart';
 import '../../../providers/group_provider.dart';
 import 'addcollection.dart';
@@ -10,7 +11,8 @@ class CollectionListScreen extends ConsumerStatefulWidget {
   const CollectionListScreen({super.key});
 
   @override
-  ConsumerState<CollectionListScreen> createState() => _CollectionListScreenState();
+  ConsumerState<CollectionListScreen> createState() =>
+      _CollectionListScreenState();
 }
 
 class _CollectionListScreenState extends ConsumerState<CollectionListScreen> {
@@ -143,7 +145,9 @@ class _CollectionListScreenState extends ConsumerState<CollectionListScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddCollectionScreen()),
+            MaterialPageRoute(
+              builder: (context) => const AddCollectionScreen(),
+            ),
           ).then((_) => _refreshCollections());
         },
         backgroundColor: const Color(0xFF2962FF),
@@ -156,15 +160,15 @@ class _CollectionListScreenState extends ConsumerState<CollectionListScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF2962FF), Color(0xFF0039CB)],
+        gradient: LinearGradient(
+          colors: [primaryColor.withValues(alpha: 0.8), primaryColor],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF2962FF).withValues(alpha: 0.3),
+            color: primaryColor.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -248,9 +252,7 @@ class _CollectionListScreenState extends ConsumerState<CollectionListScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _getStatusColor(
-                  payment.status,
-                ).withValues(alpha: 0.1),
+                color: _getStatusColor(payment.status).withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -355,5 +357,3 @@ class _CollectionListScreenState extends ConsumerState<CollectionListScreen> {
     }
   }
 }
-
-
